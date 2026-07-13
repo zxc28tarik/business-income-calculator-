@@ -24,7 +24,18 @@ test("kafe brüt ciro formülü günlük müşteri × fiş × açık gündür", 
 });
 
 test("paket servis komisyonu yalnız paket servis gelirine uygulanır", () => {
-  const result = calculateCafeMonth({ ...DEFAULT_INPUTS, dailyCustomers: 100, averageTicket: 100, openDays: 10, vatRate: 0, lostSalesRate: 0, deliverySalesShare: 0.40, deliveryCommissionRate: 0.25, posCommissionRate: 0, cardSalesShare: 0 });
+  const result = calculateCafeMonth({
+    ...DEFAULT_INPUTS,
+    dailyCustomers: 100,
+    averageTicket: 100,
+    openDays: 10,
+    vatRate: 0,
+    lostSalesRate: 0,
+    deliverySalesShare: 0.40,
+    deliveryCommissionRate: 0.25,
+    posCommissionRate: 0,
+    cardSalesShare: 0,
+  });
   assert.equal(result.grossRevenue, 100000);
   assert.equal(result.deliveryRevenue, 40000);
   assert.equal(result.deliveryCommission, 10000);
@@ -38,7 +49,13 @@ test("finansman P&L net kârını değiştirmez, nakdi değiştirir", () => {
 });
 
 test("kurulum maliyeti ilk ay nakitten bir kez düşer", () => {
-  const result = calculateCafeModel({ ...DEFAULT_INPUTS, startingCash: 3000000, financingAmount: 0, monthlyGrowthRate: 0, collectionDelayDays: 0 });
+  const result = calculateCafeModel({
+    ...DEFAULT_INPUTS,
+    startingCash: 3000000,
+    financingAmount: 0,
+    monthlyGrowthRate: 0,
+    collectionDelayDays: 0,
+  });
   assert.equal(result.cashFlow.rows[0].setupCosts, result.totalSetupCost);
   assert.equal(result.cashFlow.rows[1].setupCosts, 0);
 });

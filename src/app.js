@@ -1,206 +1,380 @@
-import {
-  BUSINESS_TYPES,
-  DEFAULT_INPUTS,
-  SCENARIO_PRESETS,
-  applyScenario,
-  calculateCafeModel,
-  calculateScenarioComparison,
-  normalizeCafeInputs,
-} from "./sectors/cafe-restaurant.js";
+import { initializeScenarioInputs } from "./core/sector-schema.js";
+import { SECTORS, getSector } from "./sectors/registry.js";
 
 const currency = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 });
 const percent = new Intl.NumberFormat("tr-TR", { style: "percent", maximumFractionDigits: 1 });
-const STORAGE_KEY = "business-income-calculator:cafe:v0.1";
-
-const fieldSections = [
-  { title: "1 · İşletme ve satış varsayımları", open: true, fields: [
-    select("businessType", "İş türü", BUSINESS_TYPES), num("dailyCustomers", "Günlük müşteri", 1),
-    num("averageTicket", "Ortalama fiş (TL)", 10), num("openDays", "Açık gün / ay", 1),
-    num("serviceCapacity", "Günlük servis kapasitesi", 1), rate("deliverySalesShare", "Paket servis satış payı"),
-    rate("cardSalesShare", "Kartlı satış payı"), rate("lostSalesRate", "İptal / gerçekleşmeyen satış"),
-  ]},
-  { title: "2 · Vergi ve komisyonlar", open: true, fields: [
-    select("taxType", "KDV biçimi", [["included", "Fiyata dahil"], ["excluded", "Fiyat üstü"], ["none", "Vergi yok"]]),
-    rate("vatRate", "KDV oranı"), rate("deliveryCommissionRate", "Paket servis komisyonu"), rate("posCommissionRate", "POS komisyonu"),
-  ]},
-  { title: "3 · Değişken maliyetler", open: true, fields: [
-    rate("materialCostRate", "Malzeme maliyeti / net satış"), rate("wasteRate", "Fire / malzeme maliyeti"),
-    num("packagingCostPerDeliveryOrder", "Paketleme / teslimat siparişi (TL)", 1), rate("otherVariableCostRate", "Diğer değişken maliyet / net satış"),
-  ]},
-  { title: "4 · Sabit giderler", fields: [
-    num("rent", "Kira (TL)", 1000), num("staffCost", "Personel toplam maliyeti (TL)", 1000),
-    num("utilities", "Faturalar (TL)", 1000), num("accounting", "Muhasebe (TL)", 500),
-    num("software", "Yazılım / abonelikler (TL)", 500), num("cleaning", "Temizlik (TL)", 500),
-    num("maintenance", "Bakım (TL)", 500), num("insurance", "Sigorta (TL)", 500),
-    num("otherFixedExpenses", "Diğer sabit gider (TL)", 500), num("loanPayment", "Aylık kredi / taksit (nakit) (TL)", 500),
-  ]},
-  { title: "5 · Kurulum maliyetleri", fields: [
-    num("renovation", "Tadilat (TL)", 1000), num("equipment", "Ekipman (TL)", 1000),
-    num("furniture", "Mobilya (TL)", 1000), num("deposit", "Depozito (TL)", 1000),
-    num("initialStock", "İlk stok (TL)", 1000), num("licenseFees", "Ruhsat / izin (TL)", 1000),
-    num("openingMarketing", "Açılış reklamı (TL)", 1000), num("softwareSetup", "Yazılım kurulumu (TL)", 1000),
-  ]},
-  { title: "6 · Paydaş ve vergi varsayımı", fields: [
-    rate("franchiseRoyaltyRate", "Franchise / lisans payı"),
-    select("franchiseRoyaltyBasis", "Paylaşım tabanı", [["gross_revenue", "Brüt ciro"], ["net_revenue_after_commission", "Komisyon sonrası net gelir"], ["contribution_after_variable_cost", "Değişken maliyet sonrası katkı"], ["pre_tax_profit", "Vergi öncesi kâr"]]),
-    rate("partnerProfitShareRate", "Ortak kâr payı"), rate("estimatedTaxRate", "Vergi ön tahmin oranı"),
-  ]},
-  { title: "7 · Nakit akışı", fields: [
-    num("startingCash", "Başlangıç nakdi (TL)", 1000), num("financingAmount", "Yatırım / finansman (TL)", 1000),
-    num("collectionDelayDays", "Tahsilat gecikmesi (gün)", 1), rate("monthlyGrowthRate", "Aylık müşteri büyümesi", { allowNegative: true }),
-  ]},
-];
+const STORAGE_KEY = "business-income-calculator:platform:v0.2";
+const OLD_CAFE_KEY = "business-income-calculator:cafe:v0.1";
 
 let state = loadState();
-renderStaticForm();
-renderScenarioButtons();
+let lastRendered = null;
+
+renderSectorOptions();
+renderSectorShell();
 attachEvents();
 render();
-
-function num(key, label, step = 1) { return { type: "number", key, label, step }; }
-function rate(key, label, options = {}) { return { type: "rate", key, label, step: 0.1, ...options }; }
-function select(key, label, options) { return { type: "select", key, label, options }; }
 
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return { activeScenario: saved?.activeScenario || "expected", baseInputs: normalizeCafeInputs(saved?.baseInputs || DEFAULT_INPUTS) };
+    if (saved?.activeSectorId && saved?.sectors) return normalizeState(saved);
   } catch {
-    return { activeScenario: "expected", baseInputs: { ...DEFAULT_INPUTS } };
+    // Bozuk yerel veri varsayılanlarla değiştirilir.
   }
+
+  const fresh = createDefaultState();
+  try {
+    const oldCafe = JSON.parse(localStorage.getItem(OLD_CAFE_KEY));
+    if (oldCafe?.baseInputs) {
+      const cafe = getSector("cafe_restaurant");
+      fresh.sectors.cafe_restaurant = {
+        activeScenario: oldCafe.activeScenario || "expected",
+        scenarioInputs: initializeScenarioInputs(cafe, oldCafe.baseInputs),
+      };
+    }
+  } catch {
+    // Eski veri yoksa sessizce devam edilir.
+  }
+  return fresh;
 }
 
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function createDefaultState() {
+  return {
+    activeSectorId: SECTORS[0].id,
+    sectors: Object.fromEntries(SECTORS.map((sector) => [sector.id, {
+      activeScenario: "expected",
+      scenarioInputs: initializeScenarioInputs(sector),
+    }])),
+  };
+}
 
-function renderStaticForm() {
-  document.querySelector("#formSections").innerHTML = fieldSections.map((section) => `
+function normalizeState(raw) {
+  const next = createDefaultState();
+  next.activeSectorId = SECTORS.some((sector) => sector.id === raw.activeSectorId)
+    ? raw.activeSectorId
+    : next.activeSectorId;
+
+  for (const sector of SECTORS) {
+    const savedSector = raw.sectors?.[sector.id];
+    if (!savedSector) continue;
+    const scenarioInputs = {};
+    for (const scenarioId of Object.keys(sector.scenarios)) {
+      const source = savedSector.scenarioInputs?.[scenarioId]
+        ?? sector.applyScenario(sector.defaultInputs, scenarioId);
+      scenarioInputs[scenarioId] = sector.normalizeInputs(source);
+    }
+    next.sectors[sector.id] = {
+      activeScenario: sector.scenarios[savedSector.activeScenario] ? savedSector.activeScenario : "expected",
+      scenarioInputs,
+    };
+  }
+  return next;
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function currentSector() {
+  return getSector(state.activeSectorId);
+}
+
+function currentSectorState() {
+  return state.sectors[state.activeSectorId];
+}
+
+function currentInputs() {
+  const sectorState = currentSectorState();
+  return sectorState.scenarioInputs[sectorState.activeScenario];
+}
+
+function renderSectorOptions() {
+  document.querySelector("#sectorSelect").innerHTML = SECTORS
+    .map((sector) => `<option value="${sector.id}">${escapeHtml(sector.name)}</option>`)
+    .join("");
+}
+
+function renderSectorShell() {
+  const sector = currentSector();
+  document.querySelector("#sectorSelect").value = sector.id;
+  document.querySelector("#pageTitle").textContent = `${sector.name} Finansal Fizibilite`;
+  document.querySelector("#pageSubtitle").textContent = sector.description;
+  document.title = `Business Income Calculator · ${sector.name}`;
+  document.querySelector("#sectorSummary").innerHTML = `
+    <p class="eyebrow">${escapeHtml(sector.family)}</p>
+    <strong>${escapeHtml(sector.name)}</strong>
+    <span>${escapeHtml(sector.version)} · ${sector.status === "simulation" ? "Simülasyon modu" : escapeHtml(sector.status)}</span>
+  `;
+  renderScenarioButtons();
+  renderForm();
+}
+
+function renderScenarioButtons() {
+  const sector = currentSector();
+  const sectorState = currentSectorState();
+  document.querySelector("#scenarioSwitcher").innerHTML = Object.entries(sector.scenarios).map(([id, preset]) =>
+    `<button type="button" class="scenario-button ${sectorState.activeScenario === id ? "active" : ""}" data-scenario="${id}">${escapeHtml(preset.label)}</button>`,
+  ).join("");
+}
+
+function renderForm() {
+  const sector = currentSector();
+  document.querySelector("#formSections").innerHTML = sector.formSections.map((section) => `
     <details class="form-section" ${section.open ? "open" : ""}>
-      <summary>${section.title}</summary>
+      <summary>${escapeHtml(section.title)}</summary>
+      ${section.note ? `<p class="section-note">${escapeHtml(section.note)}</p>` : ""}
       <div class="form-fields">${section.fields.map(renderField).join("")}</div>
-    </details>`).join("");
+    </details>
+  `).join("");
 }
 
 function renderField(field) {
   if (field.type === "select") {
-    return `<div class="field"><label for="${field.key}">${field.label}</label><select id="${field.key}" data-key="${field.key}">${field.options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></div>`;
+    return `<div class="field ${field.full ? "full" : ""}">
+      <label for="${field.key}">${escapeHtml(field.label)}</label>
+      <select id="${field.key}" data-key="${field.key}">
+        ${field.options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}
+      </select>
+      ${field.hint ? `<span class="field-hint">${escapeHtml(field.hint)}</span>` : ""}
+    </div>`;
   }
-  const isRate = field.type === "rate";
-  return `<div class="field"><label for="${field.key}">${field.label}</label><input id="${field.key}" data-key="${field.key}" data-rate="${isRate}" data-negative="${Boolean(field.allowNegative)}" type="number" step="${field.step}" />${isRate ? '<span class="field-hint">Yüzde olarak girin (ör. 25 = %25)</span>' : ""}</div>`;
-}
 
-function renderScenarioButtons() {
-  document.querySelector("#scenarioSwitcher").innerHTML = Object.entries(SCENARIO_PRESETS).map(([id, preset]) => `<button type="button" class="scenario-button ${state.activeScenario === id ? "active" : ""}" data-scenario="${id}">${preset.label}</button>`).join("");
+  const isRate = field.type === "rate";
+  const hint = field.hint ?? (isRate ? "Yüzde olarak girin (ör. 25 = %25)" : "");
+  return `<div class="field ${field.full ? "full" : ""}">
+    <label for="${field.key}">${escapeHtml(field.label)}</label>
+    <input id="${field.key}" data-key="${field.key}" data-rate="${isRate}" data-negative="${Boolean(field.allowNegative)}" type="number" step="${field.step ?? 1}" />
+    ${hint ? `<span class="field-hint">${escapeHtml(hint)}</span>` : ""}
+  </div>`;
 }
 
 function attachEvents() {
+  document.querySelector("#sectorSelect").addEventListener("change", (event) => {
+    state.activeSectorId = event.target.value;
+    saveState();
+    renderSectorShell();
+    render();
+  });
+
   document.querySelector("#formSections").addEventListener("input", (event) => {
     const target = event.target;
     const key = target.dataset.key;
     if (!key) return;
+
     let value = target.value;
     if (target.tagName !== "SELECT") {
       value = Number(value);
       if (target.dataset.rate === "true") value /= 100;
       if (target.dataset.negative !== "true") value = Math.max(0, value || 0);
     }
-    const activeInputs = getActiveInputs();
-    activeInputs[key] = value;
-    state.baseInputs = normalizeCafeInputs(activeInputs);
-    state.activeScenario = "expected";
+
+    const sector = currentSector();
+    const sectorState = currentSectorState();
+    const scenarioId = sectorState.activeScenario;
+    sectorState.scenarioInputs[scenarioId] = sector.normalizeInputs({
+      ...sectorState.scenarioInputs[scenarioId],
+      [key]: value,
+    });
     saveState();
-    renderScenarioButtons();
     render();
   });
+
   document.querySelector("#scenarioSwitcher").addEventListener("click", (event) => {
     const scenarioId = event.target.dataset.scenario;
-    if (!scenarioId) return;
-    state.activeScenario = scenarioId;
+    if (!scenarioId || !currentSector().scenarios[scenarioId]) return;
+    currentSectorState().activeScenario = scenarioId;
     saveState();
     renderScenarioButtons();
     render();
   });
-  document.querySelector("#resetButton").addEventListener("click", () => {
-    state = { activeScenario: "expected", baseInputs: { ...DEFAULT_INPUTS } };
-    saveState();
-    renderScenarioButtons();
-    render();
-  });
-}
 
-function getActiveInputs() { return applyScenario(state.baseInputs, state.activeScenario); }
+  document.querySelector("#resetButton").addEventListener("click", () => {
+    const sector = currentSector();
+    state.sectors[sector.id] = {
+      activeScenario: "expected",
+      scenarioInputs: initializeScenarioInputs(sector),
+    };
+    saveState();
+    renderSectorShell();
+    render();
+  });
+
+  document.querySelector("#exportCsvButton").addEventListener("click", exportCsv);
+  document.querySelector("#printButton").addEventListener("click", () => window.print());
+}
 
 function syncInputs(inputs) {
   document.querySelectorAll("[data-key]").forEach((element) => {
     const key = element.dataset.key;
+    if (!(key in inputs)) return;
     if (element.tagName === "SELECT") element.value = inputs[key];
     else element.value = element.dataset.rate === "true" ? round(inputs[key] * 100, 2) : round(inputs[key], 2);
   });
 }
 
 function render() {
-  const inputs = getActiveInputs();
-  const result = calculateCafeModel(inputs);
+  const sector = currentSector();
+  const sectorState = currentSectorState();
+  const inputs = currentInputs();
+  const result = sector.calculateModel(inputs);
+  const presentation = sector.buildPresentation(result);
+  const scenarios = sector.calculateScenarioComparison(sectorState.scenarioInputs);
   syncInputs(inputs);
   renderWarnings(result.warnings);
-  renderKPIs(result);
-  renderKeySplit(result);
-  renderWaterfall(result);
-  renderScenarioTable(calculateScenarioComparison(state.baseInputs));
+  renderKPIs(presentation.kpis);
+  renderKeySplit(presentation.keySplit);
+  renderWaterfall(result.waterfall);
+  renderScenarioTable(sector, scenarios);
   renderCashFlow(result.cashFlow.rows);
-  renderBreakdown(result);
+  renderBreakdown(presentation.breakdown);
+  lastRendered = { sector, inputs, result, presentation, scenarios };
 }
 
 function renderWarnings(warnings) {
-  document.querySelector("#warnings").innerHTML = warnings.map((item) => `<div class="warning ${item.severity}">${item.message}</div>`).join("");
+  document.querySelector("#warnings").innerHTML = warnings
+    .map((item) => `<div class="warning ${item.severity}">${escapeHtml(item.message)}</div>`)
+    .join("");
 }
 
-function renderKPIs(result) {
-  const cards = [
-    ["Aylık net kâr", money(result.netProfit), `${percent.format(result.profitMargin)} net kâr marjı`, result.netProfit < 0],
-    ["Aylık brüt katkı", money(result.contribution), `${percent.format(result.contribution / Math.max(1, result.netSalesBeforeLoss))} net satış`, false],
-    ["Günlük başabaş", result.breakevenDailyCustomers == null ? "Bulunamadı" : `${number.format(result.breakevenDailyCustomers)} müşteri`, `Kapasite: ${number.format(result.input.serviceCapacity)}`, false],
-    ["Başabaş ciro", result.breakevenRevenue == null ? "—" : money(result.breakevenRevenue), "Aylık brüt ciro", false],
-    ["12 ay sonu nakit", money(result.cashFlow.endingCash), `Minimum: ${money(result.cashFlow.minimumCash)}`, result.cashFlow.endingCash < 0],
-    ["Kurulum maliyeti", money(result.totalSetupCost), result.paybackMonths ? `${number.format(result.paybackMonths)} ay tahmini geri dönüş` : "Geri dönüş oluşmuyor", false],
-    ["Kira / ciro", percent.format(result.rentToRevenue), "Net satış tabanına göre", result.rentToRevenue > .20],
-    ["Malzeme + fire", percent.format(result.foodCostRate), "Düzeltilmiş net satışa göre", result.foodCostRate > .40],
-  ];
-  document.querySelector("#kpiGrid").innerHTML = cards.map(([label, value, note, negative]) => `<article class="kpi-card ${negative ? "negative" : ""}"><div class="label">${label}</div><div class="value">${value}</div><div class="note">${note}</div></article>`).join("");
+function renderKPIs(cards) {
+  document.querySelector("#kpiGrid").innerHTML = cards.map((card) => `
+    <article class="kpi-card ${card.negative ? "negative" : ""}">
+      <div class="label">${escapeHtml(card.label)}</div>
+      <div class="value">${formatValue(card.value, card.format, card)}</div>
+      <div class="note">${escapeHtml(card.note ?? "")}</div>
+    </article>
+  `).join("");
 }
 
-function renderKeySplit(r) {
-  const rows = [["Brüt müşteri harcaması", r.customerPayment], ["KDV ayrımı sonrası net satış", r.netSalesBeforeLoss], ["Platform ve POS sonrası tahsilat tabanı", r.revenueAfterCommission], ["Malzeme / fire sonrası katkı", r.contribution], ["Franchise / ortak payı", r.totalStakeholderPayouts], ["Vergi öncesi işletme kârı", r.preTaxProfit], ["Aylık net kâr", r.netProfit]];
-  document.querySelector("#keySplit").innerHTML = rows.map(([label, value]) => `<div class="split-row"><span>${label}</span><span>${money(value)}</span></div>`).join("");
+function renderKeySplit(rows) {
+  document.querySelector("#keySplit").innerHTML = rows
+    .map((row) => `<div class="split-row"><span>${escapeHtml(row.label)}</span><span>${formatValue(row.value, row.format ?? "money", row)}</span></div>`)
+    .join("");
 }
 
-function renderWaterfall(r) {
-  const max = Math.max(...r.waterfall.map((item) => Math.abs(item.amount)), 1);
-  document.querySelector("#waterfall").innerHTML = r.waterfall.map((item) => `<div class="waterfall-row"><div class="waterfall-label"><strong>${item.name}</strong><small>${item.subtext}</small></div><div class="bar-track"><div class="bar ${item.kind}" style="width:${Math.max(1, Math.abs(item.amount) / max * 100)}%"></div></div><div class="waterfall-value">${money(item.amount)}</div></div>`).join("");
+function renderWaterfall(rows) {
+  const max = Math.max(...rows.map((item) => Math.abs(item.amount)), 1);
+  document.querySelector("#waterfall").innerHTML = rows.map((item) => `
+    <div class="waterfall-row">
+      <div class="waterfall-label"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.subtext ?? "")}</small></div>
+      <div class="bar-track"><div class="bar ${item.kind}" style="width:${Math.max(1, Math.abs(item.amount) / max * 100)}%"></div></div>
+      <div class="waterfall-value">${formatValue(item.amount, "money")}</div>
+    </div>
+  `).join("");
 }
 
-function renderScenarioTable(scenarios) {
-  const rows = [["Brüt ciro", (r) => money(r.grossRevenue)], ["Net tahsilat", (r) => money(r.revenueAfterCommission)], ["Toplam gider", (r) => money(r.totalVariableCosts + r.totalFixedCosts + r.totalStakeholderPayouts + r.estimatedTax)], ["Vergi öncesi kâr", (r) => money(r.preTaxProfit)], ["Net kâr", (r) => money(r.netProfit)], ["Günlük başabaş", (r) => r.breakevenDailyCustomers == null ? "—" : number.format(r.breakevenDailyCustomers)], ["12 ay sonu nakit", (r) => money(r.cashFlow.endingCash)], ["Yıllık ROI", (r) => r.roi == null ? "—" : percent.format(r.roi)]];
-  document.querySelector("#scenarioTable").innerHTML = `<thead><tr><th>Gösterge</th>${scenarios.map((s) => `<th>${s.label}</th>`).join("")}</tr></thead><tbody>${rows.map(([label, get]) => `<tr><td>${label}</td>${scenarios.map((s) => `<td>${get(s.result)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+function renderScenarioTable(sector, scenarios) {
+  const presentations = scenarios.map((scenario) => ({
+    ...scenario,
+    metrics: sector.buildPresentation(scenario.result).scenarioMetrics,
+  }));
+  const template = presentations[0]?.metrics ?? [];
+  document.querySelector("#scenarioTable").innerHTML = `
+    <thead><tr><th>Gösterge</th>${presentations.map((item) => `<th>${escapeHtml(item.label)}</th>`).join("")}</tr></thead>
+    <tbody>${template.map((metric) => `
+      <tr><td>${escapeHtml(metric.label)}</td>${presentations.map((item) => {
+        const value = item.metrics.find((candidate) => candidate.id === metric.id) ?? metric;
+        return `<td>${formatValue(value.value, value.format, value)}</td>`;
+      }).join("")}</tr>
+    `).join("")}</tbody>
+  `;
 }
 
 function renderCashFlow(rows) {
-  document.querySelector("#cashFlowTable").innerHTML = `<thead><tr><th>Ay</th><th>Tahsilat</th><th>Değişken</th><th>Sabit</th><th>Paydaş</th><th>Vergi</th><th>Kredi</th><th>Dönem sonu</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r.month}</td><td>${money(r.collections)}</td><td>${money(r.variableCosts)}</td><td>${money(r.fixedCosts)}</td><td>${money(r.stakeholderPayouts)}</td><td>${money(r.estimatedTax)}</td><td>${money(r.loanPayment)}</td><td>${money(r.cashEnd)}</td></tr>`).join("")}</tbody>`;
+  document.querySelector("#cashFlowTable").innerHTML = `
+    <thead><tr><th>Ay</th><th>Tahsilat</th><th>Finansman</th><th>Destek</th><th>Kurulum</th><th>Değişken ödeme</th><th>Sabit</th><th>Paydaş</th><th>Vergi</th><th>Kredi</th><th>Dönem sonu</th></tr></thead>
+    <tbody>${rows.map((row) => `<tr>
+      <td>${row.month}</td><td>${formatValue(row.collections, "money")}</td><td>${formatValue(row.financing, "money")}</td>
+      <td>${formatValue(row.support, "money")}</td><td>${formatValue(row.setupCosts, "money")}</td><td>${formatValue(row.variableCostsPaid, "money")}</td>
+      <td>${formatValue(row.fixedCosts, "money")}</td><td>${formatValue(row.stakeholderPayouts, "money")}</td><td>${formatValue(row.estimatedTax, "money")}</td>
+      <td>${formatValue(row.loanPayment, "money")}</td><td>${formatValue(row.cashEnd, "money")}</td>
+    </tr>`).join("")}</tbody>
+  `;
 }
 
-function renderBreakdown(r) {
-  const fixedLabels = { rent: "Kira", staffCost: "Personel", utilities: "Faturalar", accounting: "Muhasebe", software: "Yazılım", cleaning: "Temizlik", maintenance: "Bakım", insurance: "Sigorta", otherFixedExpenses: "Diğer sabit gider" };
-  const groups = [
-    ["A · Gelir tarafı", [["Brüt ciro", r.grossRevenue], ["Müşteri ödemesi", r.customerPayment], ["KDV hariç satış", r.netSalesBeforeLoss], ["İptal / kayıp", -r.lostSalesAmount]]],
-    ["B · Vergi / kesinti / komisyon", [["KDV ayrımı", -r.taxAmount], ["Paket servis komisyonu", -r.deliveryCommission], ["POS komisyonu", -r.posCommission], ["Komisyon sonrası gelir", r.revenueAfterCommission]]],
-    ["C · Değişken maliyet", [["Malzeme", -r.materialCost], ["Fire", -r.wasteCost], ["Paketleme", -r.packagingCost], ["Diğer değişken", -r.otherVariableCost], ["Katkı", r.contribution]]],
-    ["D · Sabit gider", [...Object.entries(r.fixedCostItems).map(([key, value]) => [fixedLabels[key] || key, -value]), ["Toplam sabit gider", -r.totalFixedCosts]]],
-    ["E · Paydaş / franchise", [["Franchise payı", -r.franchiseRoyalty], ["Ortak kâr payı", -r.partnerPayout], ["Toplam paydaş", -r.totalStakeholderPayouts]]],
-    ["F · Kâr-zarar", [["Vergi öncesi kâr", r.preTaxProfit], ["Vergi ön tahmini", -r.estimatedTax], ["Net kâr", r.netProfit]]],
-    ["G · Nakit akışı", [["Başlangıç nakdi", r.input.startingCash], ["Finansman (P&L dışı)", r.input.financingAmount], ["Kurulum maliyeti", -r.totalSetupCost], ["İlk 3 ay minimum nakit", r.cashFlow.cashGapFirstThreeMonths], ["12 ay sonu nakit", r.cashFlow.endingCash]]],
+function renderBreakdown(groups) {
+  document.querySelector("#breakdown").innerHTML = groups.map((group) => `
+    <div class="breakdown-group">
+      <h3>${escapeHtml(group.title)}</h3>
+      ${group.rows.map((rawRow) => {
+        const [label, value, format = "money"] = rawRow;
+        return `<div class="breakdown-row"><span>${escapeHtml(label)}</span><span>${formatValue(value, format)}</span></div>`;
+      }).join("")}
+    </div>
+  `).join("");
+}
+
+function exportCsv() {
+  if (!lastRendered) return;
+  const { sector, result, presentation } = lastRendered;
+  const rows = [
+    ["Business Income Calculator", sector.name],
+    ["Senaryo", currentSector().scenarios[currentSectorState().activeScenario].label],
+    ["Oluşturma tarihi", new Date().toLocaleString("tr-TR")],
+    [],
   ];
-  document.querySelector("#breakdown").innerHTML = groups.map(([title, rows]) => `<div class="breakdown-group"><h3>${title}</h3>${rows.map(([label, value]) => `<div class="breakdown-row"><span>${label}</span><span>${money(value)}</span></div>`).join("")}</div>`).join("");
+
+  for (const group of presentation.breakdown) {
+    rows.push([group.title]);
+    for (const [label, value, format = "money"] of group.rows) {
+      rows.push([label, exportValue(value, format)]);
+    }
+    rows.push([]);
+  }
+
+  rows.push(["12 aylık nakit akışı"]);
+  rows.push(["Ay", "Tahsilat", "Finansman", "Destek", "Kurulum", "Değişken ödeme", "Sabit", "Paydaş", "Vergi", "Kredi", "Dönem sonu"]);
+  for (const row of result.cashFlow.rows) {
+    rows.push([row.month, row.collections, row.financing, row.support, row.setupCosts, row.variableCostsPaid, row.fixedCosts, row.stakeholderPayouts, row.estimatedTax, row.loanPayment, row.cashEnd]);
+  }
+
+  const csv = `﻿${rows.map((row) => row.map(csvCell).join(";")).join("\n")}`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${sector.id}-${currentSectorState().activeScenario}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
-function money(value) { return currency.format(Number(value) || 0); }
-function round(value, digits = 2) { const p = 10 ** digits; return Math.round((Number(value) + Number.EPSILON) * p) / p; }
+function exportValue(value, format) {
+  if (value == null || !Number.isFinite(Number(value))) return "";
+  if (format === "percent") return Number(value);
+  return Number(value);
+}
+
+function csvCell(value) {
+  const text = String(value ?? "").replaceAll('"', '""');
+  return `"${text}"`;
+}
+
+function formatValue(value, format = "number", options = {}) {
+  if (value == null || !Number.isFinite(Number(value))) return "—";
+  const numeric = Number(value);
+  switch (format) {
+    case "money": return currency.format(numeric);
+    case "percent": return percent.format(numeric);
+    case "numberSuffix": return `${number.format(numeric)}${escapeHtml(options.suffix ?? "")}`;
+    case "multiple": return `${number.format(numeric)}x`;
+    case "months": return `${number.format(numeric)} ay`;
+    default: return number.format(numeric);
+  }
+}
+
+function round(value, digits = 2) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return "";
+  const power = 10 ** digits;
+  return Math.round((parsed + Number.EPSILON) * power) / power;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}

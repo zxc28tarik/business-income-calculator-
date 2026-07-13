@@ -1,31 +1,44 @@
 # Business Income Calculator
 
-Sektör bazlı maliyet, ciro, net kâr, başabaş ve nakit akışı hesaplayıcıları platformunun ilk çalışan sürümü.
+Sektör bazlı maliyet, ciro, net kâr, başabaş ve nakit akışı hesaplayıcıları platformu.
 
-## v0.1 kapsamı
+## v0.2 kapsamı
 
-İlk sektör: **Kafe / Restoran / Yiyecek-İçecek**
+### Kafe / Restoran
 
 - 11 iş türü
+- Günlük müşteri × ortalama fiş × açık gün ciro modeli
+- KDV, paket servis ve POS komisyonları
+- Malzeme, fire, paketleme, sabit gider ve kurulum maliyeti
+- Franchise / ortak payı
+- Günlük başabaş müşteri ve kira/ciro KPI’ları
+
+### E-Ticaret / Pazaryeri
+
+- 10 iş türü
+- Satış adedi × ürün fiyatı ve indirim modeli
+- Pazaryeri / ödeme komisyonları
+- İade, iade kargo, kargo, paketleme ve fulfillment
+- Reklam sonrası kâr ve ROAS
+- Ürün başı net kâr, stok nakit ihtiyacı ve başabaş satış adedi
+
+### Ortak platform özellikleri
+
 - Kötümser, beklenen ve iyimser senaryolar
-- Fiyata dahil, fiyat üstü veya vergisiz hesap
-- Paket servis komisyonunun yalnız paket servis payına uygulanması
-- POS komisyonu
-- Malzeme, fire, paketleme ve diğer değişken maliyetler
-- Sabit giderler
-- Kurulum maliyeti
-- Franchise ve ortak payı
-- Vergi ön tahmini
-- Aylık net kâr, başabaş ve ROI
-- 12 aylık nakit akışı
+- Her senaryo için bağımsız kaydedilen girdiler
 - Kural tabanlı uyarılar
-- Şelale, senaryo tablosu ve ayrıntılı döküm
+- KPI kartları ve “kim ne alıyor?” paneli
+- Şelale ve ayrıntılı döküm
+- 12 aylık nakit akışı
+- Finansman, hibe/destek ve operasyonel gelir ayrımı
+- Tahsilat ve tedarikçi ödeme vadesi
+- CSV/Excel uyumlu dışa aktarım
+- Tarayıcı yazdırma ile PDF çıktısı
+- Sektör tanımı şeması ve registry sistemi
 
 ## Çalıştırma
 
-Bu sürüm bağımlılıksız statik web uygulamasıdır. `index.html` dosyasını bir statik sunucuyla açın.
-
-Örnek:
+Bu sürüm bağımlılıksız statik web uygulamasıdır:
 
 ```bash
 python -m http.server 8080
@@ -42,17 +55,28 @@ npm test
 npm run check
 ```
 
+## Mimari
+
+- `src/core/finance-engine.js`: Ortak vergi, komisyon, paydaş, başabaş, nakit ve şelale motoru.
+- `src/core/sector-schema.js`: Sektör tanımı doğrulama ve form alanı yardımcıları.
+- `src/sectors/registry.js`: Aktif sektör listesi.
+- `src/sectors/cafe-restaurant.js`: Kafe/restoran modeli.
+- `src/sectors/ecommerce.js`: E-ticaret/pazaryeri modeli.
+- `src/app.js`: Sektörden bağımsız form ve sonuç arayüzü.
+
 ## Finansal model ilkeleri
 
 - Yatırım ve finansman P&L geliri sayılmaz; yalnız nakit akışını etkiler.
+- Hibe/destek nakit akışında ayrı gösterilir; vergi etkisi otomatik varsayılmaz.
 - Net kâr ve nakit akışı ayrı hesaplanır.
-- KDV türü düzenlenebilir.
+- KDV türü ve örnek vergi oranları düzenlenebilir.
 - Vergi yalnız pozitif vergi öncesi kâr üzerinden ön tahmin olarak hesaplanır.
-- Kurulum maliyeti ilk ay nakitten bir kez düşer.
+- Kurulum maliyeti seçilen ayda nakitten bir kez düşer.
+- İlk stok yatırımı nakit kalemidir; satılan ürün maliyeti P&L’de ayrıca hesaplanır.
 - Ürün içinde AI yorumlayıcı veya sohbet botu yoktur.
 
 ## Uyarı
 
-Bu araç ön fizibilite ve işletme içi tahmin içindir. Mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Oranlar örnektir ve kullanıcı tarafından mali müşavirle teyit edilmelidir.
+Bu araç ön fizibilite ve işletme içi tahmin içindir. Mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe ve muhasebe uygulamaları kullanıcı tarafından mali müşavirle teyit edilmelidir.
 
 Copyright © 2026 Mustafa Tarık Küçük. All rights reserved. Bu depoda açık kaynak lisansı verilmemiştir.
