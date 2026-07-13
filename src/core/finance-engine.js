@@ -88,9 +88,11 @@ export function buildWaterfall(result, overrides = {}) {
     ...overrides.labels,
   };
 
+  const waterfallTaxAmount = result.input?.taxType === "included" ? result.taxAmount : 0;
+
   return [
     { name: labels.gross, amount: result.grossRevenue, kind: "keep", subtext: overrides.grossSubtext ?? "Müşteri harcaması" },
-    { name: labels.tax, amount: -result.taxAmount, kind: "cut", subtext: result.taxTypeLabel },
+    { name: labels.tax, amount: -waterfallTaxAmount, kind: "cut", subtext: result.taxTypeLabel },
     { name: labels.loss, amount: -result.lostSalesAmount, kind: "cut", subtext: overrides.lossSubtext ?? "Gerçekleşmeyen satış" },
     { name: labels.commission, amount: -result.totalCommissions, kind: "cut", subtext: overrides.commissionSubtext ?? "Platform ve ödeme" },
     { name: labels.variable, amount: -result.totalVariableCosts, kind: "cut", subtext: overrides.variableSubtext ?? "Satışa bağlı maliyetler" },
@@ -141,7 +143,7 @@ export function calculateCashFlow({
 
     const currentVariableCosts = nonNegative(result.cashVariableCosts ?? result.totalVariableCosts);
     const variableCostsPaid = currentVariableCosts * (1 - supplierDelayRatio) + previousVariableCosts * supplierDelayRatio;
-    const fixedCostsPaid = nonNegative(result.totalFixedCosts);
+    const fixedCostsPaid = nonNegative(result.cashFixedCosts ?? result.totalFixedCosts);
     const estimatedTaxPaid = nonNegative(result.estimatedTax);
     const stakeholderPayouts = nonNegative(result.totalStakeholderPayouts);
     const monthlyLoanPayment = nonNegative(loanPayment);

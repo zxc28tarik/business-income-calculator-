@@ -5,26 +5,28 @@
 - `src/core/finance-engine.js`: Sektörden bağımsız vergi ayrımı, komisyon, paydaş tabanı, başabaş, nakit akışı ve şelale yardımcıları.
 - `src/core/sector-schema.js`: Her sektörün kimlik, form ve fonksiyon sözleşmesini doğrular.
 - `src/sectors/registry.js`: Uygulamada kullanılabilen sektörleri tek listede toplar.
-- `src/sectors/cafe-restaurant.js`: Yiyecek-içecek sektörünün veri varsayımları ve hesap zinciri.
-- `src/sectors/ecommerce.js`: E-ticaret/pazaryeri sektörünün veri varsayımları ve hesap zinciri.
+- `src/sectors/cafe-*.js`: Yiyecek-içecek sektörünün yapılandırma, hesap ve sunum katmanları.
+- `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri sektörünün yapılandırma, hesap ve sunum katmanları.
+- `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım sektörünün yapılandırma, hesap ve sunum katmanları.
 - `src/app.js`: Sektörden bağımsız form, senaryo durumu, localStorage, CSV/PDF ve sonuç panellerinin render katmanı.
-- `tests/`: Ortak finans, şema ve sektör özel kabul testleri.
+- `tests/`: Ortak finans, şema, uygulama açılışı ve sektör özel kabul testleri.
 
 ## Ortak hesap zinciri
 
 ```text
-Brüt müşteri harcaması
-- KDV ayrımı
-- iade / kayıp
+Brüt müşteri harcaması / planlanan hizmet değeri
+- fiyata dahil KDV ayrımı
+- iade / kayıp / no-show
 - platform ve ödeme komisyonları
 = komisyon sonrası net gelir
 
 Komisyon sonrası net gelir
-- satışa bağlı değişken maliyetler
+- satışa veya hizmete bağlı değişken maliyetler
 = katkı
 
 Katkı
 - reklam ve sabit giderler
+- nakit dışı amortisman
 - paydaş / ortak payı
 = vergi öncesi kâr
 
@@ -34,6 +36,15 @@ Vergi öncesi kâr
 ```
 
 Finansman ve hibe/destek bu P&L zincirine girmez; nakit akışında ayrı giriş olarak gösterilir.
+
+## Nakit ve P&L sabit gider ayrımı
+
+Sektör sonucu iki farklı sabit gider toplamı sağlayabilir:
+
+- `totalFixedCosts`: P&L’de görünen sabit giderler ve amortisman.
+- `cashFixedCosts`: İlgili ayda gerçekten nakitten çıkan sabit giderler.
+
+`calculateCashFlow()` varsa `cashFixedCosts` değerini kullanır; yoksa geriye uyumluluk için `totalFixedCosts` değerine döner. Böylece cihaz yatırımı kurulumda nakitten bir kez düşerken aylık amortisman kâr-zarar tablosunda kalır ve nakitten tekrar düşülmez.
 
 ## Sektör sözleşmesi
 
@@ -65,11 +76,13 @@ Kötümser, beklenen ve iyimser senaryolar ilk açılışta sektör presetlerind
 - Tedarikçi vadesi bir aya kadar değişken maliyet ödemesini kaydırır.
 - Finansman ve destek ilk ay ayrı nakit girişi olarak gösterilir.
 - Kredi/taksit P&L geliri veya gideri olarak değil, nakit çıkışı olarak tutulur.
+- Amortisman ve benzeri nakit dışı giderler nakit akışından ikinci kez düşülmez.
 
 ## Sonraki sektör ekleme yöntemi
 
-1. `src/sectors/` altında yeni sektör dosyası oluşturulur.
+1. `src/sectors/` altında yapılandırma, hesap, sunum ve sektör giriş dosyaları oluşturulur.
 2. Sektör tanımı `assertSectorDefinition()` ile doğrulanır.
 3. `src/sectors/registry.js` listesine eklenir.
 4. Sektör özel finans testleri yazılır.
 5. Ortak kabul testleri ve tarayıcı açılış kontrolü çalıştırılır.
+6. Devir notu ve README güncellenir.

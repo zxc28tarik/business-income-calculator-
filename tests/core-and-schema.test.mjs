@@ -4,6 +4,7 @@ import { calcTaxSplit, calculateCashFlow } from "../src/core/finance-engine.js";
 import { initializeScenarioInputs, validateSectorDefinition } from "../src/core/sector-schema.js";
 import { CAFE_SECTOR, DEFAULT_INPUTS, calculateCafeModel } from "../src/sectors/cafe-restaurant.js";
 import { ECOMMERCE_SECTOR } from "../src/sectors/ecommerce.js";
+import { BEAUTY_SECTOR } from "../src/sectors/beauty.js";
 
 const almost = (actual, expected, tolerance = 0.01) => {
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} ≉ ${expected}`);
@@ -47,9 +48,10 @@ test("tedarikçi vadesi maliyeti P&L'den silmez, nakit ödemesini kaydırır", (
   assert.equal(flow.rows[1].variableCostsPaid, 100);
 });
 
-test("kafe ve e-ticaret sektör tanımları şemayı geçer", () => {
+test("kafe, e-ticaret ve güzellik sektör tanımları şemayı geçer", () => {
   assert.equal(validateSectorDefinition(CAFE_SECTOR).valid, true);
   assert.equal(validateSectorDefinition(ECOMMERCE_SECTOR).valid, true);
+  assert.equal(validateSectorDefinition(BEAUTY_SECTOR).valid, true);
 });
 
 test("sektör şeması tekrarlanan alan anahtarını reddeder", () => {
@@ -67,4 +69,22 @@ test("senaryo girdileri bağımsız nesneler olarak başlatılır", () => {
   inputs.pessimistic.dailyCustomers = 1;
   assert.notEqual(inputs.expected.dailyCustomers, 1);
   assert.notEqual(inputs.optimistic.dailyCustomers, 1);
+});
+
+
+test("nakit dışı sabit gider nakit akışından ikinci kez düşülmez", () => {
+  const flow = calculateCashFlow({
+    months: 2,
+    startingCash: 1000,
+    evaluateMonth: () => ({
+      revenueAfterCommission: 0,
+      totalVariableCosts: 0,
+      totalFixedCosts: 100,
+      cashFixedCosts: 25,
+      estimatedTax: 0,
+      totalStakeholderPayouts: 0,
+    }),
+  });
+  assert.equal(flow.rows[0].fixedCosts, 25);
+  assert.equal(flow.endingCash, 950);
 });
