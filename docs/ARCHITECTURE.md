@@ -8,13 +8,15 @@
 - `src/sectors/cafe-*.js`: Yiyecek-içecek sektörünün yapılandırma, hesap ve sunum katmanları.
 - `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri sektörünün yapılandırma, hesap ve sunum katmanları.
 - `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım sektörünün yapılandırma, hesap ve sunum katmanları.
+- `src/sectors/agency-*.js`: Ajans/freelancer/danışmanlık sektörünün yapılandırma, hesap ve sunum katmanları.
 - `src/app.js`: Sektörden bağımsız form, senaryo durumu, localStorage, CSV/PDF ve sonuç panellerinin render katmanı.
 - `tests/`: Ortak finans, şema, uygulama açılışı ve sektör özel kabul testleri.
+- `.github/workflows/test.yml`: Push ve pull requestlerde Node.js test/sözdizimi doğrulaması.
 
 ## Ortak hesap zinciri
 
 ```text
-Brüt müşteri harcaması / planlanan hizmet değeri
+Brüt müşteri harcaması / planlanan hizmet değeri / proje geliri
 - fiyata dahil KDV ayrımı
 - iade / kayıp / no-show
 - platform ve ödeme komisyonları
@@ -36,6 +38,21 @@ Vergi öncesi kâr
 ```
 
 Finansman ve hibe/destek bu P&L zincirine girmez; nakit akışında ayrı giriş olarak gösterilir.
+
+## Hizmet kapasitesi modeli
+
+Ajans/freelancer sektörü iki kapasite ölçüsünü ayırır:
+
+- `theoreticalCapacityHours`: ekip kişi sayısı × kişi başı aylık çalışma saati.
+- `targetBillableCapacityHours`: teorik kapasite × hedef faturalandırılabilir kapasite oranı.
+
+Proje ve revizyon saatleri toplamı gerçek iş yüküdür. Bu yükün teorik kapasiteyi aşması teslim riski, hedef faturalandırılabilir kapasiteyi aşması ise planlama uyarısı üretir.
+
+Saatlik ekip maliyeti üretim saatlerine uygulanır. İdari/satış personeli, ofis, yazılım ve pazarlama sabit giderlerde tutulur; böylece aynı personel maliyeti iki kez sayılmaz.
+
+## Tahsilat vadesi
+
+Tahsilat gecikmesi P&L gelirini veya net kârı değiştirmez. `calculateCashFlow()` tahsilatı sonraki aya kaydırarak işletme sermayesi etkisini gösterir. Prototip motoru vade etkisini en fazla bir aylık kaydırma olarak modeller.
 
 ## Nakit ve P&L sabit gider ayrımı
 
@@ -86,3 +103,4 @@ Kötümser, beklenen ve iyimser senaryolar ilk açılışta sektör presetlerind
 4. Sektör özel finans testleri yazılır.
 5. Ortak kabul testleri ve tarayıcı açılış kontrolü çalıştırılır.
 6. Devir notu ve README güncellenir.
+7. GitHub Actions sonucu doğrulanır.
