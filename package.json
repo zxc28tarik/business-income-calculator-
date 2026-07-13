@@ -1,11 +1,11 @@
 {
   "name": "business-income-calculator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/core/finance-engine.js && node --check src/core/sector-schema.js && node --check src/sectors/cafe-config.js && node --check src/sectors/cafe-core.js && node --check src/sectors/cafe-presentation.js && node --check src/sectors/cafe-restaurant.js && node --check src/sectors/ecommerce-config.js && node --check src/sectors/ecommerce-core.js && node --check src/sectors/ecommerce-presentation.js && node --check src/sectors/ecommerce.js && node --check src/sectors/beauty-config.js && node --check src/sectors/beauty-core.js && node --check src/sectors/beauty-presentation.js && node --check src/sectors/beauty.js && node --check src/sectors/registry.js && node --check src/app.js"
+    "check": "node --check src/core/finance-engine.js && node --check src/core/sector-schema.js && node --check src/sectors/cafe-config.js && node --check src/sectors/cafe-core.js && node --check src/sectors/cafe-presentation.js && node --check src/sectors/cafe-restaurant.js && node --check src/sectors/ecommerce-config.js && node --check src/sectors/ecommerce-core.js && node --check src/sectors/ecommerce-presentation.js && node --check src/sectors/ecommerce.js && node --check src/sectors/beauty-config.js && node --check src/sectors/beauty-core.js && node --check src/sectors/beauty-presentation.js && node --check src/sectors/beauty.js && node --check src/sectors/agency-config.js && node --check src/sectors/agency-core.js && node --check src/sectors/agency-presentation.js && node --check src/sectors/agency.js && node --check src/sectors/registry.js && node --check src/app.js"
   },
   "engines": {
     "node": ">=20"
