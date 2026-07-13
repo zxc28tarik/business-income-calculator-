@@ -1,26 +1,17 @@
 name: Test and syntax check
-
 on:
   push:
-    branches:
-      - main
-      - agent/**
   pull_request:
-
-permissions:
-  contents: read
-
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Run tests
         run: npm test
       - name: Check JavaScript syntax

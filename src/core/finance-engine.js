@@ -108,6 +108,7 @@ export function buildWaterfall(result, overrides = {}) {
  *
  * Finansman ve destek nakit girişidir; evaluateMonth tarafından hesaplanan P&L sonucuna eklenmez.
  * Tahsilat ve tedarikçi vadesi prototipte en fazla bir aylık kaydırma olarak modellenir.
+ * evaluateMonth(growthMultiplier, month) çağrısı sektörlerin dönem bazlı abone/stok planı üretmesine izin verir.
  */
 export function calculateCashFlow({
   months = 12,
@@ -137,7 +138,7 @@ export function calculateCashFlow({
 
   for (let month = 1; month <= monthCount; month += 1) {
     const growthMultiplier = Math.pow(1 + growthRate, month - 1) * (month === 1 ? firstMonthMultiplier : 1);
-    const result = evaluateMonth(growthMultiplier);
+    const result = evaluateMonth(growthMultiplier, month);
     const currentCollectible = nonNegative(result.revenueAfterCommission);
     const collections = currentCollectible * (1 - collectionDelayRatio) + previousCollectible * collectionDelayRatio;
 

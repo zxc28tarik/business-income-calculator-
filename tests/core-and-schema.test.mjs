@@ -5,6 +5,8 @@ import { initializeScenarioInputs, validateSectorDefinition } from "../src/core/
 import { CAFE_SECTOR, DEFAULT_INPUTS, calculateCafeModel } from "../src/sectors/cafe-restaurant.js";
 import { ECOMMERCE_SECTOR } from "../src/sectors/ecommerce.js";
 import { BEAUTY_SECTOR } from "../src/sectors/beauty.js";
+import { AGENCY_SECTOR } from "../src/sectors/agency.js";
+import { SAAS_SECTOR } from "../src/sectors/saas.js";
 
 const almost = (actual, expected, tolerance = 0.01) => {
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} ≉ ${expected}`);
@@ -48,10 +50,12 @@ test("tedarikçi vadesi maliyeti P&L'den silmez, nakit ödemesini kaydırır", (
   assert.equal(flow.rows[1].variableCostsPaid, 100);
 });
 
-test("kafe, e-ticaret ve güzellik sektör tanımları şemayı geçer", () => {
+test("beş aktif sektör tanımı şemayı geçer", () => {
   assert.equal(validateSectorDefinition(CAFE_SECTOR).valid, true);
   assert.equal(validateSectorDefinition(ECOMMERCE_SECTOR).valid, true);
   assert.equal(validateSectorDefinition(BEAUTY_SECTOR).valid, true);
+  assert.equal(validateSectorDefinition(AGENCY_SECTOR).valid, true);
+  assert.equal(validateSectorDefinition(SAAS_SECTOR).valid, true);
 });
 
 test("sektör şeması tekrarlanan alan anahtarını reddeder", () => {

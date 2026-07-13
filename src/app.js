@@ -282,10 +282,11 @@ function renderScenarioTable(sector, scenarios) {
 }
 
 function renderCashFlow(rows) {
+  const hasSubscriberData = rows.some((row) => Number.isFinite(Number(row.endingSubscribers)));
   document.querySelector("#cashFlowTable").innerHTML = `
-    <thead><tr><th>Ay</th><th>Tahsilat</th><th>Finansman</th><th>Destek</th><th>Kurulum</th><th>Değişken ödeme</th><th>Sabit</th><th>Paydaş</th><th>Vergi</th><th>Kredi</th><th>Dönem sonu</th></tr></thead>
+    <thead><tr><th>Ay</th>${hasSubscriberData ? "<th>Aktif abone</th>" : ""}<th>Tahsilat</th><th>Finansman</th><th>Destek</th><th>Kurulum</th><th>Değişken ödeme</th><th>Sabit</th><th>Paydaş</th><th>Vergi</th><th>Kredi</th><th>Dönem sonu</th></tr></thead>
     <tbody>${rows.map((row) => `<tr>
-      <td>${row.month}</td><td>${formatValue(row.collections, "money")}</td><td>${formatValue(row.financing, "money")}</td>
+      <td>${row.month}</td>${hasSubscriberData ? `<td>${formatValue(row.endingSubscribers, "number")}</td>` : ""}<td>${formatValue(row.collections, "money")}</td><td>${formatValue(row.financing, "money")}</td>
       <td>${formatValue(row.support, "money")}</td><td>${formatValue(row.setupCosts, "money")}</td><td>${formatValue(row.variableCostsPaid, "money")}</td>
       <td>${formatValue(row.fixedCosts, "money")}</td><td>${formatValue(row.stakeholderPayouts, "money")}</td><td>${formatValue(row.estimatedTax, "money")}</td>
       <td>${formatValue(row.loanPayment, "money")}</td><td>${formatValue(row.cashEnd, "money")}</td>
@@ -324,12 +325,13 @@ function exportCsv() {
   }
 
   rows.push(["12 aylık nakit akışı"]);
-  rows.push(["Ay", "Tahsilat", "Finansman", "Destek", "Kurulum", "Değişken ödeme", "Sabit", "Paydaş", "Vergi", "Kredi", "Dönem sonu"]);
+  const hasSubscriberData = result.cashFlow.rows.some((row) => Number.isFinite(Number(row.endingSubscribers)));
+  rows.push(["Ay", ...(hasSubscriberData ? ["Aktif abone"] : []), "Tahsilat", "Finansman", "Destek", "Kurulum", "Değişken ödeme", "Sabit", "Paydaş", "Vergi", "Kredi", "Dönem sonu"]);
   for (const row of result.cashFlow.rows) {
-    rows.push([row.month, row.collections, row.financing, row.support, row.setupCosts, row.variableCostsPaid, row.fixedCosts, row.stakeholderPayouts, row.estimatedTax, row.loanPayment, row.cashEnd]);
+    rows.push([row.month, ...(hasSubscriberData ? [row.endingSubscribers] : []), row.collections, row.financing, row.support, row.setupCosts, row.variableCostsPaid, row.fixedCosts, row.stakeholderPayouts, row.estimatedTax, row.loanPayment, row.cashEnd]);
   }
 
-  const csv = `﻿${rows.map((row) => row.map(csvCell).join(";")).join("\n")}`;
+  const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(";")).join("\n")}`;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

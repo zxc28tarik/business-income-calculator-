@@ -9,6 +9,7 @@
 - `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri sektörünün yapılandırma, hesap ve sunum katmanları.
 - `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım sektörünün yapılandırma, hesap ve sunum katmanları.
 - `src/sectors/agency-*.js`: Ajans/freelancer/danışmanlık sektörünün yapılandırma, hesap ve sunum katmanları.
+- `src/sectors/saas-*.js`: SaaS/abonelik sektörünün abone hareketi, birim ekonomi ve sunum katmanları.
 - `src/app.js`: Sektörden bağımsız form, senaryo durumu, localStorage, CSV/PDF ve sonuç panellerinin render katmanı.
 - `tests/`: Ortak finans, şema, uygulama açılışı ve sektör özel kabul testleri.
 - `.github/workflows/test.yml`: Push ve pull requestlerde Node.js test/sözdizimi doğrulaması.
@@ -16,7 +17,7 @@
 ## Ortak hesap zinciri
 
 ```text
-Brüt müşteri harcaması / planlanan hizmet değeri / proje geliri
+Brüt müşteri harcaması / planlanan hizmet değeri / proje geliri / abonelik MRR
 - fiyata dahil KDV ayrımı
 - iade / kayıp / no-show
 - platform ve ödeme komisyonları
@@ -49,6 +50,30 @@ Ajans/freelancer sektörü iki kapasite ölçüsünü ayırır:
 Proje ve revizyon saatleri toplamı gerçek iş yüküdür. Bu yükün teorik kapasiteyi aşması teslim riski, hedef faturalandırılabilir kapasiteyi aşması ise planlama uyarısı üretir.
 
 Saatlik ekip maliyeti üretim saatlerine uygulanır. İdari/satış personeli, ofis, yazılım ve pazarlama sabit giderlerde tutulur; böylece aynı personel maliyeti iki kez sayılmaz.
+
+## SaaS abone ve birim ekonomi modeli
+
+SaaS sektörü ay başı abone tabanını dönem bazında taşır:
+
+```text
+churned_subscribers = opening_subscribers × monthly_churn_rate
+ending_subscribers = opening_subscribers − churned_subscribers + new_subscribers
+MRR = ending_subscribers × monthly_price
+ARR = MRR × 12
+```
+
+Her ayın `ending_subscribers` değeri sonraki ayın `opening_subscribers` değeridir. Ortak nakit motoru `evaluateMonth(growthMultiplier, month)` çağrısıyla ay numarasını sektöre verir; SaaS modeli böylece 12 aylık abone planını P&L ve nakit akışıyla eşleştirir.
+
+Birim ekonomi prototipi:
+
+```text
+contribution_per_subscriber = (net_MRR − server_variable − support_variable) / ending_subscribers
+LTV = contribution_per_subscriber / monthly_churn_rate
+LTV_CAC = LTV / CAC
+CAC_payback_months = CAC / contribution_per_subscriber
+```
+
+Churn sıfırsa LTV sonsuz varsayılmaz; sonuç hesaplanamaz olarak gösterilir. CAC kazanım gideri `new_subscribers × CAC` olarak aylık değişken maliyete eklenir. Sabit marka/pazarlama bütçesi ayrıca sabit giderdir.
 
 ## Tahsilat vadesi
 
