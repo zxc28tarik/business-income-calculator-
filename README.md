@@ -75,8 +75,12 @@ npm run check
 - İlk stok yatırımı nakit kalemidir; satılan ürün maliyeti P&L’de ayrıca hesaplanır.
 - Ürün içinde AI yorumlayıcı veya sohbet botu yoktur.
 
+## Lisans
+
+Bu proje **GNU Affero General Public License v3.0 (AGPL-3.0)** ile yayımlanır. Değiştirilmiş sürümü ağ üzerinden hizmet olarak sunanların, ilgili kaynak kodunu kullanıcılarına AGPL-3.0 koşullarıyla erişilebilir kılması gerekir.
+
 ## Uyarı
 
 Bu araç ön fizibilite ve işletme içi tahmin içindir. Mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe ve muhasebe uygulamaları kullanıcı tarafından mali müşavirle teyit edilmelidir.
 
-Copyright © 2026 Mustafa Tarık Küçük. All rights reserved. Bu depoda açık kaynak lisansı verilmemiştir.
+Copyright © 2026 Mustafa Tarık Küçük. Proje GNU Affero General Public License v3.0 (AGPL-3.0) ile lisanslanmıştır. Ayrıntılar için `LICENSE` dosyasına bakın.
