@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Kafe ve restoranlar için ciro, net kâr, başabaş ve 12 aylık nakit akışı hesaplayıcısı." />
+  <title>Business Income Calculator · Kafe / Restoran</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.1</p>
+      <h1>Kafe / Restoran Finansal Fizibilite</h1>
+      <p class="subtitle">Cirodan net kâra, başabaştan 12 aylık nakit akışına kadar düzenlenebilir ön fizibilite.</p>
+    </div>
+    <button id="resetButton" class="secondary-button" type="button">Varsayılanlara dön</button>
+  </header>
+
+  <main class="layout">
+    <aside class="input-panel" aria-label="Hesaplama girdileri">
+      <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
+      <div id="formSections"></div>
+    </aside>
+
+    <section class="results-panel" aria-live="polite">
+      <section>
+        <div class="section-heading">
+          <div><p class="eyebrow">RİSK KONTROLÜ</p><h2>Uyarılar</h2></div>
+        </div>
+        <div id="warnings" class="warnings"></div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <div><p class="eyebrow">ANA SONUÇLAR</p><h2>KPI özeti</h2></div>
+        </div>
+        <div id="kpiGrid" class="kpi-grid"></div>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading"><div><p class="eyebrow">DAĞILIM</p><h2>Kim ne alıyor?</h2></div></div>
+        <div id="keySplit" class="key-split"></div>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading"><div><p class="eyebrow">ŞELALE</p><h2>Brüt cirodan net kâra</h2></div></div>
+        <div id="waterfall" class="waterfall"></div>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>
+        <div class="table-scroll"><table id="scenarioTable"></table></div>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading"><div><p class="eyebrow">NAKİT</p><h2>12 aylık nakit akışı</h2></div></div>
+        <div class="table-scroll"><table id="cashFlowTable"></table></div>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-heading"><div><p class="eyebrow">DENETİM İZİ</p><h2>Ayrıntılı döküm</h2></div></div>
+        <div id="breakdown" class="breakdown"></div>
+      </section>
+
+      <p class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi oranları ve muhasebe uygulamaları kullanıcı tarafından mali müşavirle teyit edilmelidir.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
