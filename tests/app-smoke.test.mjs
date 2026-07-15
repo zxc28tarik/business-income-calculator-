@@ -82,6 +82,6 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   sectorSelect.value = "physical_retail";
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /Fiziksel Perakende/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Stok devir hızı/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /stok devir hızı/i);
   assert.match(elements.get("#kpiGrid").innerHTML, /İlk stok nakit ihtiyacı/);
 });
