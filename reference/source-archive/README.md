@@ -1,6 +1,6 @@
 # Master Kaynak Arşivi
 
-Bu klasörde Steam Yayıncı Finansal Fizibilite & Net Kâr Hesaplayıcı v2 kaynak dosyasının gzip + base64 parçaları bulunur.
+Bu klasörde Steam Yayıncı Finansal Fizibilite & Net Kâr Hesaplayıcı v2 kaynak dosyasının gzip + base64 parçaları bulunur. Büyük beşinci parça, aktarım bütünlüğü için dört küçük alt parçaya ayrılmıştır.
 
 Kaynak HTML’yi byte düzeyinde yeniden üretmek için:
 
