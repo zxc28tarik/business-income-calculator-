@@ -2,25 +2,26 @@
 
 ## Katmanlar
 
-- `src/core/finance-engine.js`: Vergi ayrımı, komisyon, paydaş tabanı, başabaş, nakit akışı ve şelale yardımcıları.
+- `src/core/finance-engine.js`: Sektörden bağımsız vergi, komisyon, paydaş, başabaş, nakit akışı ve şelale yardımcıları.
 - `src/core/sector-schema.js`: Her sektörün kimlik, form ve fonksiyon sözleşmesini doğrular.
 - `src/sectors/registry.js`: Uygulamada kullanılabilen sektörleri tek listede toplar.
-- `src/sectors/cafe-*.js`: Yiyecek-içecek yapılandırma, hesap ve sunum katmanları.
-- `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri katmanları.
-- `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım katmanları.
-- `src/sectors/agency-*.js`: Ajans/freelancer/danışmanlık katmanları.
-- `src/sectors/saas-*.js`: SaaS abone hareketi, birim ekonomi ve sunum katmanları.
-- `src/sectors/retail-*.js`: Fiziksel perakende satış, stok, mağaza gideri ve sunum katmanları.
-- `src/app.js`: Sektörden bağımsız form, senaryo, localStorage, CSV/PDF ve sonuç render katmanı.
+- `src/sectors/cafe-*.js`: Yiyecek-içecek modeli.
+- `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri modeli.
+- `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım modeli.
+- `src/sectors/agency-*.js`: Ajans/freelancer/danışmanlık modeli.
+- `src/sectors/saas-*.js`: SaaS/abonelik ve birim ekonomisi modeli.
+- `src/sectors/retail-*.js`: Fiziksel perakende, stok ve mağaza modeli.
+- `src/sectors/auto-*.js`: Oto hizmetleri, kapasite, parça geliri ve ekipman modeli.
+- `src/app.js`: Sektörden bağımsız form, senaryo, yerel kayıt, CSV/PDF ve sonuç render katmanı.
 - `tests/`: Ortak finans, şema, uygulama açılışı ve sektör özel kabul testleri.
 - `.github/workflows/test.yml`: Push ve pull requestlerde test/sözdizimi doğrulaması.
 
 ## Ortak hesap zinciri
 
 ```text
-Brüt müşteri harcaması / hizmet değeri / proje geliri / abonelik MRR / mağaza satışı
+Brüt müşteri harcaması / hizmet / proje / abonelik / mağaza / araç geliri
 - fiyata dahil KDV ayrımı
-- iade / kayıp / no-show
+- iade / kayıp / no-show (sektörde varsa)
 - platform ve ödeme komisyonları
 = komisyon sonrası net gelir
 
@@ -29,7 +30,7 @@ Komisyon sonrası net gelir
 = katkı
 
 Katkı
-- reklam ve sabit giderler
+- sabit giderler
 - nakit dışı amortisman
 - paydaş / ortak payı
 = vergi öncesi kâr
@@ -39,63 +40,39 @@ Vergi öncesi kâr
 = net kâr
 ```
 
-Finansman ve hibe/destek P&L zincirine girmez; nakit akışında ayrı giriş olarak gösterilir.
+Finansman ve hibe/destek P&L zincirine girmez; nakit akışında ayrı gösterilir.
 
-## Fiziksel perakende modeli
-
-```text
-gross_revenue = daily_customers × average_basket × open_days
-returned_revenue = gross_revenue × return_rate
-recognized_revenue = gross_revenue − returned_revenue
-retained_units = (gross_revenue / average_unit_sale_price) × (1 − return_rate)
-product_cost = retained_units × average_unit_cost
-inventory_loss_cost = gross_units × average_unit_cost × inventory_loss_rate
-```
-
-İade geliri azaltır. Satılan ürün maliyeti ve fire/kayıp ayrı kalemlerdir. İlk stok yatırımı aylık P&L gideri değildir; kurulum sırasında nakitten bir kez düşer.
-
-Stok göstergeleri:
+## Oto hizmetleri kapasite ve gelir modeli
 
 ```text
-annual_stock_turnover = monthly_product_cost × 12 / initial_stock_investment
-stock_coverage_months = initial_stock_investment / monthly_product_cost
+monthly_vehicles = daily_vehicles × open_days
+daily_capacity = service_stations × working_hours × 60 / service_duration
+service_revenue = monthly_vehicles × service_price
+parts_revenue = monthly_vehicles × parts_revenue_per_vehicle
 ```
 
-Bu prototip stok devir hızını ilk stok yatırımını yaklaşık ortalama stok seviyesi kabul ederek hesaplar. Gerçek takip modunda dönem başı ve dönem sonu stok ortalaması kullanılmalıdır.
+Parça maliyeti yalnız parça gelirine uygulanır. Sarf ve araç başı su/elektrik değişken giderdir. Sabit abonelik/fatura, personel, kira ve reklam sabit giderdir.
 
-## Hizmet kapasitesi modeli
-
-Ajans/freelancer sektöründe teorik kapasite ile hedef faturalandırılabilir kapasite ayrıdır. Proje ve revizyon saatleri gerçek iş yükünü oluşturur; üretim maliyeti yalnız üretim saatlerine uygulanır.
-
-## SaaS abone ve birim ekonomi modeli
-
-```text
-churned_subscribers = opening_subscribers × monthly_churn_rate
-ending_subscribers = opening_subscribers − churned_subscribers + new_subscribers
-MRR = ending_subscribers × monthly_price
-ARR = MRR × 12
-LTV = contribution_per_subscriber / monthly_churn_rate
-```
-
-Her ayın ay sonu abonesi sonraki ayın ay başı abonesidir. Churn sıfırsa sonsuz LTV gösterilmez.
-
-## Tahsilat ve tedarikçi vadesi
-
-Tahsilat gecikmesi P&L sonucunu değiştirmez; nakdin geliş zamanını kaydırır. Tedarikçi vadesi değişken maliyet ödemesini kaydırır. Prototip iki etkiyi de en fazla bir aylık kaydırma olarak modeller.
+Ekipman yatırımı kurulum sırasında nakitten bir kez düşer. Aylık amortisman `totalFixedCosts` içinde P&L gideridir; `cashFixedCosts` içine alınmaz. Bu nedenle nakit akışında ikinci kez düşmez.
 
 ## Nakit ve P&L ayrımı
 
-- `totalFixedCosts`: P&L’de görünen sabit giderler ve varsa amortisman.
-- `cashFixedCosts`: O ay gerçekten nakitten çıkan sabit giderler.
-- Kurulum ve ilk stok seçilen ayda bir kez düşer.
-- Kredi/taksit P&L’den ayrı nakit çıkışıdır.
-- Finansman ve destek ilk ay ayrı nakit girişidir.
+- `totalFixedCosts`: P&L sabit giderleri ve amortisman.
+- `cashFixedCosts`: Gerçek aylık sabit nakit çıkışları.
+- `cashVariableCosts`: Tedarikçi vadesine tabi değişken nakit çıkışları.
+- Kurulum, stok ve ekipman yatırımı seçilen ayda tek seferlik nakit çıkışıdır.
+- Tahsilat ve tedarikçi vadeleri P&L sonucunu değiştirmez.
 
 ## Sektör sözleşmesi
 
-Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri ve şu fonksiyonları sağlar:
+Her sektör şu parçaları sağlar:
 
 ```text
+kimlik ve durum
+iş türleri
+varsayılan girdiler
+senaryo tanımları
+form bölümleri
 normalizeInputs
 applyScenario
 calculateModel
@@ -103,14 +80,14 @@ calculateScenarioComparison
 buildPresentation
 ```
 
-Uygulama arayüzü sektör formüllerini bilmez. Sektör standart sonuç ve sunum verisi üretir; ortak UI KPI, şelale, senaryo, nakit ve döküm panellerini render eder.
+Uygulama arayüzü sektör formüllerini bilmez. Sektör modeli standart sonuç ve sunum verisi üretir; ortak UI aynı KPI, şelale, senaryo, nakit ve döküm panellerini kullanır.
 
-## Yeni sektör ekleme yöntemi
+## Sonraki geliştirme aşaması
 
-1. Yapılandırma, hesap, sunum ve giriş dosyalarını oluştur.
-2. Tanımı `assertSectorDefinition()` ile doğrula.
-3. Registry listesine ekle.
-4. Sektör özel testleri yaz.
-5. Uygulama geçiş testini güncelle.
-6. README, sektör spesifikasyonu ve devir notunu güncelle.
-7. GitHub Actions sonucunu doğrula.
+İlk sektör backlogu v0.7 ile tamamlanır. Sonraki mimari çalışma rapor katmanıdır:
+
+- PDF rapor şablonu
+- Excel/CSV rapor yapısı
+- paylaşılabilir senaryo bağlantısı
+- mali müşavir özeti
+- yatırımcı/ortak özeti

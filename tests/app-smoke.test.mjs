@@ -56,6 +56,7 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   assert.match(elements.get("#sectorSelect").innerHTML, /Ajans \/ Freelancer \/ Danışmanlık/);
   assert.match(elements.get("#sectorSelect").innerHTML, /SaaS \/ Abonelik/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Fiziksel Perakende/);
+  assert.match(elements.get("#sectorSelect").innerHTML, /Oto Hizmetleri/);
 
   const sectorSelect = elements.get("#sectorSelect");
   sectorSelect.value = "ecommerce_marketplace";
@@ -83,5 +84,10 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /Fiziksel Perakende/);
   assert.match(elements.get("#kpiGrid").innerHTML, /stok devir hızı/i);
-  assert.match(elements.get("#kpiGrid").innerHTML, /İlk stok nakit ihtiyacı/);
+
+  sectorSelect.value = "auto_services";
+  sectorSelect.dispatch("change", sectorSelect);
+  assert.match(elements.get("#pageTitle").textContent, /Oto Hizmetleri/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Araç başı net kâr/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
 });
