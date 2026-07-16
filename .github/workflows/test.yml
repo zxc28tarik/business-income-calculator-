@@ -13,6 +13,15 @@ jobs:
         with:
           node-version: 24
       - name: Run tests
-        run: npm test
+        shell: bash
+        run: |
+          set +e
+          npm test > test-output.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            tail -n 140 test-output.log
+            exit "$status"
+          fi
+          cat test-output.log
       - name: Check JavaScript syntax
         run: npm run check
