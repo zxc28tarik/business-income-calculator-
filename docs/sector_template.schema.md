@@ -1,92 +1,94 @@
-# Sektör Tanımı Şeması
+# Sektör Tanımı Şeması v2
 
-Bu belge, `04_SEKTOR_SABLONU_SPEC.md` kararlarının çalışan kod karşılığıdır. Her yeni sektör `src/sectors/` altında bir sektör tanımı dışa aktarır ve `src/core/sector-schema.js` tarafından doğrulanır.
+Bu belge `src/core/sector-schema.js` dosyasındaki çalışan sözleşmeyi açıklar.
 
 ## Zorunlu kimlik alanları
 
-```text
-id
-name
-family
-version
-status
-simulationMode
-realTrackingMode
-```
+- `id`
+- `name`
+- `family`
+- `version`
+- `status`
 
 ## Zorunlu veri alanları
 
-```text
-businessTypes
-defaultInputs
-scenarios
-formSections
-```
+- `businessTypes`
+- `defaultInputs`
+- `scenarios`
+- `formSections`
 
-Her form alanı şu yapıyı kullanır:
+`cashFlowColumns` isteğe bağlıdır. Tanımlanırsa sektörün nakit tablosunda kullanılacak kolonları belirler.
 
-```js
-{
-  type: "number" | "rate" | "select",
-  key: "unitsSold",
-  label: "Aylık satış adedi",
-  step: 1,
-  options: [],
-  hint: "İsteğe bağlı açıklama",
-  allowNegative: false
-}
-```
+## Alan türleri
 
-`key`, sektörün `defaultInputs` nesnesinde bulunmak zorundadır. Aynı anahtar birden fazla form bölümünde tanımlanamaz.
+- `number`: para, adet, gün ve süre
+- `rate`: kodda 0 ile 1 arasında saklanan oran
+- `select`: sabit seçenek listesi
+- `text`: serbest metin
+- `boolean`: checkbox
+- `table`: eklenebilir ve silinebilir satır tablosu
+
+Her alanın `key` değeri `defaultInputs` içinde bulunmalıdır. Aynı anahtar iki kez kullanılamaz.
+
+## Tablo alanı
+
+Bir tablo şu ek özellikleri kullanabilir:
+
+- `columns`
+- `newRow`
+- `minRows`
+- `maxRows`
+- `addLabel`
+- `visibleWhen`
+
+Tablo kolonları sayı, oran, seçim, metin veya checkbox olabilir. Tablo verileri senaryolar arasında derin kopyalanır.
+
+## Koşullu görünürlük
+
+Bölüm ve alanlar `visibleWhen` kullanabilir. Desteklenen koşullar:
+
+- `equals`
+- `notEquals`
+- `in`
+- `truthy`
+- `exists`
+- `all`
+- `any`
+- `not`
 
 ## Zorunlu fonksiyonlar
 
-```text
-normalizeInputs(rawInputs)
-applyScenario(baseInputs, scenarioId)
-calculateModel(inputs)
-calculateScenarioComparison(baseOrScenarioInputs)
-buildPresentation(result)
-```
+- `normalizeInputs(rawInputs)`
+- `applyScenario(baseInputs, scenarioId)`
+- `calculateModel(inputs)`
+- `calculateScenarioComparison(baseOrScenarioInputs)`
+- `buildPresentation(result)`
 
-## Standart model sonucu
+## Ortak UI için gerekli sonuçlar
 
-Her sektörün `calculateModel()` sonucu en az şu alanları üretmelidir:
+`calculateModel()` sonucu en az şu görünüm verilerini sağlamalıdır:
 
-```text
-grossRevenue
-customerPayment
-taxAmount
-lostSalesAmount
-totalCommissions
-revenueAfterCommission
-totalVariableCosts
-totalFixedCosts
-totalStakeholderPayouts
-preTaxProfit
-estimatedTax
-netProfit
-totalSetupCost
-breakevenUnits
-breakevenRevenue
-cashFlow
-warnings
-waterfall
-```
+- `warnings`
+- `waterfall`
+- `cashFlow.rows`
 
-## Sunum sözleşmesi
+`buildPresentation()` şu listeleri döndürmelidir:
 
-`buildPresentation(result)` şu grupları döndürür:
+- `kpis`
+- `keySplit`
+- `scenarioMetrics`
+- `breakdown`
 
-```text
-kpis
-keySplit
-scenarioMetrics
-breakdown
-```
+Hesap sonucunun diğer alanları sektöre özgü olabilir. Eski sektörlerde düz alanlar, Steam v2 modelinde katmanlı nesneler kullanılabilir.
 
-Böylece uygulama katmanı sektör formüllerini bilmeden aynı ekran düzenini kafe, e-ticaret ve sonraki sektörlerde korur.
+## İş türü uyarlama kuralı
 
-## Muhasebe sınırı
+`businessTypes` yalnız isim listesi değildir. Tam uyarlama aşamasında her iş türü için şu parçalar tanımlanır:
 
-Kurulum, stok, ekipman ve amortisman kalemlerinin vergi/muhasebe etkisi otomatik kesin hüküm olarak verilmez. Prototip, operasyonel P&L ile nakit akışını ayırır ve kullanıcıya mali müşavir teyidi notu gösterir.
+- ayrı varsayılan değerler
+- gerekli özel alanlar
+- özel KPI'lar
+- özel uyarılar
+- gerekiyorsa farklı hesap yolu
+
+Bir sektörün bütün alt türlerini aynı varsayımla çalıştırmak geçici temel model sayılır; tamamlanmış iş türü uyarlaması sayılmaz.
