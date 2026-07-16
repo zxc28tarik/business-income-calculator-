@@ -1,3 +1,4 @@
+import { STEAM_PUBLISHER_SECTOR } from "./steam-publisher.js";
 import { CAFE_SECTOR } from "./cafe-restaurant.js";
 import { ECOMMERCE_SECTOR } from "./ecommerce.js";
 import { BEAUTY_SECTOR } from "./beauty.js";
@@ -14,6 +15,7 @@ export const SECTORS = [
   SAAS_SECTOR,
   RETAIL_SECTOR,
   AUTO_SERVICE_SECTOR,
+  STEAM_PUBLISHER_SECTOR,
 ];
 export const SECTOR_MAP = new Map(SECTORS.map((sector) => [sector.id, sector]));
 
