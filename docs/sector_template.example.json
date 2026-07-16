@@ -1,0 +1,83 @@
+{
+  "sector_id": "cafe_restaurant",
+  "sector_name": "Kafe / Restoran",
+  "sector_family": "Yiyecek-İçecek",
+  "version": "v0.2",
+  "status": "simulation",
+  "simulation_mode": true,
+  "real_tracking_mode": "planned",
+  "business_types": [
+    "cafe",
+    "restaurant",
+    "coffee_kiosk",
+    "dark_kitchen",
+    "pastry_shop"
+  ],
+  "revenue_inputs": [
+    "dailyCustomers",
+    "averageTicket",
+    "openDays",
+    "deliverySalesShare"
+  ],
+  "deduction_inputs": [
+    "taxType",
+    "vatRate",
+    "lostSalesRate",
+    "deliveryCommissionRate",
+    "posCommissionRate"
+  ],
+  "variable_expense_inputs": [
+    "materialCostRate",
+    "wasteRate",
+    "packagingCostPerDeliveryOrder",
+    "otherVariableCostRate"
+  ],
+  "fixed_expense_inputs": [
+    "rent",
+    "staffCost",
+    "utilities",
+    "accounting",
+    "software",
+    "cleaning",
+    "maintenance",
+    "insurance",
+    "otherFixedExpenses"
+  ],
+  "setup_cost_inputs": [
+    "renovation",
+    "equipment",
+    "furniture",
+    "deposit",
+    "initialStock",
+    "licenseFees",
+    "openingMarketing",
+    "softwareSetup"
+  ],
+  "stakeholder_inputs": [
+    "franchiseRoyaltyRate",
+    "franchiseRoyaltyBasis",
+    "partnerProfitShareRate"
+  ],
+  "cashflow_inputs": [
+    "startingCash",
+    "financingAmount",
+    "supportAmount",
+    "setupPaymentMonth",
+    "collectionDelayDays",
+    "supplierPaymentDelayDays",
+    "firstMonthSalesShare",
+    "monthlyGrowthRate"
+  ],
+  "kpis": [
+    "netProfit",
+    "contribution",
+    "breakevenDailyCustomers",
+    "breakevenRevenue",
+    "cashGapFirstThreeMonths",
+    "endingCash",
+    "roi",
+    "unitNetProfit",
+    "foodCostRate",
+    "rentToRevenue"
+  ]
+}

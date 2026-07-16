@@ -1,0 +1,33 @@
+name: Test and syntax check
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run tests
+        shell: bash
+        run: |
+          set +e
+          npm test > test-output.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            tail -n 35 test-output.log
+            exit "$status"
+          fi
+          cat test-output.log
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: test-output.log
+      - name: Check JavaScript syntax
+        run: npm run check
