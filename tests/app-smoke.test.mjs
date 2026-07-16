@@ -1,13 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 class MockElement {
-  constructor() {
+  constructor(tagName = "DIV") {
     this.innerHTML = "";
     this.value = "";
     this.textContent = "";
     this.dataset = {};
-    this.tagName = "DIV";
+    this.tagName = tagName;
     this.type = "";
     this.checked = false;
     this.listeners = new Map();
@@ -26,23 +27,34 @@ class MockElement {
   click() {}
 }
 
-test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => {
-  const selectors = [
+function extractElementsFromHtml(html) {
+  const elements = new Map();
+  const pattern = /<([a-z][a-z0-9-]*)\b[^>]*\bid="([^"]+)"[^>]*>/gi;
+  for (const match of html.matchAll(pattern)) {
+    elements.set(`#${match[2]}`, new MockElement(match[1].toUpperCase()));
+  }
+  return elements;
+}
+
+test("gerçek uygulama kabuğu açılır ve Steam dahil sektörler render olur", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  const elements = extractElementsFromHtml(html);
+  const requiredSelectors = [
     "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
     "#formSections", "#resetButton", "#exportCsvButton", "#printButton", "#warnings",
     "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
-  const elements = new Map(selectors.map((selector) => [selector, new MockElement()]));
-  elements.get("#sectorSelect").tagName = "SELECT";
+  for (const selector of requiredSelectors) {
+    assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
+  }
 
   globalThis.document = {
     title: "",
     querySelector(selector) {
-      if (!elements.has(selector)) elements.set(selector, new MockElement());
-      return elements.get(selector);
+      return elements.get(selector) ?? null;
     },
     querySelectorAll() { return []; },
-    createElement() { return new MockElement(); },
+    createElement(tagName) { return new MockElement(String(tagName).toUpperCase()); },
   };
   globalThis.window = { print() {} };
   const store = new Map();
@@ -61,8 +73,10 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   assert.match(elements.get("#sectorSelect").innerHTML, /SaaS \/ Abonelik/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Fiziksel Perakende/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Oto Hizmetleri/);
+  assert.match(elements.get("#sectorSelect").innerHTML, /Oyun \/ Dijital Yayıncılık/);
 
   const sectorSelect = elements.get("#sectorSelect");
+
   sectorSelect.value = "ecommerce_marketplace";
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /E-Ticaret \/ Pazaryeri/);
@@ -94,4 +108,13 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   assert.match(elements.get("#pageTitle").textContent, /Oto Hizmetleri/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Araç başı net k.r/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
+
+  sectorSelect.value = "game_digital_publishing";
+  sectorSelect.dispatch("change", sectorSelect);
+  assert.match(elements.get("#pageTitle").textContent, /Oyun \/ Dijital Yayıncılık/);
+  assert.match(elements.get("#formSections").innerHTML, /Bölgesel satış satırları/);
+  assert.match(elements.get("#formSections").innerHTML, /Recoup ve oyun giderleri/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Yayıncı net kârı/);
+  assert.match(elements.get("#cashFlowTable").innerHTML, /Recoup bakiyesi/);
+  assert.match(elements.get("#breakdown").innerHTML, /Geliştirici settlement/);
 });
