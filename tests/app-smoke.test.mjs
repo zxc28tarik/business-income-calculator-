@@ -54,7 +54,7 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   await import(`../src/app.js?smoke=${Date.now()}`);
 
   assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net kär/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net k.r/);
   assert.match(elements.get("#sectorSelect").innerHTML, /E-Ticaret \/ Pazaryeri/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Güzellik \/ Kuaför \/ Bakım/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Ajans \/ Freelancer \/ Danışmanlık/);
@@ -92,6 +92,6 @@ test("uygulama ilk yüklemede render olur ve sektör değiştirir", async () => 
   sectorSelect.value = "auto_services";
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /Oto Hizmetleri/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Araç başı net kär/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Araç başı net k.r/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
 });
