@@ -1,0 +1,39 @@
+.conditional-hidden { display: none !important; }
+
+.boolean-field { align-self: stretch; }
+.checkbox-control {
+  display: flex; align-items: flex-start; gap: 10px; min-height: 44px;
+  padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px;
+  background: #fbfcfa; cursor: pointer;
+}
+.checkbox-control input { width: auto; margin: 2px 0 0; accent-color: var(--accent); }
+.checkbox-control span { display: grid; gap: 3px; }
+.checkbox-control strong { color: #18201d; font-size: 12px; }
+.checkbox-control small { color: var(--ink-soft); font-size: 10px; font-weight: 500; line-height: 1.4; }
+
+.table-field { gap: 10px; }
+.table-field-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.table-field-heading > div { display: grid; gap: 4px; }
+.table-action, .table-remove {
+  border: 1px solid var(--line); border-radius: 9px; background: white;
+  color: var(--accent); cursor: pointer; font-size: 11px; font-weight: 800;
+}
+.table-action { padding: 8px 10px; white-space: nowrap; }
+.table-remove { padding: 6px 8px; color: var(--danger); }
+.table-action:disabled, .table-remove:disabled { opacity: .45; cursor: not-allowed; }
+
+.input-table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+.input-table { min-width: 680px; background: white; }
+.input-table th, .input-table td { padding: 7px 8px; }
+.input-table input, .input-table select {
+  width: 100%; min-width: 82px; padding: 7px 8px;
+  border: 1px solid var(--line); border-radius: 8px; background: #fbfcfa;
+}
+.input-table input[type="checkbox"] { min-width: 0; width: 18px; height: 18px; accent-color: var(--accent); }
+.input-table td:has(input[type="checkbox"]) { text-align: center; }
+.empty-table { padding: 18px !important; text-align: center !important; color: var(--ink-soft); }
+
+@media (max-width: 680px) {
+  .table-field-heading { align-items: stretch; flex-direction: column; }
+  .table-action { align-self: flex-start; }
+}

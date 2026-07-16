@@ -2,6 +2,21 @@
 
 Sektör bazlı maliyet, ciro, net kâr, başabaş ve nakit akışı hesaplayıcıları platformu.
 
+## v0.9 kaynak uyumu — 2. adım
+
+Sektör form şeması, Steam Yayıncısı master modelindeki karmaşık girdileri ve ileride her sektörün kendi iş yapısına özgü ayrıntılı alanlarını taşıyabilecek biçimde genişletildi.
+
+- `boolean`: checkbox ve açık/kapalı iş kuralları
+- `text`: serbest metin ve satır adları
+- `table`: eklenip silinebilen, satır bazlı para birimi/oran/işaret taşıyan düzenlenebilir tablolar
+- `visibleWhen`: alan ve panel seviyesinde `equals`, `in`, `truthy`, `all`, `any`, `not` koşulları
+- Derin senaryo kopyalama: iç içe tablo satırları senaryolar arasında paylaşılmaz
+- `cashFlowColumns`: her sektörün kendi nakit akışı kolonlarını tanımlaması
+- Arayüzde tablo satırı ekleme/silme, hücre güncelleme ve koşullu görünürlük
+- CSV dışa aktarımında sektör özel nakit kolonları
+
+Bu aşama altyapı geçişidir. Steam Yayıncısı henüz registry'ye bağlanmamıştır; sıradaki adım master formunun eksiksiz sektör tanımını oluşturmaktır.
+
 ## v0.8 kaynak uyumu — 1. adım
 
 Steam Yayıncı Finansal Fizibilite & Net Kâr Hesaplayıcı v2 master prototipi artık yalnız arşivlenmiş bir referans değil; hesap zinciri kaynak sonuçlarını koruyan saf modüllere çıkarılmıştır.
@@ -50,7 +65,7 @@ Yeni v2 motor mevcut sade motorun üzerine yazılmadı. Çalışan yedi sektör 
 
 - Günlük müşteri × ortalama sepet
 - Ürün maliyeti, iade, fire/kayıp, POS ve stok yatırımı
-- Ürün başı net kâr, stok devir hızı ve günlük başabaş müşteri
+- Ürün başı net kär, stok devir hızı ve günlük başabaş müşteri
 
 ### Oto Hizmetleri
 
@@ -59,7 +74,7 @@ Yeni v2 motor mevcut sade motorun üzerine yazılmadı. Çalışan yedi sektör 
 - Hizmet ve parça/ürün gelirinin ayrı izlenmesi
 - İstasyon, çalışma saati ve hizmet süresinden kapasite hesabı
 - Araç başı sarf, su/elektrik ve parça maliyeti
-- Araç başı net kâr, günlük başabaş araç ve kapasite kullanımı
+- Araç başı net kär, günlük başabaş araç ve kapasite kullanımı
 - Ekipman yatırımı, amortisman ve yaklaşık geri dönüş süresi
 
 ### Ortak platform özellikleri
@@ -73,7 +88,7 @@ Yeni v2 motor mevcut sade motorun üzerine yazılmadı. Çalışan yedi sektör 
 - Tahsilat ve tedarikçi ödeme vadesi
 - Nakit dışı sabit gider desteği
 - CSV/Excel uyumlu dışa aktarım ve tarayıcı yazdırma ile PDF
-- Sektör tanımı şeması ve registry sistemi
+- Gelişmiş sektör tanımı şeması ve registry sistemi
 - GitHub Actions ile otomatik test ve sözdizimi doğrulaması
 
 ## Çalıştırma
@@ -93,19 +108,19 @@ npm test
 npm run check
 ```
 
-Test paketi ortak finans, kaynak master koruması, v2 golden sonuçları, şema, uygulama açılışı ve yedi aktif sektörün özel kabul testlerini kapsar.
+Test paketi ortak finans, kaynak master koruması, v2 golden sonuçları, gelişmiş şema, uygulama açılışı ve yedi aktif sektörün özel kabul testlerini kapsar.
 
 ## Mimari
 
 - `src/core/finance-engine.js`: Çalışan sektörlerin mevcut ortak vergi, komisyon, paydaş, başabaş, nakit ve şelale motoru.
 - `src/core/master-finance-engine-v2.js`: Steam masterdan çıkarılan kaynak uyumlu zengin finans motoru.
-- `src/core/sector-schema.js`: Sektör tanımı doğrulama ve form alanı yardımcıları.
-- `src/sectors/steam-publisher-*`: Oyun/dijital yayıncılık kaynak modeli; şema genişletilene kadar registry dışında tutulur.
+- `src/core/sector-schema.js`: Sayı, oran, seçim, metin, checkbox, tablo, görünürlük ve senaryo kopyalama şeması.
+- `src/sectors/steam-publisher-*`: Oyun/dijital yayıncılık kaynak modeli; eksiksiz form tanımı tamamlanana kadar registry dışında tutulur.
 - `src/sectors/registry.js`: Aktif sektör listesi.
 - `src/sectors/*-config.js`: Sektör girdileri, senaryolar ve formlar.
 - `src/sectors/*-core.js`: Sektör hesap motorları.
 - `src/sectors/*-presentation.js`: KPI ve ayrıntılı çıktı modelleri.
-- `src/app.js`: Sektörden bağımsız arayüz, kayıt, CSV ve yazdırma katmanı.
+- `src/app.js`: Sektörden bağımsız gelişmiş form, kayıt, CSV ve yazdırma katmanı.
 
 ## Finansal model ilkeleri
 
