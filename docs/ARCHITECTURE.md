@@ -1,93 +1,77 @@
 # Mimari Notları
 
-## Katmanlar
+## Ana katmanlar
 
-- `src/core/finance-engine.js`: Sektörden bağımsız vergi, komisyon, paydaş, başabaş, nakit akışı ve şelale yardımcıları.
-- `src/core/sector-schema.js`: Her sektörün kimlik, form ve fonksiyon sözleşmesini doğrular.
-- `src/sectors/registry.js`: Uygulamada kullanılabilen sektörleri tek listede toplar.
-- `src/sectors/cafe-*.js`: Yiyecek-içecek modeli.
-- `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri modeli.
-- `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım modeli.
-- `src/sectors/agency-*.js`: Ajans/freelancer/danışmanlık modeli.
-- `src/sectors/saas-*.js`: SaaS/abonelik ve birim ekonomisi modeli.
-- `src/sectors/retail-*.js`: Fiziksel perakende, stok ve mağaza modeli.
-- `src/sectors/auto-*.js`: Oto hizmetleri, kapasite, parça geliri ve ekipman modeli.
-- `src/app.js`: Sektörden bağımsız form, senaryo, yerel kayıt, CSV/PDF ve sonuç render katmanı.
-- `tests/`: Ortak finans, şema, uygulama açılışı ve sektör özel kabul testleri.
-- `.github/workflows/test.yml`: Push ve pull requestlerde test/sözdizimi doğrulaması.
+- `src/core/finance-engine.js`: ilk yedi sektör için geriye uyumlu ortak yardımcılar
+- `src/core/master-finance-engine-v2.js`: Steam master kaynağından çıkarılan ayrıntılı motor
+- `src/core/sector-schema.js`: sektör tanımı, gelişmiş alanlar ve görünürlük sözleşmesi
+- `src/sectors/registry.js`: aktif sektör listesi
+- `src/ui/form-view.js`: sektör formu ve düzenlenebilir tablolar
+- `src/ui/results-view.js`: KPI, şelale, senaryo, nakit ve ayrıntı panelleri
+- `src/app.js`: sektör seçimi, senaryo durumu, yerel kayıt ve dışa aktarma
 
-## Ortak hesap zinciri
+## Sektör modülleri
 
-```text
-Brüt müşteri harcaması / hizmet / proje / abonelik / mağaza / araç geliri
-- fiyata dahil KDV ayrımı
-- iade / kayıp / no-show (sektörde varsa)
-- platform ve ödeme komisyonları
-= komisyon sonrası net gelir
+Her sektör yapılandırma, hesap ve sunum katmanlarına ayrılır:
 
-Komisyon sonrası net gelir
-- satışa veya hizmete bağlı değişken maliyetler
-= katkı
-
-Katkı
-- sabit giderler
-- nakit dışı amortisman
-- paydaş / ortak payı
-= vergi öncesi kâr
-
-Vergi öncesi kâr
-- pozitif kâr üzerinden vergi ön tahmini
-= net kâr
-```
-
-Finansman ve hibe/destek P&L zincirine girmez; nakit akışında ayrı gösterilir.
-
-## Oto hizmetleri kapasite ve gelir modeli
-
-```text
-monthly_vehicles = daily_vehicles × open_days
-daily_capacity = service_stations × working_hours × 60 / service_duration
-service_revenue = monthly_vehicles × service_price
-parts_revenue = monthly_vehicles × parts_revenue_per_vehicle
-```
-
-Parça maliyeti yalnız parça gelirine uygulanır. Sarf ve araç başı su/elektrik değişken giderdir. Sabit abonelik/fatura, personel, kira ve reklam sabit giderdir.
-
-Ekipman yatırımı kurulum sırasında nakitten bir kez düşer. Aylık amortisman `totalFixedCosts` içinde P&L gideridir; `cashFixedCosts` içine alınmaz. Bu nedenle nakit akışında ikinci kez düşmez.
-
-## Nakit ve P&L ayrımı
-
-- `totalFixedCosts`: P&L sabit giderleri ve amortisman.
-- `cashFixedCosts`: Gerçek aylık sabit nakit çıkışları.
-- `cashVariableCosts`: Tedarikçi vadesine tabi değişken nakit çıkışları.
-- Kurulum, stok ve ekipman yatırımı seçilen ayda tek seferlik nakit çıkışıdır.
-- Tahsilat ve tedarikçi vadeleri P&L sonucunu değiştirmez.
+- `cafe-*`: Kafe / Restoran
+- `ecommerce-*`: E-Ticaret / Pazaryeri
+- `beauty-*`: Güzellik / Kuaför / Bakım
+- `agency-*`: Ajans / Freelancer / Danışmanlık
+- `saas-*`: SaaS / Abonelik
+- `retail-*`: Fiziksel Perakende
+- `auto-*`: Oto Hizmetleri
+- `steam-publisher-*`: Oyun / Dijital Yayıncılık master profili
 
 ## Sektör sözleşmesi
 
 Her sektör şu parçaları sağlar:
 
-```text
-kimlik ve durum
-iş türleri
-varsayılan girdiler
-senaryo tanımları
-form bölümleri
-normalizeInputs
-applyScenario
-calculateModel
-calculateScenarioComparison
-buildPresentation
-```
+- kimlik, aile, sürüm ve durum
+- iş türleri
+- varsayılan girdiler
+- senaryolar
+- form bölümleri
+- isteğe bağlı özel nakit kolonları
+- girdi normalizasyonu
+- senaryo uygulama
+- model hesaplama
+- senaryo karşılaştırması
+- sunum verisi üretimi
 
-Uygulama arayüzü sektör formüllerini bilmez. Sektör modeli standart sonuç ve sunum verisi üretir; ortak UI aynı KPI, şelale, senaryo, nakit ve döküm panellerini kullanır.
+UI sektör formüllerini bilmez. Sektör modülü standart sunum verisi üretir; ortak arayüz bunu gösterir.
 
-## Sonraki geliştirme aşaması
+## Gelişmiş form şeması
 
-İlk sektör backlogu v0.7 ile tamamlanır. Sonraki mimari çalışma rapor katmanıdır:
+Desteklenen alanlar:
 
-- PDF rapor şablonu
-- Excel/CSV rapor yapısı
-- paylaşılabilir senaryo bağlantısı
-- mali müşavir özeti
-- yatırımcı/ortak özeti
+- sayı
+- oran
+- seçim
+- metin
+- checkbox
+- düzenlenebilir tablo
+
+Bölüm ve alan görünürlüğü giriş değerlerine göre koşullu olabilir. Tablo satırları senaryolar arasında derin kopyalanır.
+
+## Hesap motoru geçişi
+
+- Steam sektörü ayrıntılı v2 motoru kullanır.
+- İlk yedi sektör eski ortak motoru kullanmaya devam eder.
+- Her sektör v2 derinliğine ayrı ayrı taşınacaktır.
+- Sonuç değişiklikleri test ve devir notu olmadan kabul edilmez.
+
+## Test mimarisi
+
+- ortak motor testleri
+- sektör özel kabul testleri
+- master kaynak hash testi
+- Steam golden testleri
+- şema ve tablo testleri
+- gerçek `index.html` kimliklerini kullanan smoke testi
+- Steam seçim ve render testi
+- GitHub Actions test ve sözdizimi kontrolü
+
+## Güncel sonraki aşama
+
+Rapor katmanına henüz geçilmez. Önce iş türü profilleri ve sektörlerin kendi ekonomik yapılarına göre v2 geçişleri tamamlanır.
