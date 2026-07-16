@@ -1,55 +1,66 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum
+## Güncel durum — v0.10.1
 
-Başlangıçta master prototip bulunmadan sade bir ortak motor oluşturulmuş ve sektör geliştirmesine geçilmişti. Steam Yayıncı Finansal Fizibilite v2 dosyasının yüklenmesinden sonra kaynak planına geri dönüldü.
+Proje, Steam Yayıncısı master kaynağı korunarak yeniden kaynak sırasına alınmıştır. İlk yedi sektör silinmemiştir; kontrollü geçiş için eski uyumluluk motoruyla çalışmaya devam eder.
 
-## Tamamlanan düzeltmeler
+## Tamamlanan aşamalar
 
-### Aşama 0 — Master prototipi koruma
+### Aşama 0 — Master kaynağı koruma
 
-- Master HTML kayıpsız arşivlendi.
-- SHA-256 değeri kilitlendi.
-- Tek komutla birebir yeniden üretim sağlandı.
-- Hash ve ana işaret koruma testleri eklendi.
-- Master hesap zinciri belgelendi.
+- Orijinal HTML kayıpsız arşivlendi.
+- SHA-256 değeri testle kilitlendi.
+- Kaynak tek komutla yeniden üretilebilir.
 
-### Aşama 1 — Ortak finans motoru çıkarma, ilk paket
+### Aşama 1 — Golden sonuçlar
 
-- Masterdaki saf hesap zinciri `src/core/master-finance-engine-v2.js` dosyasına çıkarıldı.
-- Basit ve bölgesel satış, para birimi, vergi, kademeli komisyon ve stopaj katmanları taşındı.
-- Banka/kur tahsilatı, recoup, advance, geliştirici settlement ve yayıncı P&L taşındı.
-- Kurum/şahıs vergisi, stopaj mahsubu, Teknopark, yüzde 80 indirim ve temettü ayrımı taşındı.
-- 12 aylık nakit, runway, recoup kapanışı ve başabaş çözümü taşındı.
-- Üç master senaryonun beklenen sonuçları golden testlerle kilitlendi.
+- Kötümser, beklenen ve iyimser sonuçlar testlerde sabitlendi.
+- Kaynak davranışının istemeden değişmesi engellendi.
+
+### Aşama 2 — v2 motor çıkarımı
+
+- Master hesap sırası saf fonksiyonlara ayrıldı.
+- Steam sektör hesabı bu motoru kullanır.
+- İlk yedi sektör geriye uyumluluk motorunda bırakıldı.
+
+### Aşama 3 — Gelişmiş sektör şeması
+
+- Checkbox ve metin alanları
+- Düzenlenebilir tablolar
+- Koşullu görünürlük
+- Derin senaryo kopyalama
+- Sektöre özel nakit kolonları
+
+### Aşama 4 — Steam Yayıncısı master profilini bağlama
+
+- On giriş bölümü platform formuna taşındı.
+- Steam sektör listesine eklendi.
+- KPI, şelale, senaryo, ayrıntı ve nakit görünümü bağlandı.
+- Gerçek HTML kabuğu ve Steam render testi eklendi.
+
+### Düzeltme paketi — v0.10.1
+
+- Bozuk `index.html` temiz UTF-8 olarak yeniden kuruldu.
+- Sürüm etiketi güncellendi.
+- Zorunlu uyarı metni geri getirildi.
+- Smoke testi gerçek HTML kimliklerini kullanacak şekilde değiştirildi.
+- Steam ekranı smoke testine eklendi.
 
 ## Kaynak ilkesi
 
-Steam yayıncısı bütün sektörlere aynen kopyalanacak genel bir form değildir. Kendi iş kolunun ayrıntılı modelidir ve kalite referansıdır.
+Steam formu diğer sektörlere kopyalanmaz. Her sektör ve alt iş türü kendi gelir, gider, kapasite, gösterge ve uyarılarıyla uyarlanır.
 
-Her sektör:
+## Sıradaki aşama
 
-- kendi gelir mantığını,
-- kendi kesinti ve komisyonlarını,
-- kendi değişken/sabit giderlerini,
-- kendi paydaş veya ortaklık ilişkilerini,
-- kendi kapasite ve sektör KPI'larını,
-- kendi nakit zamanlamasını
+Aşama 5, iş türü profilleridir:
 
-masterdaki finansal açıklık ve ayrım seviyesinde uygular.
+1. Oyun/dijital yayıncılık alt türlerini ayrı profillere ayırmak
+2. Kafe/Restoranı v2 derinliğine taşımak
+3. Kafe alt iş türlerini ayrı varsayım ve alanlarla uyarlamak
+4. Sonraki sektörleri aynı yöntemle sırayla taşımak
 
-Steam'e özgü recoup, ABD stopajı veya geliştirici royalty'si ilgisiz sektörlere eklenmez. Kafe için paket servis/franchise, e-ticaret için pazaryeri/stok/iade, SaaS için abone/churn/CAC/LTV gibi kendi dalına özgü yapılar kullanılır.
+## Daha sonraki işler
 
-## Henüz tamamlanmayanlar
-
-1. Sektör şemasında checkbox, tablo ve koşullu grup desteği
-2. Steam yayıncısının eksiksiz formuyla registry'ye bağlanması
-3. Oyun/dijital yayıncılıktaki diğer iş türleri için ayrı profil varsayımları
-4. Kafe/restoranın v2 derinlik modeline taşınması
-5. Sonraki sektörlerin tek tek kendi iş yapısıyla taşınması
-6. Bağımsız tek HTML üretimi
-7. Rapor çıktıları
-
-## Güvenli geçiş kararı
-
-Mevcut `finance-engine.js` ve yedi çalışan sektör henüz kaldırılmadı. Kaynak uyumlu v2 motor paralel çalışıyor. Her sektörün taşınması sırasında eski kabul testleri korunacak, yeni sektör-özel derinlik testleri eklenecek ve sonuç farkları belgelenmeden eski motor kaldırılmayacaktır.
+- bağımsız tek HTML çıktıları
+- rapor katmanı
+- gerçek takip modu
