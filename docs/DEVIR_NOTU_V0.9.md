@@ -9,8 +9,16 @@
 - Senaryolar için derin kopyalama eklendi.
 - Sektöre özel nakit tablosu kolonları eklendi.
 - CSV çıktısı özel nakit kolonlarını kullanacak şekilde güncellendi.
+- Arayüz form, sonuç ve biçimlendirme modüllerine ayrıldı.
 - 9 gelişmiş şema kabul testi eklendi.
 - Mevcut yedi sektörün model ve form tanımları değiştirilmedi.
+- GitHub Actions test çıktısını artefakt olarak saklayacak şekilde geliştirildi.
+
+## Doğrulama
+
+- Toplam 103/103 test geçti.
+- JavaScript sözdizimi kontrolü geçti.
+- Yedi aktif sektörün uygulama geçiş testi geçti.
 
 ## Sıradaki
 
