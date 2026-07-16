@@ -36,8 +36,38 @@ function extractElementsFromHtml(html) {
   return elements;
 }
 
+async function readApplicationHtml() {
+  return readFile(new URL("../index.html", import.meta.url), "utf8");
+}
+
+test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
+  const html = await readApplicationHtml();
+
+  assert.match(html, /<meta charset="UTF-8"\s*\/>/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.10\.1/);
+  assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
+  assert.match(html, /Brüt cirodan net kâra/);
+  assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
+  assert.match(html, /<script type="module" src="\.\/src\/app\.js"><\/script>/);
+  assert.match(html, /<\/body>\s*<\/html>\s*$/);
+
+  for (const marker of ["Ã", "Å", "Ä", "Â", "�"]) {
+    assert.equal(html.includes(marker), false, `index.html bozuk kodlama işareti içeriyor: ${marker}`);
+  }
+
+  const requiredIds = [
+    "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher",
+    "formSections", "resetButton", "exportCsvButton", "printButton", "warnings",
+    "kpiGrid", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
+  ];
+  for (const id of requiredIds) {
+    const matches = html.match(new RegExp(`\\bid="${id}"`, "g")) ?? [];
+    assert.equal(matches.length, 1, `${id} gerçek index.html içinde bir kez bulunmalıdır`);
+  }
+});
+
 test("gerçek uygulama kabuğu açılır ve Steam dahil sektörler render olur", async () => {
-  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  const html = await readApplicationHtml();
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
     "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
