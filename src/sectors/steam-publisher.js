@@ -14,8 +14,8 @@ import {
 } from "./steam-business-profile-engine.js";
 import {
   STEAM_PUBLISHER_CASH_FLOW_COLUMNS,
-  STEAM_PUBLISHER_FORM_SECTIONS,
-} from "./steam-publisher-form.js";
+  STEAM_PROFILED_FORM_SECTIONS,
+} from "./steam-publisher-profile-form.js";
 import {
   buildSteamPublisherPresentation,
   mapSteamPublisherCashFlow,
@@ -98,7 +98,7 @@ export const STEAM_PUBLISHER_SECTOR = assertSectorDefinition({
   businessProfiles: STEAM_BUSINESS_PROFILES,
   defaultInputs: STEAM_UI_DEFAULT_INPUTS,
   scenarios: STEAM_PUBLISHER_SCENARIOS,
-  formSections: STEAM_PUBLISHER_FORM_SECTIONS,
+  formSections: STEAM_PROFILED_FORM_SECTIONS,
   cashFlowColumns: STEAM_PUBLISHER_CASH_FLOW_COLUMNS,
   normalizeInputs: normalizeUiInputs,
   applyScenario: applyUiScenario,
