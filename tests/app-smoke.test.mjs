@@ -44,7 +44,7 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
   const html = await readApplicationHtml();
 
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.11\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.12\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -97,6 +97,8 @@ test("gerçek uygulama kabuğu açılır ve Steam dahil sektörler render olur",
 
   assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net k.r/);
+  assert.match(elements.get("#formSections").innerHTML, /Gelişmiş satış kanalı karmasını kullan/);
+  assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
   assert.match(elements.get("#sectorSelect").innerHTML, /E-Ticaret \/ Pazaryeri/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Güzellik \/ Kuaför \/ Bakım/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Ajans \/ Freelancer \/ Danışmanlık/);
