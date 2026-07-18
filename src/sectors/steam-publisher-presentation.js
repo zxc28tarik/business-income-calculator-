@@ -1,14 +1,21 @@
+import {
+  buildSteamBusinessProfileBreakdown,
+  buildSteamBusinessProfileKpis,
+} from "./steam-business-profile-presentation.js";
+
 export function buildSteamPublisherPresentation(result) {
-  const { input, platform, receipt, recoup, settlement, pnl, tax, cashFlow } = result;
+  const { input, platform, receipt, recoup, settlement, pnl, tax, cashFlow, profile } = result;
   const perUnit = input.units > 0 ? tax.publisherNetProfitTry / input.units : 0;
+  const profileKpis = buildSteamBusinessProfileKpis(result);
 
   return {
     kpis: [
+      ...profileKpis,
       { label: "Yayıncı net kârı", value: tax.publisherNetProfitTry, format: "money", negative: tax.publisherNetProfitTry < 0, note: "Vergi ve temettü sonrası" },
       { label: "Yayıncı ROI", value: result.publisherRoi, format: "percent", note: "Net kâr / yayıncı toplam harcaması" },
       { label: "Geliştiriciye toplam", value: settlement.developerTotalPaymentTry, format: "money", note: "Advance + nakit royalty" },
       { label: "Kapanmamış recoup", value: settlement.unrecoupedExpenseTry, format: "money", negative: settlement.unrecoupedExpenseTry > 0, note: settlement.unrecoupedExpenseTry > 0 ? "Recoup kapanmadı" : "Recoup kapandı" },
-      { label: "Başabaş satış", value: result.breakevenUnits, format: "numberSuffix", suffix: " adet", note: "Yayıncı net kârı sıfır noktası" },
+      { label: profile.breakevenLabel, value: result.breakevenUnits, format: "number", note: "Yayıncı net kârı sıfır noktası" },
       { label: "Birim başı yayıncı kârı", value: perUnit, format: "money", note: "Vergi sonrası" },
       { label: "Vergi öncesi kâr", value: pnl.earningsBeforeTaxTry, format: "money", negative: pnl.earningsBeforeTaxTry < 0, note: "EBT" },
       { label: "Runway", value: cashFlow.runwayMonths, format: "months", note: "Başlangıç nakdi / lansman öncesi yakım" },
@@ -24,17 +31,18 @@ export function buildSteamPublisherPresentation(result) {
       { label: "Yayıncı net kârı", value: tax.publisherNetProfitTry, format: "money" },
     ],
     scenarioMetrics: [
-      { id: "customer_payment", label: "Brüt oyuncu harcaması", value: platform.customerPayment * input.usdTry, format: "money" },
+      { id: "customer_payment", label: "Brüt müşteri harcaması", value: platform.customerPayment * input.usdTry, format: "money" },
       { id: "receipt", label: "Yayıncı tahsilatı", value: receipt.receiptTry, format: "money" },
       { id: "developer_payment", label: "Geliştiriciye ödeme", value: settlement.developerTotalPaymentTry, format: "money" },
       { id: "ebt", label: "Vergi öncesi kâr", value: pnl.earningsBeforeTaxTry, format: "money" },
       { id: "net_profit", label: "Yayıncı net kârı", value: tax.publisherNetProfitTry, format: "money" },
       { id: "roi", label: "Yayıncı ROI", value: result.publisherRoi, format: "percent" },
-      { id: "breakeven", label: "Başabaş satış", value: result.breakevenUnits, format: "number" },
+      { id: "breakeven", label: profile.breakevenLabel, value: result.breakevenUnits, format: "number" },
     ],
     breakdown: [
+      buildSteamBusinessProfileBreakdown(result),
       { title: "A · Platform tarafı", rows: [
-        ["Brüt oyuncu harcaması", platform.customerPayment * input.usdTry],
+        ["Brüt müşteri harcaması", platform.customerPayment * input.usdTry],
         ["İşlem vergileri", platform.transactionTax * input.usdTry],
         ["İade ve ters ibraz", platform.refundAndChargeback * input.usdTry],
         ["Platform komisyonu", platform.platformCommission * input.usdTry],
@@ -59,7 +67,7 @@ export function buildSteamPublisherPresentation(result) {
       ] },
       { title: "D · Yayıncı P&L ve vergi", rows: [
         ["P&L geliri", pnl.revenueTry],
-        ["Doğrudan oyun giderleri", recoup.directGameCostsTry],
+        ["Doğrudan ürün giderleri", recoup.directGameCostsTry],
         ["Yayıncı operasyon giderleri", input.publisherOperationsTry],
         ["Atanan genel gider", pnl.allocatedOverheadTry],
         ["Amortisman", input.depreciationTry],
