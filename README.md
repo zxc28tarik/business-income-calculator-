@@ -2,41 +2,55 @@
 
 Sektör bazlı finansal fizibilite ve 12 aylık nakit akışı platformu.
 
-## v0.11.0 — Oyun ve dijital yayıncılık iş türü profilleri
+## v0.12.0 — Kafe / Restoran v2 iş türü profilleri
 
-Oyun / Dijital Yayıncılık sektörü artık altı ayrı hesap profiliyle çalışır:
+Kafe / Restoran sektörü artık on bir ayrı iş türü profiliyle çalışır:
 
-1. Steam oyun yayıncısı
-2. Indie oyun kendi yayınlama
-3. Mobil oyun
-4. DLC / supporter pack
-5. Oyun asset / dijital ürün
-6. Publisher–developer paylaşımı
+1. Kafe
+2. Restoran
+3. Kahveci
+4. Kahve kiosk
+5. Tatlıcı / pastane
+6. Burgerci
+7. Dönerci
+8. Tostçu / büfe
+9. Dark kitchen
+10. Food truck
+11. Franchise restoran
 
-Profiller yalnız isim seçeneği değildir. Mobil oyun MAU, ödeme dönüşümü, IAP ve reklam gelirini; DLC sahip tabanı ve satın alma oranını; dijital ürün aylık satış ve dönem uzunluğunu kullanır. Kendi yayınlama profilinde harici geliştirici paylaşımı oluşmaz. Her profil koşullu alan, özel KPI, özel uyarı ve senaryo sürücülerine sahiptir.
+Profiller yalnız etiket değildir. Restoran koltuk, masa devri ve dolulukla; kiosk saatlik sipariş ve servis saatiyle; dark kitchen günlük paket siparişiyle; food truck etkinlik ve etkinlik başı müşteriyle hesaplanır.
 
-Steam Yayıncısı master golden sonucu korunur. Ayrıntılar: `docs/STEAM_BUSINESS_TYPE_PROFILES.md`.
+Kafe v2 ayrıca şunları içerir:
 
-## v0.10.1 — Denetim düzeltmeleri
+- düzenlenebilir satış kanalı karması
+- düzenlenebilir ürün / kategori karması
+- kanal bazlı fiş çarpanı, komisyon ve paketleme
+- kategori bazlı malzeme ve fire oranı
+- profile özgü kapasite, başabaş, KPI ve uyarılar
+- kurulum yatırımı ile amortismanın P&L / nakit ayrımı
+- finansmanın P&L dışı tutulması
+- hibe / desteğin P&L geliri ve nakit girişi olarak ayrı alanlarda izlenmesi
 
-- `index.html` temiz UTF-8 olarak yeniden kuruldu.
-- Gerçek HTML ve Steam render smoke testi eklendi.
-- Kaynak uyumu ve mimari belgeleri güncellendi.
+Eski Kafe varsayılan finans sonucu golden testle korunur. Ayrıntılar: `docs/CAFE_BUSINESS_TYPE_PROFILES.md`.
+
+## v0.11.0 — Oyun ve dijital yayıncılık profilleri
+
+Steam yayıncısı, indie kendi yayınlama, mobil oyun, DLC, dijital ürün ve publisher–developer paylaşımı ayrı profil sürücülerine sahiptir. Steam master golden sonucu korunur.
 
 ## Aktif sektörler
 
-1. Kafe / Restoran
-2. E-Ticaret / Pazaryeri
-3. Güzellik / Kuaför / Bakım
-4. Ajans / Freelancer / Danışmanlık
-5. SaaS / Abonelik
-6. Fiziksel Perakende
-7. Oto Hizmetleri
-8. Oyun / Dijital Yayıncılık
+1. Kafe / Restoran — v2 profil derinliği
+2. E-Ticaret / Pazaryeri — temel model
+3. Güzellik / Kuaför / Bakım — temel model
+4. Ajans / Freelancer / Danışmanlık — temel model
+5. SaaS / Abonelik — temel model
+6. Fiziksel Perakende — temel model
+7. Oto Hizmetleri — temel model
+8. Oyun / Dijital Yayıncılık — v2 profil derinliği
 
 ## Geçiş durumu
 
-Steam ve oyun/dijital yayıncılık profilleri ayrıntılı v2 motoru kullanır. Diğer yedi sektör çalışan temel modellerdir ve sırayla kendi ekonomik yapılarına göre v2 derinliğine taşınacaktır. Sıradaki çalışma Kafe/Restoran v2 geçişidir.
+Oyun / Dijital Yayıncılık ve Kafe / Restoran kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör E-Ticaret / Pazaryeri olacaktır.
 
 ## Çalıştırma
 
@@ -59,6 +73,7 @@ npm run check
 - Steam'e özgü alanlar başka sektörlere kopyalanmaz.
 - Yatırım ve finansman P&L geliri değildir.
 - Net sonuç ve nakit hareketi ayrı tutulur.
+- Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
 - Ürün içinde AI yorumlayıcı veya sohbet botu yoktur.
 
 ## Lisans
