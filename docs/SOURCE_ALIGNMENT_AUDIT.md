@@ -1,8 +1,8 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.10.1
+## Güncel durum — v0.11.0
 
-Proje, Steam Yayıncısı master kaynağı korunarak yeniden kaynak sırasına alınmıştır. İlk yedi sektör silinmemiştir; kontrollü geçiş için eski uyumluluk motoruyla çalışmaya devam eder.
+Proje, Steam Yayıncısı master kaynağı korunarak kaynak sırasına alınmıştır. İlk yedi sektör silinmemiştir; kontrollü geçiş için geriye uyumlu motorla çalışmaya devam eder.
 
 ## Tamamlanan aşamalar
 
@@ -38,13 +38,24 @@ Proje, Steam Yayıncısı master kaynağı korunarak yeniden kaynak sırasına a
 - KPI, şelale, senaryo, ayrıntı ve nakit görünümü bağlandı.
 - Gerçek HTML kabuğu ve Steam render testi eklendi.
 
-### Düzeltme paketi — v0.10.1
+### Denetim düzeltmesi — v0.10.1
 
 - Bozuk `index.html` temiz UTF-8 olarak yeniden kuruldu.
-- Sürüm etiketi güncellendi.
-- Zorunlu uyarı metni geri getirildi.
+- Zorunlu uzman teyidi uyarısı geri getirildi.
 - Smoke testi gerçek HTML kimliklerini kullanacak şekilde değiştirildi.
-- Steam ekranı smoke testine eklendi.
+
+### Aşama 5A — Oyun ve dijital yayıncılık iş türü profilleri
+
+Altı profil ayrı satış sürücüsü, koşullu form, gösterge, uyarı ve senaryo yapısına bağlandı:
+
+1. Steam oyun yayıncısı
+2. Indie oyun kendi yayınlama
+3. Mobil oyun
+4. DLC / supporter pack
+5. Oyun asset / dijital ürün
+6. Publisher–developer paylaşımı
+
+Mobil oyun MAU, ödeme dönüşümü, IAP ve reklam geliriyle; DLC sahip tabanı ve satın alma oranıyla; dijital ürün aylık satış ve dönem uzunluğuyla hesaplanır. Kendi yayınlama profilinde harici geliştirici paylaşımı sıfırlanır. Steam master golden sonucu korunur.
 
 ## Kaynak ilkesi
 
@@ -52,15 +63,16 @@ Steam formu diğer sektörlere kopyalanmaz. Her sektör ve alt iş türü kendi 
 
 ## Sıradaki aşama
 
-Aşama 5, iş türü profilleridir:
+Aşama 5B — Kafe/Restoran v2 geçişi:
 
-1. Oyun/dijital yayıncılık alt türlerini ayrı profillere ayırmak
-2. Kafe/Restoranı v2 derinliğine taşımak
-3. Kafe alt iş türlerini ayrı varsayım ve alanlarla uyarlamak
-4. Sonraki sektörleri aynı yöntemle sırayla taşımak
+1. Kafe gelir, masa/paket servis ve kapasite yapısını v2 derinliğine taşımak
+2. Kafe alt iş türlerini ayrı varsayım profillerine ayırmak
+3. Kafe özel KPI ve uyarılarını genişletmek
+4. Eski kafe kabul testlerini koruyup yeni v2 testlerini eklemek
 
 ## Daha sonraki işler
 
+- sonraki sektörlerin kendi iş yapısıyla v2 geçişi
 - bağımsız tek HTML çıktıları
 - rapor katmanı
 - gerçek takip modu
