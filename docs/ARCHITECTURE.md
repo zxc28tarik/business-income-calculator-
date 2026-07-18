@@ -2,76 +2,48 @@
 
 ## Ana katmanlar
 
-- `src/core/finance-engine.js`: ilk yedi sektör için geriye uyumlu ortak yardımcılar
+- `src/core/finance-engine.js`: ilk yedi sektörün geriye uyumlu motoru
 - `src/core/master-finance-engine-v2.js`: Steam master kaynağından çıkarılan ayrıntılı motor
-- `src/core/sector-schema.js`: sektör tanımı, gelişmiş alanlar ve görünürlük sözleşmesi
+- `src/core/sector-schema.js`: alan, tablo ve görünürlük sözleşmesi
+- `src/ui/`: ortak form ve sonuç görünümü
 - `src/sectors/registry.js`: aktif sektör listesi
-- `src/ui/form-view.js`: sektör formu ve düzenlenebilir tablolar
-- `src/ui/results-view.js`: KPI, şelale, senaryo, nakit ve ayrıntı panelleri
-- `src/app.js`: sektör seçimi, senaryo durumu, yerel kayıt ve dışa aktarma
 
 ## Sektör modülleri
 
-Her sektör yapılandırma, hesap ve sunum katmanlarına ayrılır:
+Her sektör yapılandırma, hesap ve sunum katmanlarına ayrılır. Oyun / Dijital Yayıncılık için ek profil katmanı vardır:
 
-- `cafe-*`: Kafe / Restoran
-- `ecommerce-*`: E-Ticaret / Pazaryeri
-- `beauty-*`: Güzellik / Kuaför / Bakım
-- `agency-*`: Ajans / Freelancer / Danışmanlık
-- `saas-*`: SaaS / Abonelik
-- `retail-*`: Fiziksel Perakende
-- `auto-*`: Oto Hizmetleri
-- `steam-publisher-*`: Oyun / Dijital Yayıncılık master profili
+- `steam-publisher-config.js`: master varsayımları
+- `steam-publisher-core.js`: v2 finans hesabı
+- `steam-publisher-form.js`: master formu
+- `steam-publisher-profile-form.js`: alt iş türüne göre koşullu alanlar
+- `steam-business-profile-engine.js`: satış sürücülerini master motor girdilerine dönüştürür
+- `steam-business-profile-presentation.js`: özel KPI ve uyarılar
+- `steam-publisher-presentation.js`: ortak sonuç görünümü
+
+## Profil dönüşümleri
+
+- Mobil oyun: MAU, ödeme dönüşümü, IAP ve reklam geliri
+- DLC: sahip tabanı ve satın alma oranı
+- Dijital ürün: aylık satış ve projeksiyon dönemi
+- Indie kendi yayınlama: harici geliştirici payı yok
+- Publisher–developer: sözleşme ve recoup paylaşımı korunur
+
+Profil katmanı vergi, tahsilat, P&L ve nakit motorunu kopyalamaz; yalnız iş türünün gelir sürücülerini ortak v2 girdilerine çevirir.
 
 ## Sektör sözleşmesi
 
-Her sektör şu parçaları sağlar:
-
-- kimlik, aile, sürüm ve durum
-- iş türleri
-- varsayılan girdiler
-- senaryolar
-- form bölümleri
-- isteğe bağlı özel nakit kolonları
-- girdi normalizasyonu
-- senaryo uygulama
-- model hesaplama
-- senaryo karşılaştırması
-- sunum verisi üretimi
-
-UI sektör formüllerini bilmez. Sektör modülü standart sunum verisi üretir; ortak arayüz bunu gösterir.
-
-## Gelişmiş form şeması
-
-Desteklenen alanlar:
-
-- sayı
-- oran
-- seçim
-- metin
-- checkbox
-- düzenlenebilir tablo
-
-Bölüm ve alan görünürlüğü giriş değerlerine göre koşullu olabilir. Tablo satırları senaryolar arasında derin kopyalanır.
-
-## Hesap motoru geçişi
-
-- Steam sektörü ayrıntılı v2 motoru kullanır.
-- İlk yedi sektör eski ortak motoru kullanmaya devam eder.
-- Her sektör v2 derinliğine ayrı ayrı taşınacaktır.
-- Sonuç değişiklikleri test ve devir notu olmadan kabul edilmez.
+Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. UI sektör formüllerini bilmez.
 
 ## Test mimarisi
 
-- ortak motor testleri
-- sektör özel kabul testleri
-- master kaynak hash testi
-- Steam golden testleri
-- şema ve tablo testleri
-- gerçek `index.html` kimliklerini kullanan smoke testi
-- Steam seçim ve render testi
-- GitHub Actions test ve sözdizimi kontrolü
+- ortak motor ve sektör kabul testleri
+- master kaynak hash ve golden testleri
+- gelişmiş şema testleri
+- gerçek HTML smoke testi
+- Steam render testi
+- altı oyun/dijital yayıncılık profil testi
+- GitHub Actions sözdizimi kontrolü
 
-## Güncel sonraki aşama
+## Sonraki aşama
 
-Rapor katmanına henüz geçilmez. Önce iş türü profilleri ve sektörlerin kendi ekonomik yapılarına göre v2 geçişleri tamamlanır.
+Sıradaki çalışma Kafe/Restoran sektörünün kendi ekonomik yapısıyla v2 derinliğine taşınması ve kafe alt iş türlerinin ayrı profillere ayrılmasıdır. Rapor katmanına henüz geçilmez.
