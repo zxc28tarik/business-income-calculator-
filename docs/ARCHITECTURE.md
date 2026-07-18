@@ -2,15 +2,13 @@
 
 ## Ana katmanlar
 
-- `src/core/finance-engine.js`: ilk yedi sektörün geriye uyumlu motoru
-- `src/core/master-finance-engine-v2.js`: Steam master kaynağından çıkarılan ayrıntılı motor
+- `src/core/finance-engine.js`: sektör bağımsız vergi ayrımı, komisyon, başabaş ve nakit yardımcıları
+- `src/core/master-finance-engine-v2.js`: Steam master kaynağından çıkarılan ayrıntılı yayıncı motoru
 - `src/core/sector-schema.js`: alan, tablo ve görünürlük sözleşmesi
 - `src/ui/`: ortak form ve sonuç görünümü
 - `src/sectors/registry.js`: aktif sektör listesi
 
-## Sektör modülleri
-
-Her sektör yapılandırma, hesap ve sunum katmanlarına ayrılır. Oyun / Dijital Yayıncılık için ek profil katmanı vardır:
+## Oyun / Dijital Yayıncılık profil katmanı
 
 - `steam-publisher-config.js`: master varsayımları
 - `steam-publisher-core.js`: v2 finans hesabı
@@ -20,19 +18,31 @@ Her sektör yapılandırma, hesap ve sunum katmanlarına ayrılır. Oyun / Dijit
 - `steam-business-profile-presentation.js`: özel KPI ve uyarılar
 - `steam-publisher-presentation.js`: ortak sonuç görünümü
 
-## Profil dönüşümleri
-
-- Mobil oyun: MAU, ödeme dönüşümü, IAP ve reklam geliri
-- DLC: sahip tabanı ve satın alma oranı
-- Dijital ürün: aylık satış ve projeksiyon dönemi
-- Indie kendi yayınlama: harici geliştirici payı yok
-- Publisher–developer: sözleşme ve recoup paylaşımı korunur
-
 Profil katmanı vergi, tahsilat, P&L ve nakit motorunu kopyalamaz; yalnız iş türünün gelir sürücülerini ortak v2 girdilerine çevirir.
+
+## Kafe / Restoran v2 profil katmanı
+
+- `cafe-business-profile-engine.js`: on bir iş türünün varsayımları, talep sürücüsü, kapasite, KPI ve uyarıları
+- `cafe-config.js`: koşullu form, satış kanalı ve ürün karması tabloları, senaryolar ve normalizasyon
+- `cafe-core.js`: kanal bazlı ciro/komisyon, ürün karması maliyeti, P&L, vergi ön tahmini, başabaş ve nakit hesabı
+- `cafe-presentation.js`: iş türü, kanal, ürün, amortisman ve nakit denetim izi
+- `cafe-restaurant.js`: sektör sözleşmesi ve profil dışa aktarımları
+
+Kafe profil sürücüleri:
+
+- Kafe, kahveci, pastane, burgerci, dönerci ve büfe: günlük müşteri
+- Restoran ve franchise restoran: koltuk × masa devri × doluluk
+- Kahve kiosk: saatlik sipariş × servis saati
+- Dark kitchen: günlük paket siparişi
+- Food truck: aylık etkinlik × etkinlik başı müşteri
+
+Satış kanalı tablosu sipariş payı, fiş çarpanı, komisyon ve paketleme maliyeti taşır. Ürün karması tablosu ciro payı, malzeme oranı ve fire oranı taşır.
+
+Amortisman yalnız P&L sabit giderine eklenir. Nakit akışı `cashFixedCosts` üzerinden çalıştığı için kurulum yatırımı nakitten ikinci kez düşülmez. Finansman P&L dışıdır; P&L hibe geliri ile hibe nakit girişi ayrı alanlardır.
 
 ## Sektör sözleşmesi
 
-Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. UI sektör formüllerini bilmez.
+Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. Profil kullanan sektörler ayrıca `businessProfiles` ve isteğe bağlı `applyBusinessType` sözleşmesi sağlayabilir. UI sektör formüllerini bilmez.
 
 ## Test mimarisi
 
@@ -42,8 +52,11 @@ Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölüm
 - gerçek HTML smoke testi
 - Steam render testi
 - altı oyun/dijital yayıncılık profil testi
+- on bir Kafe / Restoran profil testi
+- eski Kafe varsayılan sonuç koruma testi
+- amortisman P&L / nakit ayrımı testi
 - GitHub Actions sözdizimi kontrolü
 
 ## Sonraki aşama
 
-Sıradaki çalışma Kafe/Restoran sektörünün kendi ekonomik yapısıyla v2 derinliğine taşınması ve kafe alt iş türlerinin ayrı profillere ayrılmasıdır. Rapor katmanına henüz geçilmez.
+Sıradaki çalışma E-Ticaret / Pazaryeri sektörünün kendi sipariş, iade, kargo, stok ve reklam ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
