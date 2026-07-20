@@ -38,7 +38,16 @@ function switchProfile(raw) {
   const requested = SAAS_V2_BUSINESS_TYPES.some(([id]) => id === raw.businessType)
     ? raw.businessType
     : "b2b_saas";
-  if (!raw.profileTypeApplied) return { ...raw, businessType: requested, profileTypeApplied: requested };
+  if (!raw.profileTypeApplied) {
+    if (requested === "b2b_saas") return { ...raw, businessType: requested, profileTypeApplied: requested };
+    return {
+      ...clone(SAAS_DEFAULT_INPUTS),
+      ...clone(getSaasBusinessProfile(requested).defaults),
+      ...raw,
+      businessType: requested,
+      profileTypeApplied: requested,
+    };
+  }
   if (raw.profileTypeApplied === requested) return raw;
   const preserved = Object.fromEntries(preservedKeys.map((key) => [key, raw[key] ?? SAAS_DEFAULT_INPUTS[key]]));
   return {
@@ -64,7 +73,7 @@ export function normalizeSaasInputs(raw = {}) {
   const source = switchProfile(clone(raw));
   const requested = source.businessType;
   const legacy = normalizeLegacy({ ...clone(SAAS_DEFAULT_INPUTS), ...source, businessType: "b2b_saas" });
-  const input = { ...legacy, ...source, businessType: requested, profileTypeApplied: source.profileTypeApplied || requested };
+  const input = { ...legacy, businessType: requested, profileTypeApplied: source.profileTypeApplied || requested };
 
   for (const key of [
     "trialConversionRate", "freeToPaidConversionRate", "apiMonthlyChurnRate", "enterpriseMonthlyChurnRate",
@@ -81,7 +90,7 @@ export function normalizeSaasInputs(raw = {}) {
 
   input.supportStaffCount = clampInteger(input.supportStaffCount, 0, 10000, 0);
   input.advancedPlanMixEnabled = Boolean(input.advancedPlanMixEnabled);
-  input.plans = (Array.isArray(source.plans) ? source.plans : SAAS_DEFAULT_INPUTS.plans).map(normalizePlan);
+  input.plans = (Array.isArray(input.plans) ? input.plans : SAAS_DEFAULT_INPUTS.plans).map(normalizePlan);
   return input;
 }
 
