@@ -15,14 +15,8 @@ class MockElement {
     this.classList = { toggle() {} };
   }
 
-  addEventListener(type, handler) {
-    this.listeners.set(type, handler);
-  }
-
-  dispatch(type, target = this) {
-    this.listeners.get(type)?.({ target });
-  }
-
+  addEventListener(type, handler) { this.listeners.set(type, handler); }
+  dispatch(type, target = this) { this.listeners.get(type)?.({ target }); }
   querySelectorAll() { return []; }
   click() {}
 }
@@ -30,9 +24,7 @@ class MockElement {
 function extractElementsFromHtml(html) {
   const elements = new Map();
   const pattern = /<([a-z][a-z0-9-]*)\b[^>]*\bid="([^"]+)"[^>]*>/gi;
-  for (const match of html.matchAll(pattern)) {
-    elements.set(`#${match[2]}`, new MockElement(match[1].toUpperCase()));
-  }
+  for (const match of html.matchAll(pattern)) elements.set(`#${match[2]}`, new MockElement(match[1].toUpperCase()));
   return elements;
 }
 
@@ -42,9 +34,8 @@ async function readApplicationHtml() {
 
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
-
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.12\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.13\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -66,7 +57,7 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
   }
 });
 
-test("gerçek uygulama kabuğu açılır ve Steam dahil sektörler render olur", async () => {
+test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async () => {
   const html = await readApplicationHtml();
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
@@ -74,15 +65,11 @@ test("gerçek uygulama kabuğu açılır ve Steam dahil sektörler render olur",
     "#formSections", "#resetButton", "#exportCsvButton", "#printButton", "#warnings",
     "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
-  for (const selector of requiredSelectors) {
-    assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
-  }
+  for (const selector of requiredSelectors) assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
 
   globalThis.document = {
     title: "",
-    querySelector(selector) {
-      return elements.get(selector) ?? null;
-    },
+    querySelector(selector) { return elements.get(selector) ?? null; },
     querySelectorAll() { return []; },
     createElement(tagName) { return new MockElement(String(tagName).toUpperCase()); },
   };
@@ -112,7 +99,14 @@ test("gerçek uygulama kabuğu açılır ve Steam dahil sektörler render olur",
   sectorSelect.value = "ecommerce_marketplace";
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /E-Ticaret \/ Pazaryeri/);
+  assert.match(elements.get("#formSections").innerHTML, /Aylık mağaza ziyaretçisi/);
+  assert.match(elements.get("#formSections").innerHTML, /Satış kanalları/);
+  assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
+  assert.match(elements.get("#formSections").innerHTML, /Reklam kanalları/);
+  assert.match(elements.get("#formSections").innerHTML, /Gelişmiş stok yeterliliğini izle/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Ürün başı net kâr/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
+  assert.match(elements.get("#breakdown").innerHTML, /Stok ve işletme sermayesi/);
 
   sectorSelect.value = "beauty_personal_care";
   sectorSelect.dispatch("change", sectorSelect);
