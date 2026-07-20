@@ -142,6 +142,8 @@ export function calculateRetailProfileMonth(rawInputs, overrides = {}) {
   return {
     ...base,
     input, profile, demand, productMetrics: product, supplierMetrics: supplier,
+    inventoryPlanningEnabled: input.inventoryPlanningEnabled,
+    currentInventoryCost: input.currentInventoryCost,
     operatingGrantIncome, adjustedRevenue, revenueAfterCommission, contribution,
     fixedCostItems, totalFixedCosts, cashFixedCosts: base.totalFixedCosts,
     partnerPayout, totalStakeholderPayouts: partnerPayout, preTaxProfit, estimatedTax, netProfit,
