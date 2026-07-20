@@ -23,10 +23,15 @@ export const RETAIL_DEFAULT_INPUTS = {
   ...clone(RETAIL_PROFILE_DEFAULT_INPUTS),
 };
 
+const legacyTail = clone(LEGACY_SECTIONS.slice(3));
+for (const section of legacyTail) {
+  section.fields = section.fields.filter((field) => field.key !== "supplierPaymentDelayDays");
+}
+
 export const RETAIL_FORM_SECTIONS = [
   ...RETAIL_PROFILE_SALES_SECTIONS,
   ...RETAIL_PROFILE_INVENTORY_SECTIONS,
-  ...LEGACY_SECTIONS.slice(3),
+  ...legacyTail,
 ];
 
 const preservedKeys = [
