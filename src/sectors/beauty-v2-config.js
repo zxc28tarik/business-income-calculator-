@@ -127,9 +127,6 @@ export function applyBeautyScenario(baseInputs, scenarioId) {
   for (const [key, multiplier] of Object.entries(preset.multipliers)) {
     if (key !== "occupancyRate") next[key] = normalized[key] * multiplier;
   }
-  if (!normalized.customerBaseDemandEnabled && preset.multipliers.occupancyRate) {
-    next.occupancyRate = normalized.occupancyRate * preset.multipliers.occupancyRate;
-  }
   if (next.advancedServiceMixEnabled && scenarioId !== "expected") {
     const priceMultiplier = preset.multipliers.servicePrice ?? 1;
     const consumableMultiplier = preset.multipliers.consumableCostPerSession ?? 1;
