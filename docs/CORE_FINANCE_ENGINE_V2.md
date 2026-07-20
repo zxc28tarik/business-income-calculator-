@@ -32,13 +32,22 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 ### E-Ticaret / Pazaryeri
 
 - on iş türü profili
-- satış adedi, trafik/dönüşüm, talep/dönüşüm, üretim ve abone sürücüleri
+- satış adedi, trafik/dönüşüm, sosyal talep, üretim ve abone sürücüleri
 - satış kanalı, ürün karması ve reklam tabloları
-- kanal kesintileri ve ağırlıklı tahsilat vadesi
-- ürün/iade, lojistik ve profile özgü ek maliyetler
-- stok kapsamı, yeniden sipariş noktası ve devir hızı
+- kanal kesintileri, ürün/iade, lojistik ve stok katmanı
 - amortisman P&L/nakit ayrımı
 - eski Trendyol varsayılan sonucu koruması
+
+### Güzellik / Kuaför / Bakım
+
+- sekiz iş türü profili
+- koltuk, masa, oda, cihaz, uzman veya genel istasyon kapasitesi
+- fiziksel kaynak ile personel üretken kapasitesinin karşılaştırılması
+- hizmet karması: fiyat, süre, sarf ve çalışan primi
+- müşteri tabanı, yeni müşteri ve tekrar ziyaret talebi
+- no-show geri kazanımı ve perakende ürün satışı
+- cihaz amortismanı P&L/nakit ayrımı
+- eski güzellik salonu varsayılan sonucu koruması
 
 ## Sabit finans kuralları
 
@@ -46,17 +55,16 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 - Net kâr ve nakit hareketi ayrı hesaplanır.
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
 - Kurulum ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
-- Satılan ürün/malzeme maliyeti dönemsel P&L gideridir.
+- Satılan ürün/malzeme/sarf maliyeti dönemsel P&L gideridir.
 - Hibe nakit girişi ile vergilendirilebilir P&L hibe geliri ayrı alanlardır.
 - Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
 ## Bekleyen geçişler
 
-1. Güzellik / Kuaför / Bakım
-2. Ajans / Freelancer / Danışmanlık
-3. SaaS / Abonelik
-4. Fiziksel Perakende
-5. Oto Hizmetleri
+1. Ajans / Freelancer / Danışmanlık
+2. SaaS / Abonelik
+3. Fiziksel Perakende
+4. Oto Hizmetleri
 
 Bunlardan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
 
