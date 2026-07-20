@@ -20,7 +20,7 @@ export const RETAIL_PROFILE_SALES_SECTIONS = [
       numberField("transactionsPerHour", "Saatlik kasa işlemi", 1, { visibleWhen: { all: [{ key: "profileDriverEnabled", equals: true }, { key: "businessType", equals: "mini_market" }] } }),
       numberField("openHoursPerDay", "Günlük açık saat", 0.5, { visibleWhen: { all: [{ key: "profileDriverEnabled", equals: true }, { key: "businessType", equals: "mini_market" }] } }),
       numberField("openDays", "Açık gün / ay", 1),
-      rateField("seasonalityMultiplier", "Sezon / dönem satış çarpanı", { allowAboveOne: true }),
+      numberField("seasonalityMultiplier", "Sezon / dönem satış çarpanı", 0.05),
       numberField("storeDailyCapacity", "Günlük işlem kapasitesi", 1),
     ],
   },
