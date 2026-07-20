@@ -40,17 +40,28 @@ Talep sürücüleri günlük müşteri; koltuk × masa devri × doluluk; saatlik
 - `ecommerce-presentation.js`: profil, kanal, ürün, reklam, stok ve nakit denetim izi
 - `ecommerce.js`: sektör sözleşmesi ve profil dışa aktarımları
 
-Talep sürücüleri:
+Talep sürücüleri satış adedi, trafik × dönüşüm, sosyal talep × dönüşüm, üretim kapasitesi veya aktif abonedir.
 
-- Trendyol, Hepsiburada, Amazon Türkiye ve stoklu e-ticaret: aylık satış adedi
-- Amazon global, Shopify ve dropshipping: trafik × dönüşüm × sipariş başı ürün
-- Instagram: talep × dönüşüm × sipariş başı ürün
-- El yapımı ürün: günlük üretim × üretim günü × kapasite kullanımı
-- Abonelik kutusu: aktif abone; yeni abone ve aylık kayıp ay sonu abonesini üretir
+## Güzellik / Kuaför / Bakım v2
 
-Satış kanalı tablosu sipariş payı, fiyat çarpanı, kanal komisyonu, ödeme kesintisi, kargo, paketleme ve tahsilat vadesi taşır. Ürün tablosu adet payı, fiyat çarpanı, birim maliyet ve iade oranı taşır. Reklam tablosu harcama, atfedilen sipariş ve atfedilen cirodan ROAS/CAC üretir.
+- `beauty-business-profile-engine.js`: sekiz iş türünün kaynak varsayımları, hizmet/personel ekonomisi, talep, KPI ve uyarıları
+- `beauty-profile-form.js`: kapasite, tekrar ziyaret, hizmet karması, personel ve ürün satışı alanları
+- `beauty-finance-form.js`: sabit gider, kurulum, hibe, vergi ön tahmini ve nakit alanları
+- `beauty-v2-config.js`: eski veriyi koruyan profil geçişi, normalizasyon ve senaryolar
+- `beauty-v2-core.js`: kapasite, no-show, hizmet/ürün geliri, sarf, personel, P&L, başabaş ve nakit hesabı
+- `beauty-v2-presentation.js`: profil KPI ve ayrıntılı denetim izi
+- `beauty-v2.js`: v2 sektör sözleşmesi
 
-Stok katmanı kapsam günü, yeniden sipariş noktası, güvenlik stoğu ve devir hızını hesaplar. Amazon global sınır ötesi maliyeti; dropshipping tedarikçi kalite kaybını; el yapımı ürün birim emek maliyetini; abonelik kutusu fulfillment ve churn etkisini ayrı taşır.
+Kapasite kaynakları:
+
+- Kuaför ve berber: koltuk
+- Güzellik salonu: genel istasyon
+- Tırnak stüdyosu: masa
+- Cilt bakım ve spa: oda
+- Lazer merkezi: cihaz
+- Kaş / kirpik stüdyosu: uzman
+
+Etkin kapasite, fiziksel kaynak kapasitesi ile personel üretken saat kapasitesinin düşük olanıdır. Hizmet tablosu fiyat, süre, sarf ve primi; personel tablosu kişi, aylık maliyet, üretken saat ve ciro primini taşır. Müşteri tabanı modu yeni müşteri ile tekrar ziyaret talebini üretir.
 
 ## P&L / nakit ayrımı
 
@@ -58,7 +69,7 @@ Stok katmanı kapsam günü, yeniden sipariş noktası, güvenlik stoğu ve devi
 - P&L hibe geliri ile hibe nakit girişi ayrı alanlardır.
 - Amortisman yalnız P&L sabit giderine eklenir.
 - Nakit akışı `cashFixedCosts` kullandığı için amortisman nakitten ikinci kez düşülmez.
-- Kurulum ve ilk stok yatırımı nakitte tek sefer gösterilir; satılan ürün maliyeti dönemsel P&L'de ayrıca hesaplanır.
+- Kurulum ve ilk stok yatırımı nakitte tek sefer gösterilir; dönemsel maliyetler P&L'de ayrıca hesaplanır.
 
 ## Sektör sözleşmesi
 
@@ -72,9 +83,10 @@ Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölüm
 - gerçek HTML smoke testi
 - oyun/dijital yayıncılık profil testleri
 - Kafe / Restoran profil ve eski sonuç koruma testleri
-- E-Ticaret / Pazaryeri on profil, eski sonuç, tablo, stok ve P&L/nakit ayrımı testleri
-- GitHub Actions test ve JavaScript sözdizimi kontrolü
+- E-Ticaret / Pazaryeri profil, tablo, stok ve eski sonuç testleri
+- Güzellik / Kuaför / Bakım sekiz profil, kapasite, hizmet/personel karması ve eski sonuç testleri
+- `scripts/check-modules.mjs` ile bütün kaynak modüllerinin otomatik içe aktarım kontrolü
 
 ## Sonraki aşama
 
-Sıradaki çalışma Güzellik / Kuaför / Bakım sektörünün randevu, personel, koltuk/oda/cihaz, hizmet karması, sarf ve tekrar ziyaret ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
+Sıradaki çalışma Ajans / Freelancer / Danışmanlık sektörünün proje, saatlik, retainer ve performans gelirleri; ekip kapasitesi, revizyon, taşeron ve tahsilat ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
