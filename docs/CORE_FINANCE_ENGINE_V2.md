@@ -2,35 +2,64 @@
 
 ## Kaynak
 
-Bu modül, korunan Steam Yayıncısı master prototipinin hesap sırasından çıkarılmıştır. Orijinal kaynak değiştirilmez; kaynak hash testiyle korunur.
+Ayrıntılı yayıncı motoru, korunan Steam Yayıncısı master prototipinin hesap sırasından çıkarılmıştır. Orijinal kaynak değiştirilmez ve hash testiyle korunur.
 
-## Yapı
+## Motor katmanları
 
-- `src/core/master-finance-engine-v2.js`: ayrıntılı master hesap zinciri
-- `src/core/finance-engine.js`: ilk yedi sektör için geriye uyumlu yardımcılar
-- `src/sectors/steam-publisher-*.js`: Steam sektör girdileri, hesapları ve sunumu
-- `tests/master-finance-engine-v2.test.mjs`: master davranış testleri
-- `tests/steam-publisher-sector.test.mjs`: sektör bağlantı testleri
+- `src/core/master-finance-engine-v2.js`: Steam master hesap zinciri
+- `src/core/finance-engine.js`: sektör bağımsız vergi, komisyon, başabaş ve nakit yardımcıları
+- `src/core/sector-schema.js`: sayı, oran, seçim, metin, checkbox, tablo ve koşullu görünürlük sözleşmesi
 
-## v0.10.1 itibarıyla tamamlananlar
+Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kendi gerçek gelir, gider, kapasite, paydaş ve nakit yapısını sektör modüllerinde kurar.
 
-- master kaynak arşivi ve hash koruması
-- üç senaryolu golden testler
-- ayrıntılı v2 motor çıkarımı
-- checkbox, metin, tablo ve koşullu alan şeması
-- Steam Yayıncısı master profilinin sektör listesine bağlanması
-- Steam form, KPI, şelale, senaryo ve nakit görünümü
-- gerçek `index.html` kabuğunu okuyan uygulama testi
-- Steam sektörünü seçip sonuçları render eden smoke testi
+## Tamamlanan geçişler
 
-## Bekleyenler
+### Oyun / Dijital Yayıncılık
 
-- oyun/dijital yayıncılık alt iş türleri için ayrı profiller
-- Kafe/Restoranın v2 derinliğine taşınması
-- diğer sektörlerin kendi iş yapısına göre v2 geçişi
-- bağımsız tek HTML çıktıları
-- rapor ve gerçek takip aşamaları
+- Steam master formu ve v2 motoru
+- altı iş türü profili
+- recoup, geliştirici anlaşması, vergi ve nakit
+- master golden sonuçları
+
+### Kafe / Restoran
+
+- on bir iş türü profili
+- talep ve kapasite sürücüleri
+- satış kanalı ve ürün karması tabloları
+- amortisman P&L/nakit ayrımı
+- eski Kafe varsayılan sonucu koruması
+
+### E-Ticaret / Pazaryeri
+
+- on iş türü profili
+- satış adedi, trafik/dönüşüm, talep/dönüşüm, üretim ve abone sürücüleri
+- satış kanalı, ürün karması ve reklam tabloları
+- kanal kesintileri ve ağırlıklı tahsilat vadesi
+- ürün/iade, lojistik ve profile özgü ek maliyetler
+- stok kapsamı, yeniden sipariş noktası ve devir hızı
+- amortisman P&L/nakit ayrımı
+- eski Trendyol varsayılan sonucu koruması
+
+## Sabit finans kuralları
+
+- Finansman ve yatırım P&L geliri değildir.
+- Net kâr ve nakit hareketi ayrı hesaplanır.
+- Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
+- Kurulum ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
+- Satılan ürün/malzeme maliyeti dönemsel P&L gideridir.
+- Hibe nakit girişi ile vergilendirilebilir P&L hibe geliri ayrı alanlardır.
+- Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
+
+## Bekleyen geçişler
+
+1. Güzellik / Kuaför / Bakım
+2. Ajans / Freelancer / Danışmanlık
+3. SaaS / Abonelik
+4. Fiziksel Perakende
+5. Oto Hizmetleri
+
+Bunlardan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
 
 ## Geçiş kuralı
 
-İlk yedi sektör, sonuç farkları belgelenip test edilmeden eski uyumluluk katmanından kaldırılmaz. Her sektör kendi gelir, gider, kapasite, gösterge ve uyarılarıyla ayrı uyarlanır.
+Mevcut sektör sonucu, koruma testi eklenmeden değiştirilmez. Her geçişte alt iş türleri için ayrı varsayımlar, koşullu alanlar, KPI, uyarı ve senaryo sürücüleri kurulmalıdır.
