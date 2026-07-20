@@ -3,7 +3,8 @@ import { buildAgencyProfileKpis } from "./agency-profile-presentation.js";
 
 export function buildAgencyPresentation(result) {
   const presentation = buildLegacyAgencyPresentation(result);
-  const driverLabel = result.profileMetrics.driverLabel.replace(/^Aylık\s+/u, "");
+  const rawDriverLabel = result.profileMetrics.driverLabel.replace(/^Aylık\s+/u, "");
+  const driverLabel = rawDriverLabel.charAt(0).toLocaleUpperCase("tr-TR") + rawDriverLabel.slice(1);
   const driverKpi = presentation.kpis.find((item) => item.id === "project_profit");
   if (driverKpi) {
     driverKpi.label = `${driverLabel} başı net kâr`;
