@@ -1,4 +1,4 @@
-import { calcCommission, calcTaxSplit, percent, stakeholderBasisAmount } from "../core/finance-engine.js";
+import { calcCommission, calcTaxSplit, findLargestExpense, percent, stakeholderBasisAmount } from "../core/finance-engine.js";
 import { calculateSaasMonth as calculateLegacyMonth } from "./saas-core.js";
 import { getSaasBusinessProfile } from "./saas-business-profiles.js";
 import { normalizeSaasInputs } from "./saas-v2-config.js";
@@ -17,8 +17,7 @@ function weightedPlanMetrics(input) {
   return input.plans.reduce((acc, row) => {
     const weight = row.subscriberShareRate / totalShare;
     const annualRecognized = row.monthlyPrice * row.annualBillingShareRate * (1 - row.annualDiscountRate);
-    const monthlyRecognized = row.monthlyPrice * (1 - row.annualBillingShareRate) + annualRecognized;
-    acc.monthlyPrice += monthlyRecognized * weight;
+    acc.monthlyPrice += (row.monthlyPrice * (1 - row.annualBillingShareRate) + annualRecognized) * weight;
     acc.annualMonthlyRecognized += annualRecognized * weight;
     acc.annualBillingShareRate += row.annualBillingShareRate * weight;
     acc.annualDiscountRate += row.annualDiscountRate * weight;
@@ -28,7 +27,7 @@ function weightedPlanMetrics(input) {
 
 export function deriveSaasProfileInputs(rawInputs) {
   const input = normalizeSaasInputs(rawInputs);
-  const plan = weightedPlanMetrics(input);
+  let plan = weightedPlanMetrics(input);
   let openingSubscribers = input.openingSubscribers;
   let monthlyNewSubscribers = input.monthlyNewSubscribers + input.reactivatedSubscribers;
   let monthlyChurnRate = input.monthlyChurnRate;
@@ -39,18 +38,26 @@ export function deriveSaasProfileInputs(rawInputs) {
     monthlyNewSubscribers = input.apiNewCustomers;
     monthlyChurnRate = input.apiMonthlyChurnRate;
     monthlyPrice = input.usageUnitsPerCustomer * input.pricePerUsageUnit;
+    plan = { monthlyPrice, annualMonthlyRecognized: 0, annualBillingShareRate: 0, annualDiscountRate: 0 };
   } else if (input.businessType === "enterprise_license") {
     openingSubscribers = input.enterpriseCustomers;
     monthlyNewSubscribers = input.enterpriseNewCustomers;
     monthlyChurnRate = input.enterpriseMonthlyChurnRate;
     monthlyPrice = input.annualContractValue / 12;
+    plan = { monthlyPrice, annualMonthlyRecognized: monthlyPrice, annualBillingShareRate: 1, annualDiscountRate: 0 };
   } else if (["b2c_subscription", "mobile_subscription"].includes(input.businessType)) {
     monthlyNewSubscribers += input.trialUsers * input.trialConversionRate;
   } else if (input.businessType === "freemium_saas") {
     monthlyNewSubscribers += input.freeUsers * input.freeToPaidConversionRate;
   }
 
-  monthlyPrice *= 1 + input.expansionMrrRate - input.contractionMrrRate;
+  const expansionFactor = Math.max(0, 1 + input.expansionMrrRate - input.contractionMrrRate);
+  monthlyPrice *= expansionFactor;
+  plan = {
+    ...plan,
+    monthlyPrice: plan.monthlyPrice * expansionFactor,
+    annualMonthlyRecognized: plan.annualMonthlyRecognized * expansionFactor,
+  };
   return {
     input,
     profile: getSaasBusinessProfile(input.businessType),
@@ -96,7 +103,7 @@ export function calculateSaasProfileMonth(rawInputs, overrides = {}) {
   const preTaxProfit = contribution - totalFixedCosts - partnerPayout;
   const estimatedTax = Math.max(0, preTaxProfit) * input.estimatedTaxRate;
   const netProfit = preTaxProfit - estimatedTax;
-  const recurringContribution = revenueAfterCommission - onboardingNet - operatingGrantIncome
+  const recurringContribution = base.revenueAfterCommission
     - base.serverVariableCost - base.supportVariableCost - profileVariableCosts;
   const contributionPerSubscriber = percent(recurringContribution, base.endingSubscribers);
   const ltv = legacyInputs.monthlyChurnRate > 0 ? contributionPerSubscriber / legacyInputs.monthlyChurnRate : null;
@@ -106,6 +113,16 @@ export function calculateSaasProfileMonth(rawInputs, overrides = {}) {
   const supportCapacityLoad = supportCapacity > 0 ? base.endingSubscribers / supportCapacity : (base.endingSubscribers > 0 ? Infinity : 0);
   const annualRevenueShare = plan.monthlyPrice > 0 ? plan.annualMonthlyRecognized / plan.monthlyPrice : 0;
   const annualMonthlyNetCash = base.revenueAfterCommission * annualRevenueShare;
+  const largestExpense = findLargestExpense({
+    ...fixedCostItems,
+    serverVariableCost: base.serverVariableCost,
+    supportVariableCost: base.supportVariableCost,
+    acquisitionSpend: base.acquisitionSpend,
+    apiUsageCost,
+    freeUserCost,
+    platformCommission: base.platformCommission,
+    paymentCommission: base.paymentCommission,
+  });
 
   return {
     ...base,
@@ -137,6 +154,7 @@ export function calculateSaasProfileMonth(rawInputs, overrides = {}) {
     ltv,
     ltvCacRatio,
     cacPaybackMonths,
+    grossMargin: percent(recurringContribution, base.revenueAfterCommission),
     profitMargin: percent(netProfit, adjustedRevenue),
     supportCapacity,
     supportCapacityLoad,
@@ -144,6 +162,7 @@ export function calculateSaasProfileMonth(rawInputs, overrides = {}) {
     annualMonthlyNetCash,
     annualPrepaymentCash: annualMonthlyNetCash * 12,
     annualPrepaymentIncrement: annualMonthlyNetCash * 11,
+    largestExpense,
     grossRevenue: base.potentialMRR + onboardingGross,
     customerPayment: base.customerPayment + onboardingTax.customerPayment,
     taxAmount: base.taxAmount + onboardingTax.taxAmount,
