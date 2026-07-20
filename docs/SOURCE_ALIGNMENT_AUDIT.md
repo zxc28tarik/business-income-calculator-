@@ -1,6 +1,6 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.14.0
+## Güncel durum — v0.15.0
 
 Proje, Steam Yayıncısı master kaynağı korunarak kaynak sırasına alınmıştır. Çalışan sektörler silinmez; her sektör kendi ekonomik yapısına göre kontrollü biçimde v2 derinliğine taşınır.
 
@@ -58,32 +58,36 @@ On iş türü satış adedi, trafik/dönüşüm, sosyal talep, üretim veya akti
 
 ### Aşama 5D — Güzellik / Kuaför / Bakım v2 profilleri
 
-Sekiz iş türü ayrı fiziksel kaynak ve operasyon profiline bağlandı:
+Sekiz iş türü koltuk, masa, oda, cihaz, uzman veya genel istasyon kapasitesine bağlandı. Hizmet ve personel tabloları, tekrar ziyaret, no-show geri kazanımı, ürün satışı ve cihaz amortismanı eklendi. Eski güzellik salonu sonucu korunur.
 
-1. Kuaför — koltuk
-2. Berber — koltuk
-3. Güzellik salonu — genel istasyon
-4. Tırnak stüdyosu — masa
-5. Cilt bakım salonu — bakım odası
-6. Lazer / epilasyon merkezi — cihaz
-7. Kaş / kirpik stüdyosu — uzman
-8. Masaj / spa salonu — masaj odası
+### Aşama 5E — Ajans / Freelancer / Danışmanlık v2 profilleri
 
-Güzellik v2 kapsamında:
+On iş türü ayrı gelir sürücüsüne bağlandı:
 
-- düzenlenebilir hizmet / seans karması
-- hizmet bazlı fiyat, süre, sarf ve çalışan primi
-- düzenlenebilir personel rol tablosu
-- fiziksel kaynak ile personel üretken kapasitesinin düşük olanına göre etkin kapasite
-- aktif müşteri tabanı, yeni müşteri ve tekrar ziyaret talebi
-- no-show ve ön ödeme / iptal bedeli geri kazanımı
-- bakım / kozmetik ürün geliri ve ürün maliyeti
-- profile özgü başabaş, KPI ve uyarılar
-- cihaz amortismanının P&L gideri; kurulum yatırımının nakit çıkışı olarak ayrılması
+1. Yazılım ajansı — proje
+2. Sosyal medya ajansı — retainer
+3. Reklam ajansı — kampanya
+4. Tasarım ajansı — proje
+5. Danışmanlık şirketi — danışmanlık günü
+6. Freelancer yazılımcı — faturalandırılan saat
+7. Freelancer tasarımcı — faturalandırılan saat
+8. Video / editing hizmeti — proje
+9. SEO ajansı — retainer
+10. Performans reklam ajansı — yönetilen bütçe ve performans primi
+
+Ajans v2 kapsamında:
+
+- rol bazlı ekip kapasitesi, faturalandırılabilir oran ve saatlik maliyet tablosu
+- teorik kapasite, hedef faturalandırılabilir kapasite ve iç ekip yükü
+- taşeron maliyeti ile sağlanan taşeron saatinin ayrı izlenmesi
+- sözleşmeli revizyon, kapsam taşması ve revizyon tahsilatı
+- peşinat payına göre etkin tahsilat gecikmesi
+- müşteri yoğunlaşması, kapasite ve tahsilat uyarıları
+- profile özgü başabaş, KPI ve denetim izi
 - finansmanın P&L dışında tutulması
 - faaliyet hibe geliri ile hibe nakit girişinin ayrı izlenmesi
 
-uygulandı. Eski güzellik salonu varsayılan sonucu testle korunur.
+uygulandı. Eski Yazılım Ajansı varsayılan sonucu testle korunur.
 
 ## Kaynak ilkesi
 
@@ -91,17 +95,16 @@ Steam formu diğer sektörlere kopyalanmaz. Her sektör ve alt iş türü kendi 
 
 ## Sıradaki aşama
 
-Aşama 5E — Ajans / Freelancer / Danışmanlık v2 geçişi:
+Aşama 5F — SaaS / Abonelik v2 geçişi:
 
-1. proje, saatlik çalışma, retainer ve performans bazlı gelir sürücülerini ayırmak
-2. ekip kapasitesi, faturalandırılabilir saat ve kullanım oranını kurmak
-3. müşteri yoğunlaşması, revizyon, taşeron ve tahsilat ekonomisini derinleştirmek
+1. B2B, B2C, mobil abonelik, üyelik ve API kullanımı gelir sürücülerini ayırmak
+2. plan/fiyat karması, yeni müşteri, churn, expansion ve contraction hareketlerini derinleştirmek
+3. sunucu, destek, ödeme, satış ve müşteri edinme ekonomisini profile göre kurmak
 4. alt iş türlerine özel KPI ve uyarıları eklemek
-5. mevcut ajans kabul sonuçlarını korumak
+5. mevcut SaaS kabul sonuçlarını korumak
 
 ## Daha sonraki işler
 
-- SaaS / Abonelik v2 geçişi
 - Fiziksel Perakende v2 geçişi
 - Oto Hizmetleri v2 geçişi
 - bağımsız tek HTML çıktıları
