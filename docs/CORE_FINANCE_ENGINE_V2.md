@@ -10,7 +10,7 @@ Ayrıntılı yayıncı motoru, korunan Steam Yayıncısı master prototipinin he
 - `src/core/finance-engine.js`: sektör bağımsız vergi, komisyon, başabaş ve nakit yardımcıları
 - `src/core/sector-schema.js`: sayı, oran, seçim, metin, checkbox, tablo ve koşullu görünürlük sözleşmesi
 
-Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kendi gerçek gelir, gider, kapasite, paydaş ve nakit yapısını sektör modüllerinde kurar.
+Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kendi gelir, gider, kapasite, paydaş ve nakit yapısını sektör modüllerinde kurar.
 
 ## Tamamlanan geçişler
 
@@ -56,31 +56,41 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 
 - yedi iş türü profili
 - trafik/dönüşüm, müşteri sıklığı, sipariş ve saatlik işlem sürücüleri
-- ürün/kategori karması: fiyat, maliyet, iade, iskonto ve bozulma/fire
-- tedarikçi karması: vade, teslim süresi, alım indirimi ve asgari sipariş
-- stok kapsamı, hedef stok, yeniden sipariş noktası ve işletme sermayesi açığı
-- mağaza kapasitesi, profile özgü başabaş ve perakende nakit kolonları
-- amortisman P&L/nakit ayrımı
+- ürün/kategori, tedarikçi, stok kapsamı ve işletme sermayesi
 - eski Butik mağaza sonucu koruması
+
+### Oto Hizmetleri
+
+- sekiz iş türü profili
+- talep, randevu, no-show, iptal/kapora ve tekrar ziyaret
+- istasyon/lift ile personel üretken kapasitesinin karşılaştırılması
+- hizmet karması: fiyat, süre, sarf, enerji, parça ve tekrar işçilik
+- parça/sarf stok kapsamı, tedarikçi indirimi/vadesi ve yeniden sipariş noktası
+- taşeron iş geliri, maliyeti ve katkı marjı
+- otoya özel başabaş, uyarı ve nakit kolonları
+- eski Oto Yıkama sonucu koruması
 
 ## Sabit finans kuralları
 
 - Finansman ve yatırım P&L geliri değildir.
 - Net kâr ve nakit hareketi ayrı hesaplanır.
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
-- Kurulum ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
-- Satılan ürün, malzeme, sarf, teslimat ve kullanım maliyeti dönemsel P&L gideridir.
-- Sayım kaybı ve bozulma/fire satılan ürün maliyetinden ayrı izlenebilir.
-- Tedarikçi indirimi ürün maliyetini; tedarikçi vadesi nakit zamanlamasını etkiler.
+- Kurulum, ekipman ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
+- Satılan ürün, malzeme, sarf, teslimat, kullanım, tekrar işçilik ve taşeron dönemsel P&L gideridir.
+- Tedarikçi indirimi maliyeti; tedarikçi vadesi nakit zamanlamasını etkiler.
 - Hibe nakit girişi ile vergilendirilebilir P&L faaliyet hibesi ayrı alanlardır.
 - Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
-## Bekleyen geçişler
+## Profil geçiş durumu
 
-1. Oto Hizmetleri
+Aktif sekiz sektör ailesinin tamamı v2 profil derinliğine taşınmıştır. Bundan sonraki çalışma finans formüllerini yeniden yazmak değil, mevcut tek kaynak sözleşmelerinden farklı çıktı biçimleri üretmektir.
 
-Bundan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
+## Sıradaki aşama
 
-## Geçiş kuralı
+1. bağımsız tek HTML çıktıları
+2. rapor katmanı
+3. gerçek takip modu
 
-Mevcut sektör sonucu, koruma testi eklenmeden değiştirilmez. Her geçişte alt iş türleri için ayrı varsayımlar, koşullu alanlar, KPI, uyarı ve senaryo sürücüleri kurulmalıdır.
+## Tek kaynak kuralı
+
+Bağımsız HTML veya rapor çıktısı yeni bir finans motoru oluşturamaz. Platform, tek HTML ve rapor aynı sektör tanımı ve aynı hesap fonksiyonlarını kullanmalı; aynı girdide aynı finans sonucunu üretmelidir.
