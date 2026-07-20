@@ -5,8 +5,10 @@ import { normalizeSaasInputs } from "./saas-v2-config.js";
 
 function weightedPlanMetrics(input) {
   if (!input.advancedPlanMixEnabled || !input.plans.length) {
+    const annualMonthlyRecognized = input.monthlyPrice * input.annualBillingShareRate * (1 - input.annualDiscountRate);
     return {
       monthlyPrice: input.monthlyPrice * (1 - input.annualBillingShareRate * input.annualDiscountRate),
+      annualMonthlyRecognized,
       annualBillingShareRate: input.annualBillingShareRate,
       annualDiscountRate: input.annualDiscountRate,
     };
@@ -14,11 +16,14 @@ function weightedPlanMetrics(input) {
   const totalShare = input.plans.reduce((sum, row) => sum + row.subscriberShareRate, 0) || 1;
   return input.plans.reduce((acc, row) => {
     const weight = row.subscriberShareRate / totalShare;
-    acc.monthlyPrice += row.monthlyPrice * (1 - row.annualBillingShareRate * row.annualDiscountRate) * weight;
+    const annualRecognized = row.monthlyPrice * row.annualBillingShareRate * (1 - row.annualDiscountRate);
+    const monthlyRecognized = row.monthlyPrice * (1 - row.annualBillingShareRate) + annualRecognized;
+    acc.monthlyPrice += monthlyRecognized * weight;
+    acc.annualMonthlyRecognized += annualRecognized * weight;
     acc.annualBillingShareRate += row.annualBillingShareRate * weight;
     acc.annualDiscountRate += row.annualDiscountRate * weight;
     return acc;
-  }, { monthlyPrice: 0, annualBillingShareRate: 0, annualDiscountRate: 0 });
+  }, { monthlyPrice: 0, annualMonthlyRecognized: 0, annualBillingShareRate: 0, annualDiscountRate: 0 });
 }
 
 export function deriveSaasProfileInputs(rawInputs) {
@@ -98,11 +103,9 @@ export function calculateSaasProfileMonth(rawInputs, overrides = {}) {
   const ltvCacRatio = ltv == null || input.cacPerSubscriber <= 0 ? null : ltv / input.cacPerSubscriber;
   const cacPaybackMonths = contributionPerSubscriber > 0 ? input.cacPerSubscriber / contributionPerSubscriber : null;
   const supportCapacity = input.supportStaffCount * input.supportCapacityPerStaff;
-  const supportCapacityLoad = percent(base.endingSubscribers, supportCapacity);
-  const annualPrepaymentCash = base.endingSubscribers * plan.annualBillingShareRate
-    * plan.monthlyPrice * 12 * (1 - plan.annualDiscountRate);
-  const annualRecognizedThisMonth = base.endingSubscribers * plan.annualBillingShareRate
-    * plan.monthlyPrice * (1 - plan.annualDiscountRate);
+  const supportCapacityLoad = supportCapacity > 0 ? base.endingSubscribers / supportCapacity : (base.endingSubscribers > 0 ? Infinity : 0);
+  const annualRevenueShare = plan.monthlyPrice > 0 ? plan.annualMonthlyRecognized / plan.monthlyPrice : 0;
+  const annualMonthlyNetCash = base.revenueAfterCommission * annualRevenueShare;
 
   return {
     ...base,
@@ -137,8 +140,10 @@ export function calculateSaasProfileMonth(rawInputs, overrides = {}) {
     profitMargin: percent(netProfit, adjustedRevenue),
     supportCapacity,
     supportCapacityLoad,
-    annualPrepaymentCash,
-    annualPrepaymentIncrement: Math.max(0, annualPrepaymentCash - annualRecognizedThisMonth),
+    annualRevenueShare,
+    annualMonthlyNetCash,
+    annualPrepaymentCash: annualMonthlyNetCash * 12,
+    annualPrepaymentIncrement: annualMonthlyNetCash * 11,
     grossRevenue: base.potentialMRR + onboardingGross,
     customerPayment: base.customerPayment + onboardingTax.customerPayment,
     taxAmount: base.taxAmount + onboardingTax.taxAmount,
