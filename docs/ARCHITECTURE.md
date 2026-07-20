@@ -21,34 +21,38 @@ Profil katmanı ortak UI veya finans yardımcılarını kopyalamaz. İş türün
 - Ajans / Freelancer / Danışmanlık
 - SaaS / Abonelik
 - Fiziksel Perakende
+- Oto Hizmetleri
 
-## Fiziksel Perakende v2
+## Oto Hizmetleri v2
 
-- `retail-business-profiles.js`: yedi iş türünün varsayımları ve satış sürücüsü
-- `retail-profile-form-sales.js`: trafik, dönüşüm, müşteri sıklığı, sipariş, saatlik işlem ve ürün karması
-- `retail-profile-form-inventory.js`: tedarikçi tablosu, vade, teslim süresi, stok ve işletme sermayesi alanları
-- `retail-v2-config.js`: eski veriyi koruyan profil geçişi, normalizasyon ve senaryolar
-- `retail-profile-engine.js`: talep, iskonto, ürün maliyeti, fire, tedarikçi indirimi ve stok metrikleri
-- `retail-v2-core.js`: profile özgü başabaş, nakit akışı ve uyarılar
-- `retail-v2-presentation.js`: profil KPI, stok/tedarikçi denetim izi ve nakit kolonları
-- `retail-v2.js`: v2 sektör sözleşmesi
+- `auto-business-profiles.js`: sekiz iş türünün varsayımları ve talep sürücüsü
+- `auto-profile-form-operations.js`: iş türü, randevu, tekrar ziyaret, istasyon ve hizmet karması
+- `auto-profile-form-staff.js`: personel rol tablosu ile vergi/ödeme alanları
+- `auto-profile-form-supply.js`: parça/sarf stoğu, tedarikçi ve taşeron alanları
+- `auto-v2-config.js`: eski veriyi koruyan profil geçişi, normalizasyon ve senaryolar
+- `auto-profile-engine.js`: talep, no-show, istasyon/personel kapasitesi, hizmet, tedarikçi ve taşeron türetimi
+- `auto-v2-month.js`: aylık gelir, iptal tahsilatı, parça/sarf, tekrar işçilik, taşeron, P&L ve stok metrikleri
+- `auto-v2-core.js`: profile özgü başabaş, nakit akışı ve uyarılar
+- `auto-v2-presentation.js`: profil KPI ve denetim izi
+- `auto-v2.js`: v2 sektör sözleşmesi ve otoya özel nakit kolonları
 
-Satış sürücüleri:
+Talep sürücüleri:
 
-- Butik, aksesuar, kırtasiye ve oyuncak: mağaza trafiği × dönüşüm × sezon çarpanı
-- Pet shop: aktif müşteri tabanı × aylık alışveriş sıklığı
-- Çiçekçi: standart günlük sipariş + etkinlik siparişi
-- Küçük market: saatlik kasa işlemi × günlük açık saat
+- Oto yıkama: günlük talep × dönüşüm
+- Oto kuaför, detaylı temizlik, lastik, kaplama ve küçük servis: randevu × gerçekleşme
+- Kaporta / boya: aylık planlanan iş
+- Mobil servis: mobil ekip × günlük rota
+- İsteğe bağlı müşteri tabanı: aktif müşteri × tekrar ziyaret + yeni iş
 
-Ürün karması satış payı, fiyat, maliyet, iade, iskonto ve bozulma/fire alanlarını taşır. Tedarikçi karması alım payı, ödeme vadesi, teslim süresi, alım indirimi ve asgari siparişi taşır. Stok planı mevcut stok maliyetini hedef kapsamla karşılaştırarak işletme sermayesi açığı, fazla stok ve yeniden sipariş noktasını üretir.
+Etkin kapasite; istasyon/lift kapasitesi ile personel üretken kapasitesinin düşük olanıdır. Tekrar işçilik süreyi ve malzeme maliyetini artırır. Taşeron işler iç kapasiteyi kullanmadan gelir ve maliyet üretir. Parça/sarf stoğu hedef kapsam, tedarik süresi ve güvenlik stoğuyla karşılaştırılır.
 
 ## P&L / nakit ayrımı
 
 - Finansman ve yatırım P&L geliri değildir.
 - P&L faaliyet hibesi ile tek seferlik hibe nakit girişi ayrıdır.
-- İlk stok yatırımı kurulum nakdinde bir kez gösterilir.
-- Satılan ürün ve stok kaybı dönemsel P&L gideridir.
-- Tedarikçi vadesi P&L maliyetini silmez; nakit ödeme zamanını değiştirir.
+- Parça, sarf, enerji, yol, tekrar işçilik ve taşeron dönemsel P&L gideridir.
+- Tedarikçi vadesi maliyeti silmez; nakit ödeme zamanını değiştirir.
+- Ekipman yatırımı kurulum nakdinde bir kez gösterilir.
 - Amortisman yalnız P&L gideridir ve nakitten ikinci kez düşülmez.
 
 ## Sektör sözleşmesi
@@ -62,9 +66,9 @@ Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölüm
 - gerçek HTML smoke testi
 - eski sektör sonucu koruma testleri
 - alt iş türü, tablo, senaryo, P&L/nakit ve kapasite testleri
-- Fiziksel Perakende için yedi profil, ürün/tedarikçi karması, stok işletme sermayesi ve eski Butik sonucu testleri
+- Oto Hizmetleri için sekiz profil, hizmet/personel, stok/tedarikçi, taşeron ve eski Oto Yıkama sonucu testleri
 - `scripts/check-modules.mjs` ile bütün kaynak modüllerinin içe aktarım kontrolü
 
 ## Sonraki aşama
 
-Sıradaki çalışma Oto Hizmetleri sektörünün hizmet türü, randevu, lift/istasyon, personel saati, parça, sarf, taşeron, tekrar ziyaret ve paket ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
+Aşama 6, her sektör için bağımsız tek HTML çıktısı üretimidir. Tek HTML dosyaları ortak sektör sözleşmelerini kullanmalı; finans motorunu kopyalayan ikinci bir formül kaynağı oluşturmamalıdır. Platform ve bağımsız çıktı aynı girdide aynı sonucu vermelidir.
