@@ -3,15 +3,16 @@ import { buildAgencyProfileKpis } from "./agency-profile-presentation.js";
 
 export function buildAgencyPresentation(result) {
   const presentation = buildLegacyAgencyPresentation(result);
+  const driverLabel = result.profileMetrics.driverLabel.replace(/^Aylık\s+/u, "");
   const driverKpi = presentation.kpis.find((item) => item.id === "project_profit");
   if (driverKpi) {
-    driverKpi.label = `${result.profileMetrics.driverLabel} başı net kâr`;
+    driverKpi.label = `${driverLabel} başı net kâr`;
     driverKpi.value = result.projectNetProfit;
     driverKpi.note = `${round(result.profileMetrics.equivalentUnits, 1)} birim`;
   }
   const breakevenKpi = presentation.kpis.find((item) => item.id === "breakeven_projects");
   if (breakevenKpi) {
-    breakevenKpi.label = `Başabaş ${result.profileMetrics.driverLabel.toLocaleLowerCase("tr-TR")}`;
+    breakevenKpi.label = `Başabaş ${driverLabel.toLocaleLowerCase("tr-TR")}`;
     breakevenKpi.value = result.breakevenDriverValue;
     breakevenKpi.suffix = "";
   }
