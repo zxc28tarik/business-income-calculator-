@@ -12,11 +12,30 @@ import {
 } from "./auto-v2-config.js";
 import {
   buildAutoServiceWarnings,
-  calculateAutoServiceModel,
-  calculateAutoServiceMonth,
-  calculateAutoServiceScenarioComparison,
+  calculateAutoServiceModel as calculateCoreModel,
+  calculateAutoServiceMonth as calculateCoreMonth,
+  calculateAutoServiceScenarioComparison as calculateCoreScenarioComparison,
 } from "./auto-v2-core.js";
 import { buildAutoServicePresentation } from "./auto-v2-presentation.js";
+
+function alignCompletedJobs(result) {
+  return {
+    ...result,
+    input: { ...result.input, dailyVehicles: result.monthlyVehicles / Math.max(1, result.input.openDays) },
+  };
+}
+
+export function calculateAutoServiceModel(rawInputs) {
+  return alignCompletedJobs(calculateCoreModel(rawInputs));
+}
+
+export function calculateAutoServiceMonth(rawInputs, overrides = {}) {
+  return alignCompletedJobs(calculateCoreMonth(rawInputs, overrides));
+}
+
+export function calculateAutoServiceScenarioComparison(baseOrScenarioInputs) {
+  return calculateCoreScenarioComparison(baseOrScenarioInputs).map((item) => ({ ...item, result: alignCompletedJobs(item.result) }));
+}
 
 export {
   AUTO_BUSINESS_PROFILES,
@@ -29,9 +48,6 @@ export {
   applyAutoServiceScenario,
   normalizeAutoServiceInputs,
   buildAutoServiceWarnings,
-  calculateAutoServiceModel,
-  calculateAutoServiceMonth,
-  calculateAutoServiceScenarioComparison,
   buildAutoServicePresentation,
 };
 
