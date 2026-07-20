@@ -2,45 +2,49 @@
 
 Sektör bazlı finansal fizibilite ve 12 aylık nakit akışı platformu.
 
-## v0.12.0 — Kafe / Restoran v2 iş türü profilleri
+## v0.13.0 — E-Ticaret / Pazaryeri v2 iş türü profilleri
 
-Kafe / Restoran sektörü artık on bir ayrı iş türü profiliyle çalışır:
+E-Ticaret / Pazaryeri sektörü artık on ayrı iş türü profiliyle çalışır:
 
-1. Kafe
-2. Restoran
-3. Kahveci
-4. Kahve kiosk
-5. Tatlıcı / pastane
-6. Burgerci
-7. Dönerci
-8. Tostçu / büfe
-9. Dark kitchen
-10. Food truck
-11. Franchise restoran
+1. Trendyol mağazası
+2. Hepsiburada mağazası
+3. Amazon Türkiye
+4. Amazon global
+5. Shopify mağazası
+6. Stoklu e-ticaret
+7. Dropshipping
+8. Instagram satış
+9. El yapımı ürün satışı
+10. Abonelik kutusu
 
-Profiller yalnız etiket değildir. Restoran koltuk, masa devri ve dolulukla; kiosk saatlik sipariş ve servis saatiyle; dark kitchen günlük paket siparişiyle; food truck etkinlik ve etkinlik başı müşteriyle hesaplanır.
+Profiller yalnız etiket değildir. Trendyol, Hepsiburada, Amazon Türkiye ve stoklu e-ticaret satış adediyle; Amazon global, Shopify ve dropshipping trafik × dönüşüm × sipariş başı ürünle; Instagram talep × dönüşümle; el yapımı ürün üretim kapasitesiyle; abonelik kutusu aktif aboneyle hesaplanır.
 
-Kafe v2 ayrıca şunları içerir:
+E-ticaret v2 ayrıca şunları içerir:
 
-- düzenlenebilir satış kanalı karması
+- düzenlenebilir satış kanalı tablosu
+- kanal bazlı fiyat çarpanı, komisyon, ödeme kesintisi, kargo, paketleme ve tahsilat vadesi
 - düzenlenebilir ürün / kategori karması
-- kanal bazlı fiş çarpanı, komisyon ve paketleme
-- kategori bazlı malzeme ve fire oranı
+- ürün bazlı fiyat çarpanı, birim maliyet ve iade oranı
+- düzenlenebilir reklam kanalı tablosu, ROAS ve edinme maliyeti
+- stok kapsamı, yeniden sipariş noktası, güvenlik stoğu ve stok devir hızı
+- Amazon global sınır ötesi maliyet, dropshipping tedarikçi kalite kaybı, el yapımı birim emek maliyeti ve abonelik kutusu kayıp oranı
 - profile özgü kapasite, başabaş, KPI ve uyarılar
-- kurulum yatırımı ile amortismanın P&L / nakit ayrımı
-- finansmanın P&L dışı tutulması
-- hibe / desteğin P&L geliri ve nakit girişi olarak ayrı alanlarda izlenmesi
+- amortismanın P&L gideri; yatırımın nakit çıkışı olarak ayrılması
+- finansmanın P&L dışında tutulması
+- P&L hibe geliri ile hibe nakit girişinin ayrı izlenmesi
 
-Eski Kafe varsayılan finans sonucu golden testle korunur. Ayrıntılar: `docs/CAFE_BUSINESS_TYPE_PROFILES.md`.
+Eski Trendyol varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/ECOMMERCE_BUSINESS_TYPE_PROFILES.md`.
 
-## v0.11.0 — Oyun ve dijital yayıncılık profilleri
+## Önceki v2 geçişleri
 
-Steam yayıncısı, indie kendi yayınlama, mobil oyun, DLC, dijital ürün ve publisher–developer paylaşımı ayrı profil sürücülerine sahiptir. Steam master golden sonucu korunur.
+- `v0.12.0`: Kafe / Restoran — on bir iş türü profili
+- `v0.11.0`: Oyun / Dijital Yayıncılık — altı iş türü profili ve Steam master golden koruması
+- `v0.10.1`: UTF-8, gerçek HTML kabuğu ve smoke test düzeltmeleri
 
 ## Aktif sektörler
 
 1. Kafe / Restoran — v2 profil derinliği
-2. E-Ticaret / Pazaryeri — temel model
+2. E-Ticaret / Pazaryeri — v2 profil derinliği
 3. Güzellik / Kuaför / Bakım — temel model
 4. Ajans / Freelancer / Danışmanlık — temel model
 5. SaaS / Abonelik — temel model
@@ -50,7 +54,7 @@ Steam yayıncısı, indie kendi yayınlama, mobil oyun, DLC, dijital ürün ve p
 
 ## Geçiş durumu
 
-Oyun / Dijital Yayıncılık ve Kafe / Restoran kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör E-Ticaret / Pazaryeri olacaktır.
+Oyun / Dijital Yayıncılık, Kafe / Restoran ve E-Ticaret / Pazaryeri kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör Güzellik / Kuaför / Bakım olacaktır.
 
 ## Çalıştırma
 
@@ -66,6 +70,8 @@ Ardından `http://localhost:8080` adresine gidin.
 npm test
 npm run check
 ```
+
+Güncel paket: 137/137 test ve JavaScript sözdizimi kontrolü başarılı.
 
 ## İlkeler
 
