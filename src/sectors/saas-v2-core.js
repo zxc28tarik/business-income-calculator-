@@ -1,4 +1,4 @@
-import { buildWaterfall, calculateCashFlow, percent, solveBreakeven } from "../core/finance-engine.js";
+import { buildWaterfall, calculateCashFlow, solveBreakeven } from "../core/finance-engine.js";
 import { SAAS_SCENARIOS, applySaasScenario, normalizeSaasInputs } from "./saas-v2-config.js";
 import { calculateSaasProfileMonth, deriveSaasProfileInputs } from "./saas-profile-engine.js";
 
@@ -30,14 +30,19 @@ function monthOverrides(input, row) {
   return { openingSubscribers: row.openingSubscribers, monthlyNewSubscribers: row.newSubscribers };
 }
 
-function addAnnualPrepayment(cashFlow, increment) {
-  if (!(increment > 0)) return cashFlow;
-  const rows = cashFlow.rows.map((row, index) => ({
-    ...row,
-    cashStart: row.cashStart + (index > 0 ? increment : 0),
-    annualPrepayment: index === 0 ? increment : 0,
-    cashEnd: row.cashEnd + increment,
-  }));
+function shiftAnnualCollections(cashFlow, increment, monthlyAnnualNetCash) {
+  if (!(increment > 0) || !(monthlyAnnualNetCash > 0)) return cashFlow;
+  const rows = cashFlow.rows.map((row, index) => {
+    const startDelta = index === 0 ? 0 : increment - monthlyAnnualNetCash * (index - 1);
+    const endDelta = increment - monthlyAnnualNetCash * index;
+    return {
+      ...row,
+      cashStart: row.cashStart + startDelta,
+      collections: Math.max(0, row.collections - (index > 0 ? monthlyAnnualNetCash : 0)),
+      annualPrepayment: index === 0 ? increment : 0,
+      cashEnd: row.cashEnd + endDelta,
+    };
+  });
   return {
     ...cashFlow,
     rows,
@@ -54,6 +59,7 @@ export function calculateSaasMonth(rawInputs, overrides = {}) {
 
 export function calculateSaasModel(rawInputs) {
   const input = normalizeSaasInputs(rawInputs);
+  const derived = deriveSaasProfileInputs(input);
   const current = calculateSaasProfileMonth(input);
   const [openingKey] = driverKeys(input.businessType);
   const currentOpening = input[openingKey];
@@ -91,13 +97,14 @@ export function calculateSaasModel(rawInputs) {
       return calculateSaasProfileMonth(input, overrides);
     },
   });
-  cashFlow = addAnnualPrepayment(cashFlow, current.annualPrepaymentIncrement);
+  cashFlow = shiftAnnualCollections(cashFlow, current.annualPrepaymentIncrement, current.annualMonthlyNetCash);
   cashFlow.rows = cashFlow.rows.map((row, index) => ({ ...row, ...subscriberSchedule[index] }));
 
   const annualNetProfit = current.netProfit * 12;
   const roi = current.totalSetupCost > 0 ? annualNetProfit / current.totalSetupCost : null;
   const paybackMonths = current.netProfit > 0 ? current.totalSetupCost / current.netProfit : null;
-  const grossRevenueRetention = Math.max(0, 1 - input.monthlyChurnRate - input.contractionMrrRate);
+  const profileChurnRate = derived.legacyInputs.monthlyChurnRate;
+  const grossRevenueRetention = Math.max(0, 1 - profileChurnRate - input.contractionMrrRate);
   const netRevenueRetention = grossRevenueRetention + input.expansionMrrRate;
   const warnings = buildSaasWarnings({ current, cashFlow, breakevenSubscribers, input, netRevenueRetention });
 
