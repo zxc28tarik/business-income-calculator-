@@ -16,49 +16,47 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 
 ### Oyun / Dijital Yayıncılık
 
-- Steam master formu ve v2 motoru
 - altı iş türü profili
-- recoup, geliştirici anlaşması, vergi ve nakit
+- Steam master formu, recoup, geliştirici anlaşması, vergi ve nakit
 - master golden sonuçları
 
 ### Kafe / Restoran
 
 - on bir iş türü profili
-- talep ve kapasite sürücüleri
-- satış kanalı ve ürün karması tabloları
+- talep, kapasite, satış kanalı ve ürün karması
 - amortisman P&L/nakit ayrımı
-- eski Kafe varsayılan sonucu koruması
+- eski Kafe sonucu koruması
 
 ### E-Ticaret / Pazaryeri
 
 - on iş türü profili
-- satış adedi, trafik/dönüşüm, sosyal talep, üretim ve abone sürücüleri
-- satış kanalı, ürün karması ve reklam tabloları
-- kanal kesintileri, ürün/iade, lojistik ve stok katmanı
-- amortisman P&L/nakit ayrımı
-- eski Trendyol varsayılan sonucu koruması
+- satış, trafik/dönüşüm, ürün, reklam, lojistik ve stok
+- eski Trendyol sonucu koruması
 
 ### Güzellik / Kuaför / Bakım
 
 - sekiz iş türü profili
-- koltuk, masa, oda, cihaz, uzman veya genel istasyon kapasitesi
-- fiziksel kaynak ile personel üretken kapasitesinin karşılaştırılması
-- hizmet karması: fiyat, süre, sarf ve çalışan primi
-- müşteri tabanı, yeni müşteri ve tekrar ziyaret talebi
-- no-show geri kazanımı ve perakende ürün satışı
-- cihaz amortismanı P&L/nakit ayrımı
-- eski güzellik salonu varsayılan sonucu koruması
+- fiziksel/personel kapasitesi, hizmet karması, tekrar ziyaret ve no-show
+- eski güzellik salonu sonucu koruması
 
 ### Ajans / Freelancer / Danışmanlık
 
 - on iş türü profili
-- proje, retainer, faturalandırılan saat, danışmanlık günü, kampanya ve yönetilen bütçe sürücüleri
-- rol bazlı iç ekip kapasitesi ve saatlik maliyet
-- taşeron maliyeti ile taşeron saatinin ayrı izlenmesi
-- sözleşmeli revizyon, kapsam taşması ve revizyon tahsilatı
-- peşinat oranına göre etkin tahsilat gecikmesi
-- müşteri yoğunlaşması, kapasite ve tahsilat uyarıları
-- eski Yazılım Ajansı varsayılan sonucu koruması
+- proje, retainer, saat, danışmanlık günü, kampanya ve performans geliri
+- ekip/taşeron kapasitesi, revizyon ve peşinat
+- eski Yazılım Ajansı sonucu koruması
+
+### SaaS / Abonelik
+
+- sekiz iş türü profili
+- B2B, B2C, Mikro SaaS, API, mobil, üyelik, freemium ve kurumsal lisans
+- plan/fiyat karması ve yıllık ödeme
+- deneme ve freemium dönüşümü
+- churn, yeniden aktivasyon, expansion ve contraction
+- GRR, NRR, LTV/CAC ve CAC geri dönüşü
+- API kullanım maliyeti ve mobil mağaza komisyonu
+- onboarding, içerik, topluluk ve destek kapasitesi
+- eski B2B SaaS sonucu koruması
 
 ## Sabit finans kuralları
 
@@ -66,16 +64,16 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 - Net kâr ve nakit hareketi ayrı hesaplanır.
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
 - Kurulum ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
-- Satılan ürün/malzeme/sarf ve teslimat üretim maliyeti dönemsel P&L gideridir.
-- Hibe nakit girişi ile vergilendirilebilir P&L hibe geliri ayrı alanlardır.
-- Peşinat kârı değiştirmez; tahsilat zamanlamasını ve işletme sermayesini etkiler.
+- Satılan ürün, malzeme, sarf, teslimat ve kullanım maliyeti dönemsel P&L gideridir.
+- Hibe nakit girişi ile vergilendirilebilir P&L faaliyet hibesi ayrı alanlardır.
+- Peşinat kârı değiştirmez; tahsilat zamanlamasını etkiler.
+- Yıllık abonelik geliri aylık kazanılmış gelir olarak tanınır; peşin ödeme nakdi öne taşır ve çift sayılmaz.
 - Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
 ## Bekleyen geçişler
 
-1. SaaS / Abonelik
-2. Fiziksel Perakende
-3. Oto Hizmetleri
+1. Fiziksel Perakende
+2. Oto Hizmetleri
 
 Bunlardan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
 
