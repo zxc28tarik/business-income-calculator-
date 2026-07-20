@@ -1,4 +1,4 @@
-import { booleanField, numberField, rateField, tableField } from "../core/sector-schema.js";
+import { booleanField, numberField, rateField, selectField, tableField } from "../core/sector-schema.js";
 
 export const RETAIL_PROFILE_INVENTORY_SECTIONS = [
   {
@@ -28,6 +28,8 @@ export const RETAIL_PROFILE_INVENTORY_SECTIONS = [
   {
     title: "4 · Vergi, ödeme ve dönemsel gider", open: true,
     fields: [
+      selectField("taxType", "KDV biçimi", [["included", "Fiyata dahil"], ["excluded", "Fiyat üstü"], ["none", "Vergi yok"]]),
+      rateField("vatRate", "KDV oranı", { hint: "Örnek varsayımdır; mali müşavirinizle teyit edin." }),
       rateField("cardSalesShare", "Kartlı satış payı"),
       rateField("posCommissionRate", "POS / ödeme komisyonu"),
       numberField("shoppingBagCostPerCustomer", "Poşet / ambalaj gideri, işlem başı (TL)", 1),
