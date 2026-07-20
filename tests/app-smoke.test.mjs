@@ -133,8 +133,14 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   sectorSelect.value = "saas_subscription";
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /SaaS \/ Abonelik/);
+  assert.match(elements.get("#formSections").innerHTML, /Gelişmiş paket \/ plan karmasını kullan/);
+  assert.match(elements.get("#formSections").innerHTML, /Upgrade \/ expansion MRR oranı/);
+  assert.match(elements.get("#formSections").innerHTML, /Destek \/ müşteri başarı personeli/);
   assert.match(elements.get("#kpiGrid").innerHTML, /LTV \/ CAC/);
-  assert.match(elements.get("#cashFlowTable").innerHTML, /Aktif abone/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Net gelir tutma \(NRR\)/);
+  assert.match(elements.get("#cashFlowTable").innerHTML, /Ay başı müşteri/);
+  assert.match(elements.get("#cashFlowTable").innerHTML, /Yıllık peşin/);
+  assert.match(elements.get("#breakdown").innerHTML, /Profil · İş modeli ve gelir sürücüsü/);
 
   sectorSelect.value = "physical_retail";
   sectorSelect.dispatch("change", sectorSelect);
