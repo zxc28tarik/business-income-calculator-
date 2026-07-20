@@ -8,37 +8,57 @@
 - `src/ui/`: ortak form ve sonuç görünümü
 - `src/sectors/registry.js`: aktif sektör listesi
 
-## Oyun / Dijital Yayıncılık profil katmanı
+## Profil katmanı ilkesi
+
+Profil katmanı ortak UI'ı veya finans yardımcılarını kopyalamaz. İş türünün talep/satış sürücüsünü, kapasitesini, varsayımlarını, KPI ve uyarılarını sektör motoruna verir. Sektör motoru P&L, başabaş ve nakit akışını üretir.
+
+## Oyun / Dijital Yayıncılık
 
 - `steam-publisher-config.js`: master varsayımları
 - `steam-publisher-core.js`: v2 finans hesabı
 - `steam-publisher-form.js`: master formu
 - `steam-publisher-profile-form.js`: alt iş türüne göre koşullu alanlar
-- `steam-business-profile-engine.js`: satış sürücülerini master motor girdilerine dönüştürür
-- `steam-business-profile-presentation.js`: özel KPI ve uyarılar
+- `steam-business-profile-engine.js`: profil satış sürücüleri
+- `steam-business-profile-presentation.js`: profil KPI ve uyarıları
 - `steam-publisher-presentation.js`: ortak sonuç görünümü
 
-Profil katmanı vergi, tahsilat, P&L ve nakit motorunu kopyalamaz; yalnız iş türünün gelir sürücülerini ortak v2 girdilerine çevirir.
+## Kafe / Restoran v2
 
-## Kafe / Restoran v2 profil katmanı
+- `cafe-business-profile-engine.js`: on bir iş türünün talep, kapasite, varsayım, KPI ve uyarıları
+- `cafe-config.js`: koşullu form, satış kanalı ve ürün karması tabloları
+- `cafe-core.js`: kanal ciro/komisyonu, ürün maliyeti, P&L, başabaş ve nakit
+- `cafe-presentation.js`: profil, kanal, ürün, amortisman ve nakit denetim izi
+- `cafe-restaurant.js`: sektör sözleşmesi
 
-- `cafe-business-profile-engine.js`: on bir iş türünün varsayımları, talep sürücüsü, kapasite, KPI ve uyarıları
-- `cafe-config.js`: koşullu form, satış kanalı ve ürün karması tabloları, senaryolar ve normalizasyon
-- `cafe-core.js`: kanal bazlı ciro/komisyon, ürün karması maliyeti, P&L, vergi ön tahmini, başabaş ve nakit hesabı
-- `cafe-presentation.js`: iş türü, kanal, ürün, amortisman ve nakit denetim izi
-- `cafe-restaurant.js`: sektör sözleşmesi ve profil dışa aktarımları
+Talep sürücüleri günlük müşteri; koltuk × masa devri × doluluk; saatlik sipariş; günlük paket siparişi veya etkinlik × müşteri olabilir.
 
-Kafe profil sürücüleri:
+## E-Ticaret / Pazaryeri v2
 
-- Kafe, kahveci, pastane, burgerci, dönerci ve büfe: günlük müşteri
-- Restoran ve franchise restoran: koltuk × masa devri × doluluk
-- Kahve kiosk: saatlik sipariş × servis saati
-- Dark kitchen: günlük paket siparişi
-- Food truck: aylık etkinlik × etkinlik başı müşteri
+- `ecommerce-business-profile-engine.js`: on iş türünün varsayım, talep, kapasite, KPI ve uyarıları
+- `ecommerce-config.js`: koşullu profil alanları; satış kanalı, ürün karması ve reklam tabloları
+- `ecommerce-core.js`: kanal kesintileri, ürün/iade, lojistik, reklam, stok, P&L, başabaş ve nakit hesabı
+- `ecommerce-presentation.js`: profil, kanal, ürün, reklam, stok ve nakit denetim izi
+- `ecommerce.js`: sektör sözleşmesi ve profil dışa aktarımları
 
-Satış kanalı tablosu sipariş payı, fiş çarpanı, komisyon ve paketleme maliyeti taşır. Ürün karması tablosu ciro payı, malzeme oranı ve fire oranı taşır.
+Talep sürücüleri:
 
-Amortisman yalnız P&L sabit giderine eklenir. Nakit akışı `cashFixedCosts` üzerinden çalıştığı için kurulum yatırımı nakitten ikinci kez düşülmez. Finansman P&L dışıdır; P&L hibe geliri ile hibe nakit girişi ayrı alanlardır.
+- Trendyol, Hepsiburada, Amazon Türkiye ve stoklu e-ticaret: aylık satış adedi
+- Amazon global, Shopify ve dropshipping: trafik × dönüşüm × sipariş başı ürün
+- Instagram: talep × dönüşüm × sipariş başı ürün
+- El yapımı ürün: günlük üretim × üretim günü × kapasite kullanımı
+- Abonelik kutusu: aktif abone; yeni abone ve aylık kayıp ay sonu abonesini üretir
+
+Satış kanalı tablosu sipariş payı, fiyat çarpanı, kanal komisyonu, ödeme kesintisi, kargo, paketleme ve tahsilat vadesi taşır. Ürün tablosu adet payı, fiyat çarpanı, birim maliyet ve iade oranı taşır. Reklam tablosu harcama, atfedilen sipariş ve atfedilen cirodan ROAS/CAC üretir.
+
+Stok katmanı kapsam günü, yeniden sipariş noktası, güvenlik stoğu ve devir hızını hesaplar. Amazon global sınır ötesi maliyeti; dropshipping tedarikçi kalite kaybını; el yapımı ürün birim emek maliyetini; abonelik kutusu fulfillment ve churn etkisini ayrı taşır.
+
+## P&L / nakit ayrımı
+
+- Finansman ve yatırım P&L geliri değildir.
+- P&L hibe geliri ile hibe nakit girişi ayrı alanlardır.
+- Amortisman yalnız P&L sabit giderine eklenir.
+- Nakit akışı `cashFixedCosts` kullandığı için amortisman nakitten ikinci kez düşülmez.
+- Kurulum ve ilk stok yatırımı nakitte tek sefer gösterilir; satılan ürün maliyeti dönemsel P&L'de ayrıca hesaplanır.
 
 ## Sektör sözleşmesi
 
@@ -47,16 +67,14 @@ Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölüm
 ## Test mimarisi
 
 - ortak motor ve sektör kabul testleri
-- master kaynak hash ve golden testleri
+- master kaynak hash ve Steam golden testleri
 - gelişmiş şema testleri
 - gerçek HTML smoke testi
-- Steam render testi
-- altı oyun/dijital yayıncılık profil testi
-- on bir Kafe / Restoran profil testi
-- eski Kafe varsayılan sonuç koruma testi
-- amortisman P&L / nakit ayrımı testi
-- GitHub Actions sözdizimi kontrolü
+- oyun/dijital yayıncılık profil testleri
+- Kafe / Restoran profil ve eski sonuç koruma testleri
+- E-Ticaret / Pazaryeri on profil, eski sonuç, tablo, stok ve P&L/nakit ayrımı testleri
+- GitHub Actions test ve JavaScript sözdizimi kontrolü
 
 ## Sonraki aşama
 
-Sıradaki çalışma E-Ticaret / Pazaryeri sektörünün kendi sipariş, iade, kargo, stok ve reklam ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
+Sıradaki çalışma Güzellik / Kuaför / Bakım sektörünün randevu, personel, koltuk/oda/cihaz, hizmet karması, sarf ve tekrar ziyaret ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
