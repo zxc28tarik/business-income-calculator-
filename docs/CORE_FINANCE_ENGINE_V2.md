@@ -49,14 +49,19 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 ### SaaS / Abonelik
 
 - sekiz iş türü profili
-- B2B, B2C, Mikro SaaS, API, mobil, üyelik, freemium ve kurumsal lisans
-- plan/fiyat karması ve yıllık ödeme
-- deneme ve freemium dönüşümü
-- churn, yeniden aktivasyon, expansion ve contraction
-- GRR, NRR, LTV/CAC ve CAC geri dönüşü
-- API kullanım maliyeti ve mobil mağaza komisyonu
-- onboarding, içerik, topluluk ve destek kapasitesi
+- plan/fiyat karması, yıllık ödeme, churn, expansion, API, freemium ve destek kapasitesi
 - eski B2B SaaS sonucu koruması
+
+### Fiziksel Perakende
+
+- yedi iş türü profili
+- trafik/dönüşüm, müşteri sıklığı, sipariş ve saatlik işlem sürücüleri
+- ürün/kategori karması: fiyat, maliyet, iade, iskonto ve bozulma/fire
+- tedarikçi karması: vade, teslim süresi, alım indirimi ve asgari sipariş
+- stok kapsamı, hedef stok, yeniden sipariş noktası ve işletme sermayesi açığı
+- mağaza kapasitesi, profile özgü başabaş ve perakende nakit kolonları
+- amortisman P&L/nakit ayrımı
+- eski Butik mağaza sonucu koruması
 
 ## Sabit finans kuralları
 
@@ -65,17 +70,16 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
 - Kurulum ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
 - Satılan ürün, malzeme, sarf, teslimat ve kullanım maliyeti dönemsel P&L gideridir.
+- Sayım kaybı ve bozulma/fire satılan ürün maliyetinden ayrı izlenebilir.
+- Tedarikçi indirimi ürün maliyetini; tedarikçi vadesi nakit zamanlamasını etkiler.
 - Hibe nakit girişi ile vergilendirilebilir P&L faaliyet hibesi ayrı alanlardır.
-- Peşinat kârı değiştirmez; tahsilat zamanlamasını etkiler.
-- Yıllık abonelik geliri aylık kazanılmış gelir olarak tanınır; peşin ödeme nakdi öne taşır ve çift sayılmaz.
 - Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
 ## Bekleyen geçişler
 
-1. Fiziksel Perakende
-2. Oto Hizmetleri
+1. Oto Hizmetleri
 
-Bunlardan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
+Bundan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
 
 ## Geçiş kuralı
 
