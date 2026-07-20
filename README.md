@@ -2,39 +2,47 @@
 
 Sektör bazlı finansal fizibilite ve 12 aylık nakit akışı platformu.
 
-## v0.14.0 — Güzellik / Kuaför / Bakım v2 profilleri
+## v0.15.0 — Ajans / Freelancer / Danışmanlık v2 profilleri
 
-Güzellik / Kuaför / Bakım sektörü artık sekiz ayrı iş türü profiliyle çalışır:
+Ajans sektörü artık on ayrı iş türü profiliyle çalışır:
 
-1. Kuaför
-2. Berber
-3. Güzellik salonu
-4. Tırnak stüdyosu
-5. Cilt bakım salonu
-6. Lazer / epilasyon merkezi
-7. Kaş / kirpik stüdyosu
-8. Masaj / spa salonu
+1. Yazılım ajansı
+2. Sosyal medya ajansı
+3. Reklam ajansı
+4. Tasarım ajansı
+5. Danışmanlık şirketi
+6. Freelancer yazılımcı
+7. Freelancer tasarımcı
+8. Video / editing hizmeti
+9. SEO ajansı
+10. Performans reklam ajansı
 
-Profiller yalnız etiket değildir. Kuaför ve berber koltuk; tırnak stüdyosu masa; cilt bakım ve spa oda; lazer merkezi cihaz; kaş/kirpik stüdyosu uzman kapasitesiyle hesaplanır. Varsayılan güzellik salonu mevcut genel istasyon kapasitesini korur.
+Profiller yalnız etiket değildir:
 
-Güzellik v2 ayrıca şunları içerir:
+- Yazılım, tasarım ve video: proje sayısı × proje bedeli
+- Sosyal medya ve SEO: retainer müşteri × aylık retainer
+- Freelancer: faturalandırılan saat × saatlik satış fiyatı
+- Danışmanlık: danışmanlık günü × günlük bedel
+- Reklam ajansı: kampanya sayısı × kampanya bedeli
+- Performans ajansı: yönetilen reklam bütçesi × yönetim ücreti + performans primi
 
-- düzenlenebilir hizmet / seans karması
-- hizmet bazlı fiyat, süre, sarf ve çalışan primi
-- düzenlenebilir personel rol tablosu
-- fiziksel kaynak kapasitesi ile personel üretken kapasitesinin karşılaştırılması
-- aktif müşteri tabanı, yeni müşteri ve tekrar ziyaret talebi
-- no-show, ön ödeme ve iptal bedeli geri kazanımı
-- bakım / kozmetik ürün satışı ve ürün maliyeti
-- profile özgü başabaş, kapasite, KPI ve uyarılar
-- cihaz amortismanının P&L gideri; yatırımın nakit çıkışı olarak ayrılması
+Ajans v2 ayrıca şunları içerir:
+
+- rol bazlı ekip kapasitesi ve saatlik maliyet tablosu
+- teorik, hedef faturalandırılabilir ve kullanılan kapasite ayrımı
+- taşeron maliyeti ile taşeron tarafından sağlanan saatin ayrı izlenmesi
+- sözleşmeli revizyon, kapsam taşması ve müşteriye yansıtılan revizyon geliri
+- peşinat oranına göre etkin tahsilat gecikmesi
+- müşteri yoğunlaşması ve tahsilat riski uyarıları
+- profile özgü başabaş, KPI ve denetim izi
 - finansmanın P&L dışında tutulması
-- P&L hibe geliri ile hibe nakit girişinin ayrı izlenmesi
+- faaliyet hibesi ile tek seferlik nakit desteğinin ayrı izlenmesi
 
-Eski güzellik salonu varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/BEAUTY_BUSINESS_TYPE_PROFILES.md`.
+Eski Yazılım Ajansı varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/AGENCY_BUSINESS_TYPE_PROFILES.md`.
 
 ## Önceki v2 geçişleri
 
+- `v0.14.0`: Güzellik / Kuaför / Bakım — sekiz iş türü profili
 - `v0.13.0`: E-Ticaret / Pazaryeri — on iş türü profili
 - `v0.12.0`: Kafe / Restoran — on bir iş türü profili
 - `v0.11.0`: Oyun / Dijital Yayıncılık — altı iş türü profili ve Steam master golden koruması
@@ -45,7 +53,7 @@ Eski güzellik salonu varsayılan finans sonucu testle korunur. Ayrıntılar: `d
 1. Kafe / Restoran — v2 profil derinliği
 2. E-Ticaret / Pazaryeri — v2 profil derinliği
 3. Güzellik / Kuaför / Bakım — v2 profil derinliği
-4. Ajans / Freelancer / Danışmanlık — temel model
+4. Ajans / Freelancer / Danışmanlık — v2 profil derinliği
 5. SaaS / Abonelik — temel model
 6. Fiziksel Perakende — temel model
 7. Oto Hizmetleri — temel model
@@ -53,7 +61,7 @@ Eski güzellik salonu varsayılan finans sonucu testle korunur. Ayrıntılar: `d
 
 ## Geçiş durumu
 
-Oyun / Dijital Yayıncılık, Kafe / Restoran, E-Ticaret / Pazaryeri ve Güzellik / Kuaför / Bakım kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör Ajans / Freelancer / Danışmanlık olacaktır.
+Beş sektör ailesi kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör SaaS / Abonelik olacaktır.
 
 ## Çalıştırma
 
@@ -70,7 +78,7 @@ npm test
 npm run check
 ```
 
-Güncel paket: 150/150 test ve otomatik kaynak modülü kontrolü başarılı.
+Güncel paket: 163/163 test ve otomatik kaynak modülü kontrolü başarılı.
 
 ## İlkeler
 
