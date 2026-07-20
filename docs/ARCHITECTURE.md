@@ -52,16 +52,30 @@ Talep sürücüleri satış adedi, trafik × dönüşüm, sosyal talep × dönü
 - `beauty-v2-presentation.js`: profil KPI ve ayrıntılı denetim izi
 - `beauty-v2.js`: v2 sektör sözleşmesi
 
-Kapasite kaynakları:
+Etkin kapasite, fiziksel kaynak kapasitesi ile personel üretken saat kapasitesinin düşük olanıdır.
 
-- Kuaför ve berber: koltuk
-- Güzellik salonu: genel istasyon
-- Tırnak stüdyosu: masa
-- Cilt bakım ve spa: oda
-- Lazer merkezi: cihaz
-- Kaş / kirpik stüdyosu: uzman
+## Ajans / Freelancer / Danışmanlık v2
 
-Etkin kapasite, fiziksel kaynak kapasitesi ile personel üretken saat kapasitesinin düşük olanıdır. Hizmet tablosu fiyat, süre, sarf ve primi; personel tablosu kişi, aylık maliyet, üretken saat ve ciro primini taşır. Müşteri tabanı modu yeni müşteri ile tekrar ziyaret talebini üretir.
+- `agency-business-profiles.js`: on iş türünün gelir sürücüsü ve varsayımları
+- `agency-profile-engine.js`: gelir, teslimat saati, ekip kapasitesi ve taşeron saati türetimi
+- `agency-profile-form.js`: proje, retainer, saat, danışmanlık, kampanya, performans, ekip ve taşeron alanları
+- `agency-v2-config.js`: eski veriyi koruyan profil geçişi, normalizasyon ve senaryolar
+- `agency-v2-month.js`: aylık gelir, komisyon, üretim, revizyon, taşeron, P&L ve maliyet hesabı
+- `agency-v2-core.js`: profile özgü başabaş, peşinat etkili nakit akışı ve senaryo karşılaştırması
+- `agency-profile-presentation.js`: profil KPI ve uyarıları
+- `agency-v2-presentation.js`: eski sunumu profile özgü etiket ve denetim iziyle genişletir
+- `agency-v2.js`: v2 sektör sözleşmesi
+
+Gelir sürücüleri:
+
+- Yazılım, tasarım ve video: proje sayısı × proje bedeli
+- Sosyal medya ve SEO: retainer müşteri × aylık retainer
+- Freelancer: faturalandırılan saat × saatlik satış fiyatı
+- Danışmanlık: danışmanlık günü × günlük ücret
+- Reklam ajansı: kampanya sayısı × kampanya bedeli
+- Performans ajansı: yönetilen reklam bütçesi × yönetim ücreti + performans primi
+
+İç ekip kapasitesi rol tablosundaki kişi, aylık saat ve faturalandırılabilir oranlardan hesaplanır. Taşeron saati iç ekip yükünü azaltır; taşeron maliyeti değişken gider olarak kalır. Kapsam taşması ek teslimat saati üretir; tahsil edilen revizyon payı ayrıca gelire dönüşür. Peşinat oranı nakit modelindeki etkin tahsilat gecikmesini azaltır.
 
 ## P&L / nakit ayrımı
 
@@ -84,9 +98,10 @@ Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölüm
 - oyun/dijital yayıncılık profil testleri
 - Kafe / Restoran profil ve eski sonuç koruma testleri
 - E-Ticaret / Pazaryeri profil, tablo, stok ve eski sonuç testleri
-- Güzellik / Kuaför / Bakım sekiz profil, kapasite, hizmet/personel karması ve eski sonuç testleri
+- Güzellik / Kuaför / Bakım profil, kapasite, hizmet/personel karması ve eski sonuç testleri
+- Ajans / Freelancer / Danışmanlık on profil, eski sonuç, ekip/taşeron, revizyon ve tahsilat testleri
 - `scripts/check-modules.mjs` ile bütün kaynak modüllerinin otomatik içe aktarım kontrolü
 
 ## Sonraki aşama
 
-Sıradaki çalışma Ajans / Freelancer / Danışmanlık sektörünün proje, saatlik, retainer ve performans gelirleri; ekip kapasitesi, revizyon, taşeron ve tahsilat ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
+Sıradaki çalışma SaaS / Abonelik sektörünün plan karması, churn, expansion, müşteri edinme, sunucu ve destek ekonomisiyle v2 derinliğine taşınmasıdır. Rapor katmanına henüz geçilmez.
