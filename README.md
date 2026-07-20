@@ -2,46 +2,43 @@
 
 Sektör bazlı finansal fizibilite ve 12 aylık nakit akışı platformu.
 
-## v0.16.0 — SaaS / Abonelik v2 profilleri
+## v0.17.0 — Fiziksel Perakende v2 profilleri
 
-SaaS sektörü artık sekiz ayrı iş türü profiliyle çalışır:
+Fiziksel Perakende sektörü artık yedi ayrı iş türü profiliyle çalışır:
 
-1. B2B SaaS
-2. B2C abonelik
-3. Mikro SaaS
-4. API / kullanım bazlı servis
-5. Mobil uygulama aboneliği
-6. Üyelik / içerik platformu
-7. Freemium SaaS
-8. Kurumsal lisans
+1. Butik mağaza
+2. Pet shop
+3. Telefon aksesuar mağazası
+4. Kırtasiye
+5. Oyuncak mağazası
+6. Çiçekçi
+7. Küçük market
 
 Profiller yalnız etiket değildir:
 
-- B2B, B2C, mikro SaaS, mobil ve üyelik: ücretli müşteri / abone hareketi
-- API: müşteri × kullanım birimi × birim fiyat
-- Freemium: ücretsiz kullanıcı, ücretliye dönüşüm ve ücretsiz kullanıcı maliyeti
-- Kurumsal lisans: müşteri × yıllık sözleşme / 12 + onboarding geliri
+- Butik, telefon aksesuarı, kırtasiye ve oyuncak: mağaza trafiği × dönüşüm
+- Pet shop: aktif müşteri tabanı × aylık alışveriş sıklığı
+- Çiçekçi: günlük standart sipariş + düğün/etkinlik siparişi
+- Küçük market: saatlik kasa işlemi × günlük açık saat
 
-SaaS v2 ayrıca şunları içerir:
+Perakende v2 ayrıca şunları içerir:
 
-- düzenlenebilir paket / plan karması
-- aylık ve yıllık faturalama payı ile yıllık indirim
-- yıllık peşin tahsilatın P&L'yi değiştirmeden nakit zamanlamasını öne çekmesi
-- deneme dönüşümü, yeniden aktivasyon ve freemium dönüşümü
-- churn, expansion ve contraction MRR
-- GRR ve NRR
-- API kullanım maliyeti
-- App Store / platform komisyonu
-- içerik ve topluluk yönetimi giderleri
-- destek / müşteri başarı kapasitesi
-- profile özgü başabaş, KPI, uyarı ve nakit kolonları
-- finansmanın P&L dışında tutulması
-- faaliyet hibesi ile tek seferlik hibe nakit girişinin ayrı izlenmesi
+- düzenlenebilir ürün / kategori karması
+- kategori bazlı fiyat, maliyet, iade, iskonto ve bozulma/fire
+- düzenlenebilir tedarikçi karması
+- tedarikçi bazlı vade, teslim süresi, alım indirimi ve asgari sipariş
+- stok kapsam günü, hedef stok ve yeniden sipariş noktası
+- stok işletme sermayesi açığı ve fazla stok maliyeti
+- mağaza işlem kapasitesi ve profile özgü başabaş
+- amortismanın P&L gideri olarak, nakitten ayrı izlenmesi
+- finansman ile faaliyet hibesi ayrımı
+- perakendeye özel KPI, uyarı, senaryo ve nakit kolonları
 
-Eski B2B SaaS varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/SAAS_BUSINESS_TYPE_PROFILES.md`.
+Eski Butik mağaza varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/RETAIL_BUSINESS_TYPE_PROFILES.md`.
 
 ## Önceki v2 geçişleri
 
+- `v0.16.0`: SaaS / Abonelik — sekiz iş türü profili
 - `v0.15.0`: Ajans / Freelancer / Danışmanlık — on iş türü profili
 - `v0.14.0`: Güzellik / Kuaför / Bakım — sekiz iş türü profili
 - `v0.13.0`: E-Ticaret / Pazaryeri — on iş türü profili
@@ -56,13 +53,11 @@ Eski B2B SaaS varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/SAAS
 3. Güzellik / Kuaför / Bakım — v2 profil derinliği
 4. Ajans / Freelancer / Danışmanlık — v2 profil derinliği
 5. SaaS / Abonelik — v2 profil derinliği
-6. Fiziksel Perakende — temel model
+6. Fiziksel Perakende — v2 profil derinliği
 7. Oto Hizmetleri — temel model
 8. Oyun / Dijital Yayıncılık — v2 profil derinliği
 
-## Geçiş durumu
-
-Altı sektör ailesi kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör Fiziksel Perakende olacaktır.
+Yedi sektör ailesi kendi ekonomik yapılarına göre v2 derinliğine taşındı. Sıradaki sektör Oto Hizmetleri olacaktır.
 
 ## Çalıştırma
 
@@ -79,7 +74,7 @@ npm test
 npm run check
 ```
 
-Güncel paket: 176/176 test ve otomatik kaynak modülü kontrolü başarılı.
+Güncel paket: **190/190 test** ve otomatik kaynak modülü kontrolü başarılı.
 
 ## İlkeler
 
@@ -87,7 +82,7 @@ Güncel paket: 176/176 test ve otomatik kaynak modülü kontrolü başarılı.
 - Steam'e özgü alanlar başka sektörlere kopyalanmaz.
 - Yatırım ve finansman P&L geliri değildir.
 - Net sonuç ve nakit hareketi ayrı tutulur.
-- Yıllık peşin tahsilat aylık geliri yapay biçimde şişirmez.
+- İlk stok yatırımı nakitte bir kez gösterilir; satılan ürün maliyeti dönemsel P&L gideridir.
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
 - Ürün içinde AI yorumlayıcı veya sohbet botu yoktur.
 
