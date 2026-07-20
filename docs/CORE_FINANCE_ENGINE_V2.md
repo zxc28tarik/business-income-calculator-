@@ -49,22 +49,33 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 - cihaz amortismanı P&L/nakit ayrımı
 - eski güzellik salonu varsayılan sonucu koruması
 
+### Ajans / Freelancer / Danışmanlık
+
+- on iş türü profili
+- proje, retainer, faturalandırılan saat, danışmanlık günü, kampanya ve yönetilen bütçe sürücüleri
+- rol bazlı iç ekip kapasitesi ve saatlik maliyet
+- taşeron maliyeti ile taşeron saatinin ayrı izlenmesi
+- sözleşmeli revizyon, kapsam taşması ve revizyon tahsilatı
+- peşinat oranına göre etkin tahsilat gecikmesi
+- müşteri yoğunlaşması, kapasite ve tahsilat uyarıları
+- eski Yazılım Ajansı varsayılan sonucu koruması
+
 ## Sabit finans kuralları
 
 - Finansman ve yatırım P&L geliri değildir.
 - Net kâr ve nakit hareketi ayrı hesaplanır.
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
 - Kurulum ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
-- Satılan ürün/malzeme/sarf maliyeti dönemsel P&L gideridir.
+- Satılan ürün/malzeme/sarf ve teslimat üretim maliyeti dönemsel P&L gideridir.
 - Hibe nakit girişi ile vergilendirilebilir P&L hibe geliri ayrı alanlardır.
+- Peşinat kârı değiştirmez; tahsilat zamanlamasını ve işletme sermayesini etkiler.
 - Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
 ## Bekleyen geçişler
 
-1. Ajans / Freelancer / Danışmanlık
-2. SaaS / Abonelik
-3. Fiziksel Perakende
-4. Oto Hizmetleri
+1. SaaS / Abonelik
+2. Fiziksel Perakende
+3. Oto Hizmetleri
 
 Bunlardan sonra bağımsız tek HTML çıktıları, rapor katmanı ve gerçek takip modu ele alınacaktır.
 
