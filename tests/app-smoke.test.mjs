@@ -35,7 +35,7 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.17\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.18\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -159,8 +159,18 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   sectorSelect.value = "auto_services";
   sectorSelect.dispatch("change", sectorSelect);
   assert.match(elements.get("#pageTitle").textContent, /Oto Hizmetleri/);
+  assert.match(elements.get("#formSections").innerHTML, /İş türüne özel araç \/ iş sürücüsünü kullan/);
+  assert.match(elements.get("#formSections").innerHTML, /Hizmet \/ iş karması/);
+  assert.match(elements.get("#formSections").innerHTML, /Personel rolleri/);
+  assert.match(elements.get("#formSections").innerHTML, /Parça \/ sarf stok kapsamını izle/);
+  assert.match(elements.get("#formSections").innerHTML, /Taşeron işler/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Araç başı net k.r/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Talep karşılama oranı/);
+  assert.match(elements.get("#kpiGrid").innerHTML, /Stok işletme sermayesi açığı/);
+  assert.match(elements.get("#cashFlowTable").innerHTML, /Tamamlanan iş/);
+  assert.match(elements.get("#cashFlowTable").innerHTML, /Karşılanamayan iş/);
+  assert.match(elements.get("#breakdown").innerHTML, /Profil · Talep, randevu ve kapasite/);
 
   sectorSelect.value = "game_digital_publishing";
   sectorSelect.dispatch("change", sectorSelect);
