@@ -1,6 +1,6 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.13.0
+## Güncel durum — v0.14.0
 
 Proje, Steam Yayıncısı master kaynağı korunarak kaynak sırasına alınmıştır. Çalışan sektörler silinmez; her sektör kendi ekonomik yapısına göre kontrollü biçimde v2 derinliğine taşınır.
 
@@ -54,37 +54,36 @@ On bir iş türü ayrı talep ve kapasite sürücüsüne bağlandı. Satış kan
 
 ### Aşama 5C — E-Ticaret / Pazaryeri v2 profilleri
 
-On iş türü ayrı talep sürücüsüne bağlandı:
+On iş türü satış adedi, trafik/dönüşüm, sosyal talep, üretim veya aktif abone sürücülerine ayrıldı. Satış kanalı, ürün, reklam, stok, lojistik ve profile özgü maliyet katmanları eklendi. Eski Trendyol varsayılan sonucu korunur.
 
-1. Trendyol mağazası
-2. Hepsiburada mağazası
-3. Amazon Türkiye
-4. Amazon global
-5. Shopify mağazası
-6. Stoklu e-ticaret
-7. Dropshipping
-8. Instagram satış
-9. El yapımı ürün satışı
-10. Abonelik kutusu
+### Aşama 5D — Güzellik / Kuaför / Bakım v2 profilleri
 
-E-ticaret v2 kapsamında:
+Sekiz iş türü ayrı fiziksel kaynak ve operasyon profiline bağlandı:
 
-- pazaryeri / stoklu türlerde aylık satış adedi
-- Amazon global, Shopify ve dropshipping için trafik × dönüşüm × sipariş başı ürün
-- Instagram için talep × dönüşüm
-- el yapımı ürün için üretim kapasitesi × kullanım
-- abonelik kutusu için aktif abone, yeni abone ve aylık kayıp
-- düzenlenebilir satış kanalı, ürün karması ve reklam kanalı tabloları
-- kanal bazlı komisyon, ödeme kesintisi, lojistik ve tahsilat vadesi
-- ürün bazlı fiyat, maliyet ve iade
-- stok kapsamı, yeniden sipariş noktası, güvenlik stoğu ve stok devir hızı
-- sınır ötesi maliyet, tedarikçi kalite kaybı, birim emek ve abonelik fulfillment alanları
-- profile özgü kapasite, başabaş, KPI ve uyarılar
-- amortismanın P&L gideri; kurulum ve ilk stokun nakit çıkışı olarak ayrılması
+1. Kuaför — koltuk
+2. Berber — koltuk
+3. Güzellik salonu — genel istasyon
+4. Tırnak stüdyosu — masa
+5. Cilt bakım salonu — bakım odası
+6. Lazer / epilasyon merkezi — cihaz
+7. Kaş / kirpik stüdyosu — uzman
+8. Masaj / spa salonu — masaj odası
+
+Güzellik v2 kapsamında:
+
+- düzenlenebilir hizmet / seans karması
+- hizmet bazlı fiyat, süre, sarf ve çalışan primi
+- düzenlenebilir personel rol tablosu
+- fiziksel kaynak ile personel üretken kapasitesinin düşük olanına göre etkin kapasite
+- aktif müşteri tabanı, yeni müşteri ve tekrar ziyaret talebi
+- no-show ve ön ödeme / iptal bedeli geri kazanımı
+- bakım / kozmetik ürün geliri ve ürün maliyeti
+- profile özgü başabaş, KPI ve uyarılar
+- cihaz amortismanının P&L gideri; kurulum yatırımının nakit çıkışı olarak ayrılması
 - finansmanın P&L dışında tutulması
-- P&L hibe geliri ile hibe nakit girişinin ayrı izlenmesi
+- faaliyet hibe geliri ile hibe nakit girişinin ayrı izlenmesi
 
-uygulandı. Eski Trendyol varsayılan finans sonucu testle korunur.
+uygulandı. Eski güzellik salonu varsayılan sonucu testle korunur.
 
 ## Kaynak ilkesi
 
@@ -92,17 +91,19 @@ Steam formu diğer sektörlere kopyalanmaz. Her sektör ve alt iş türü kendi 
 
 ## Sıradaki aşama
 
-Aşama 5D — Güzellik / Kuaför / Bakım v2 geçişi:
+Aşama 5E — Ajans / Freelancer / Danışmanlık v2 geçişi:
 
-1. randevu, koltuk/oda/cihaz ve personel kapasitesini iş türlerine göre ayırmak
-2. hizmet ve ürün satış karmasını derinleştirmek
-3. sarf malzemesi, komisyon, tekrar ziyaret ve iptal ekonomisini kurmak
+1. proje, saatlik çalışma, retainer ve performans bazlı gelir sürücülerini ayırmak
+2. ekip kapasitesi, faturalandırılabilir saat ve kullanım oranını kurmak
+3. müşteri yoğunlaşması, revizyon, taşeron ve tahsilat ekonomisini derinleştirmek
 4. alt iş türlerine özel KPI ve uyarıları eklemek
-5. mevcut güzellik sektörü kabul sonuçlarını korumak
+5. mevcut ajans kabul sonuçlarını korumak
 
 ## Daha sonraki işler
 
-- sonraki sektörlerin kendi iş yapısıyla v2 geçişi
+- SaaS / Abonelik v2 geçişi
+- Fiziksel Perakende v2 geçişi
+- Oto Hizmetleri v2 geçişi
 - bağımsız tek HTML çıktıları
 - rapor katmanı
 - gerçek takip modu
