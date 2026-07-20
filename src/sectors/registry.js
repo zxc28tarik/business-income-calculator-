@@ -3,7 +3,7 @@ import { CAFE_SECTOR } from "./cafe-restaurant.js";
 import { ECOMMERCE_SECTOR } from "./ecommerce.js";
 import { BEAUTY_SECTOR } from "./beauty-v2.js";
 import { AGENCY_SECTOR } from "./agency-v2.js";
-import { SAAS_SECTOR } from "./saas.js";
+import { SAAS_SECTOR } from "./saas-v2.js";
 import { RETAIL_SECTOR } from "./retail.js";
 import { AUTO_SERVICE_SECTOR } from "./auto.js";
 
