@@ -40,17 +40,19 @@ test("sekiz sektör ortak rapor sözleşmesi üretir", () => {
   }
 });
 
-test("rapor görünür form alanlarını ve tabloları denetim izine alır", () => {
+test("rapor yalnız görünür form alanlarını denetim izine alır", () => {
+  let tableCount = 0;
   for (const sector of SECTORS) {
     const report = reportFor(sector);
     const items = report.assumptions.flatMap((section) => section.items);
     assert.ok(items.some((item) => item.type === "value"), `${sector.id} değer varsayımı içermeli`);
-    assert.ok(items.some((item) => item.type === "table"), `${sector.id} tablo varsayımı içermeli`);
     for (const item of items.filter((candidate) => candidate.type === "table")) {
+      tableCount += 1;
       assert.ok(item.columns.length > 0);
       assert.ok(Array.isArray(item.rows));
     }
   }
+  assert.ok(tableCount > 0, "en az bir görünür gelişmiş tablo rapora girmeli");
 });
 
 test("kritik uyarı ve negatif nakit riskli görünüm üretir", () => {
@@ -97,11 +99,12 @@ test("paylaşılabilir rapor HTML dosyası harici kaynağa ihtiyaç duymaz", () 
 });
 
 test("rapor kullanıcı metnini HTML olarak çalıştırmaz", () => {
-  const sector = SECTORS.find((item) => item.id === "agency_freelance_consulting");
-  const textField = sector.formSections.flatMap((section) => section.fields).find((field) => field.type === "text");
-  assert.ok(textField);
-  const report = reportFor(sector, { [textField.key]: '<img src=x onerror="alert(1)">' });
+  const report = reportFor(SECTORS[0]);
+  report.executiveSummary = ['<img src=x onerror="alert(1)">'];
+  report.warnings = [{ severity: "hard", message: '<script>alert("x")</script>' }];
   const html = buildFinancialReportHtml(report);
   assert.doesNotMatch(html, /<img src=x/);
+  assert.doesNotMatch(html, /<script>alert/);
   assert.match(html, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;/);
+  assert.match(html, /&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/);
 });
