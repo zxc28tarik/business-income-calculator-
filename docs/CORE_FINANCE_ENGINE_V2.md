@@ -12,63 +12,18 @@ Ayrıntılı yayıncı motoru, korunan Steam Yayıncısı master prototipinin he
 
 Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kendi gelir, gider, kapasite, paydaş ve nakit yapısını sektör modüllerinde kurar.
 
-## Tamamlanan geçişler
+## Tamamlanan sektör geçişleri
 
-### Oyun / Dijital Yayıncılık
+- Oyun / Dijital Yayıncılık: 6 profil, Steam master ve recoup sözleşmesi
+- Kafe / Restoran: 11 profil, talep, kapasite, kanal ve ürün karması
+- E-Ticaret / Pazaryeri: 10 profil, trafik, ürün, reklam, lojistik ve stok
+- Güzellik / Kuaför / Bakım: 8 profil, fiziksel/personel kapasitesi ve tekrar ziyaret
+- Ajans / Freelancer / Danışmanlık: 10 profil, proje, retainer, saat, ekip ve taşeron
+- SaaS / Abonelik: 8 profil, plan karması, churn, expansion, API ve destek
+- Fiziksel Perakende: 7 profil, trafik, ürün, tedarikçi ve işletme sermayesi
+- Oto Hizmetleri: 8 profil, randevu, istasyon/personel, parça, stok ve taşeron
 
-- altı iş türü profili
-- Steam master formu, recoup, geliştirici anlaşması, vergi ve nakit
-- master golden sonuçları
-
-### Kafe / Restoran
-
-- on bir iş türü profili
-- talep, kapasite, satış kanalı ve ürün karması
-- amortisman P&L/nakit ayrımı
-- eski Kafe sonucu koruması
-
-### E-Ticaret / Pazaryeri
-
-- on iş türü profili
-- satış, trafik/dönüşüm, ürün, reklam, lojistik ve stok
-- eski Trendyol sonucu koruması
-
-### Güzellik / Kuaför / Bakım
-
-- sekiz iş türü profili
-- fiziksel/personel kapasitesi, hizmet karması, tekrar ziyaret ve no-show
-- eski güzellik salonu sonucu koruması
-
-### Ajans / Freelancer / Danışmanlık
-
-- on iş türü profili
-- proje, retainer, saat, danışmanlık günü, kampanya ve performans geliri
-- ekip/taşeron kapasitesi, revizyon ve peşinat
-- eski Yazılım Ajansı sonucu koruması
-
-### SaaS / Abonelik
-
-- sekiz iş türü profili
-- plan/fiyat karması, yıllık ödeme, churn, expansion, API, freemium ve destek kapasitesi
-- eski B2B SaaS sonucu koruması
-
-### Fiziksel Perakende
-
-- yedi iş türü profili
-- trafik/dönüşüm, müşteri sıklığı, sipariş ve saatlik işlem sürücüleri
-- ürün/kategori, tedarikçi, stok kapsamı ve işletme sermayesi
-- eski Butik mağaza sonucu koruması
-
-### Oto Hizmetleri
-
-- sekiz iş türü profili
-- talep, randevu, no-show, iptal/kapora ve tekrar ziyaret
-- istasyon/lift ile personel üretken kapasitesinin karşılaştırılması
-- hizmet karması: fiyat, süre, sarf, enerji, parça ve tekrar işçilik
-- parça/sarf stok kapsamı, tedarikçi indirimi/vadesi ve yeniden sipariş noktası
-- taşeron iş geliri, maliyeti ve katkı marjı
-- otoya özel başabaş, uyarı ve nakit kolonları
-- eski Oto Yıkama sonucu koruması
+Her sektörün eski varsayılan finans sonucu koruma testine sahiptir.
 
 ## Sabit finans kuralları
 
@@ -81,21 +36,40 @@ Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kend
 - Hibe nakit girişi ile vergilendirilebilir P&L faaliyet hibesi ayrı alanlardır.
 - Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
-## Profil geçiş durumu
+## Tek kaynak kuralı
 
-Aktif sekiz sektör ailesinin tamamı v2 profil derinliğine taşınmıştır. Bundan sonraki çalışma finans formüllerini yeniden yazmak değil, mevcut tek kaynak sözleşmelerinden farklı çıktı biçimleri üretmektir.
+Platform, bağımsız HTML ve rapor aynı sektör tanımı ve aynı hesap fonksiyonlarını kullanır. Çıktı katmanları yeni bir finans motoru oluşturamaz ve aynı girdide farklı finans sonucu üretemez.
+
+### Bağımsız HTML
+
+Bağımsız HTML dosyaları seçilen sektörün normalizasyon, senaryo, hesaplama ve sunum modüllerini kaynak haliyle gömer. Ayrı formül kopyası içermez.
+
+### Finansal rapor
+
+Rapor katmanı şu hazır sonuçları kullanır:
+
+1. aktif senaryonun normalize edilmiş girdisi
+2. `calculateModel` sonucu
+3. `buildPresentation` KPI, dağılım ve senaryo metrikleri
+4. sektörün kendi uyarıları
+5. sektörün nakit akışı satır ve kolonları
+6. form şemasındaki görünür varsayımlar
+
+Rapor katmanı vergi, maliyet, kâr, başabaş veya nakit değerini yeniden hesaplamaz. Dengeli, koşullu ve riskli görünüm; var olan net sonuç, dönem sonu nakit ve uyarı seviyelerinin rapor amaçlı sınıflandırmasıdır. Yatırım tavsiyesi değildir.
+
+## Çıktı güvenliği
+
+- Kullanıcı metni HTML olarak çalıştırılmaz; kaçışlanır.
+- Rapor harici script, stil veya CDN kullanmaz.
+- Raporun yazdırma/PDF işlevi tarayıcı üzerinden çalışır.
+- Rapor kullanım sınırını ve uzman teyidi uyarısını taşır.
+
+## Geçiş durumu
+
+- Aşama 5: sekiz sektörün v2 profil geçişi tamamlandı.
+- Aşama 6: sekiz bağımsız tek HTML hesaplayıcı tamamlandı.
+- Aşama 7: ortak finansal rapor katmanı tamamlandı.
 
 ## Sıradaki aşama
 
-1. bağımsız tek HTML çıktıları
-2. rapor katmanı
-3. gerçek takip modu
-
-## Tek kaynak kuralı
-
-Bağımsız HTML veya rapor çıktısı yeni bir finans motoru oluşturamaz. Platform, tek HTML ve rapor aynı sektör tanımı ve aynı hesap fonksiyonlarını kullanmalı; aynı girdide aynı finans sonucunu üretmelidir.
-
-
-## Tek HTML çıktılarında motor bütünlüğü
-
-Bağımsız HTML dosyaları yeni finans formülü tanımlamaz. Seçilen sektörün normalizasyon, senaryo, hesaplama ve sunum modülleri kaynak haliyle dosyaya gömülür. Bu nedenle ana platform ve bağımsız çıktı aynı girdide aynı finans sonucunu üretir.
+Aşama 8 gerçek takip modudur. Tahmin girdileri ile gerçekleşen aylık sonuçlar ayrı veri sözleşmelerinde tutulacak; bütçe-gerçekleşen farkı ve dönem trendi mevcut finans motorları bozulmadan üretilecektir.
