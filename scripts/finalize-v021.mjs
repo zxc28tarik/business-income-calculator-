@@ -111,8 +111,8 @@ async function patchTests() {
     `"#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#printButton", "#warnings",`,
     `"#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",`, smokeFile);
   smoke = replaceRequired(smoke,
-    `  assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);`,
-    `  assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);\n  assert.match(html, /Gerçek Takip/);\n  assert.match(html, /Tahmin–Gerçekleşen Takibi/);`, smokeFile);
+    `  assert.match(elements.get("#pageTitle").textContent, /Kafe \\/ Restoran/);`,
+    `  assert.match(elements.get("#pageTitle").textContent, /Kafe \\/ Restoran/);\n  assert.match(html, /Gerçek Takip/);\n  assert.match(html, /Tahmin–Gerçekleşen Takibi/);`, smokeFile);
   await write(smokeFile, smoke);
 
   const standaloneFile = "tests/standalone-build.test.mjs";
