@@ -2,6 +2,8 @@ name: Test and syntax check
 on:
   push:
   pull_request:
+permissions:
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -38,3 +40,17 @@ jobs:
         with:
           name: standalone-html
           path: standalone/*.html
+      - name: Materialize v0.19 release files
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+        shell: bash
+        run: |
+          node scripts/finalize-v019.mjs
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Standalone release files are already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tests/app-smoke.test.mjs README.md docs standalone
+          git commit -m "build: materialize v0.19 standalone calculators"
+          git push origin HEAD:${GITHUB_REF_NAME}
