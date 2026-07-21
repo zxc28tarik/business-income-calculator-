@@ -1,19 +1,19 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.21.0
+## Güncel durum — v0.22.0
 
-Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Çalışan finans motorları silinmez veya çıktı/takip katmanlarında yeniden yazılmaz. Sektör, bağımsız HTML, fizibilite raporu ve gerçek takip aynı hesap sözleşmesini kullanır.
+Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Finans motorları çıktı, takip veya portföy katmanlarında yeniden yazılmaz. Ana platform, bağımsız HTML, rapor, gerçek takip ve portföy karşılaştırması aynı sektör sözleşmelerini kullanır.
 
 ## Tamamlanan aşamalar
 
-### Aşama 0–4 — Kaynak, golden motor, gelişmiş şema ve Steam entegrasyonu
+### Aşama 0–4 — Kaynak, golden motor, şema ve Steam entegrasyonu
 
 - Orijinal Steam HTML kayıpsız arşivlendi ve SHA-256 testiyle kilitlendi.
 - Kötümser, beklenen ve iyimser master sonuçları golden testlerle korundu.
 - Master hesap sırası saf fonksiyonlara ayrıldı.
 - Checkbox, metin, tablo, koşullu görünürlük ve sektöre özel nakit kolonları eklendi.
 - Steam formu ve sonuç görünümü ortak platforma bağlandı.
-- `index.html` temiz UTF-8 olarak yeniden kuruldu ve gerçek HTML smoke testi eklendi.
+- `index.html` temiz UTF-8 olarak kuruldu ve gerçek HTML smoke testi eklendi.
 
 ### Aşama 5A–5H — Sektör profil geçişleri
 
@@ -28,40 +28,51 @@ Sekiz sektör ailesinin tamamı v2 profil derinliğine taşındı:
 - Fiziksel Perakende: 7 profil
 - Oto Hizmetleri: 8 profil
 
-Her geçişte eski varsayılan finans sonucu testle korundu; iş türüne özel talep/gelir, kapasite, gider, başabaş, KPI, uyarı, senaryo ve nakit katmanları kuruldu.
+Her geçişte eski varsayılan finans sonucu testle korundu. İş türüne özel talep/gelir, kapasite, gider, başabaş, KPI, uyarı, senaryo ve nakit katmanları kuruldu.
 
 ### Aşama 6 — Bağımsız tek HTML çıktıları
 
 - Sekiz sektör için çevrimdışı tek HTML hesaplayıcı üretildi.
 - Ortak CSS, UI ve yalnız ilgili sektör bağımlılıkları dosyaya gömüldü.
-- Harici CDN, script ve stil bağlantıları kaldırıldı.
-- Ana platformla aynı sektör motorları kullanıldı.
+- Harici CDN, script ve stil bağlantıları kullanılmadı.
+- Ana platformla aynı sektör motorları korundu.
 - Dosya sayısı, boyut, bağımsızlık ve deterministik üretim testleri eklendi.
-- Çıktılar `standalone/` klasörüne ve CI artefaktına bağlandı.
 
 ### Aşama 7 — Finansal rapor katmanı
 
-Ana platform ve bağımsız hesaplayıcılar ortak rapor sözleşmesine bağlandı. Rapor yönetici özeti, model görünümü, sektör KPI’ları, uyarılar, senaryo karşılaştırması, finansal dağılım, 12 aylık nakit ve görünür varsayım denetim izi taşır.
+Ana ve bağımsız hesaplayıcılar yönetici özeti, model görünümü, sektör KPI’ları, uyarılar, senaryo karşılaştırması, finansal dağılım, 12 aylık nakit ve görünür varsayımlar içeren çevrimdışı HTML raporuna bağlandı.
 
-Rapor finansal sonucu yeniden hesaplamaz. Sektörün normalize girdisi, `calculateModel`, `buildPresentation`, uyarı ve nakit çıktıları kullanılır. Kullanıcı metni HTML olarak çalıştırılmaz; belgeye kaçışlanarak yazılır.
+Rapor sonucu yeniden hesaplamaz; normalize girdi, `calculateModel`, `buildPresentation`, uyarı ve nakit çıktılarını kullanır. Kullanıcı metni HTML olarak çalıştırılmaz.
 
 ### Aşama 8 — Gerçek takip modu
 
-Tahmin ve gerçekleşen veri birbirinden ayrıldı.
+- Tahmin ile gerçekleşen veri ayrıldı.
+- Aylık tahsilat, gider, vergi, finansman, destek, kurulum, kredi, nakit ve hacim kaydı eklendi.
+- Tahsilat, faaliyet sonucu, net nakit ve dönem sonu nakit sapmaları üretildi.
+- Sapma nedeni, dönem notu ve trendler eklendi.
+- Takip CSV’si ve çevrimdışı HTML takip raporu üretildi.
+- Boş gerçekleşen alanlar otomatik sıfır sayılmadı.
+- Finansman ve destek faaliyet sonucuna değil yalnız net nakit hareketine girdi.
+- Steam master `months`, `receiptTry`, `publisherCostTry`, `developerOutflowTry` ve `cashTry` alanları yalnız okuma adaptörüyle desteklendi.
 
-Takip kapsamı:
+### Aşama 9 — Çoklu kayıt ve veri taşınabilirliği
 
-1. sektör + alt iş türü bazlı yerel kayıt
-2. aylık tahsilat, değişken/sabit gider, paydaş, vergi ve dönem sonu nakit
-3. finansman, destek, kurulum ve kredi hareketlerinin ayrı kaydı
-4. operasyon hacmi, sapma nedeni ve dönem notu
-5. tahsilat, faaliyet sonucu, net nakit hareketi ve dönem sonu nakit sapmaları
-6. tahsilat, faaliyet sonucu, nakit ve hacim trendleri
-7. takip CSV’si ve çevrimdışı tek HTML takip raporu
+Ana platform ve bağımsız hesaplayıcılar adlandırılmış işletme/proje kayıtlarına bağlandı.
 
-Takip katmanı gerçekleşen verileri finans motorunun girdilerine geri yazmaz. Boş alanlar otomatik sıfır sayılmaz. Finansman ve destek faaliyet sonucuna değil yalnız net nakit hareketine girer.
+Uygulanan sözleşme:
 
-Oyun / Dijital Yayıncılık için korunan master nakit alanları (`months`, `receiptTry`, `publisherCostTry`, `developerOutflowTry`, `cashTry`) yalnız okuma adaptörüyle ortak takip modeline çevrilir. Master finans motoru ve golden sonuçlar değiştirilmez.
+1. yeni kayıt oluşturma
+2. kayıt adlandırma
+3. çalışma alanı ve takip verisiyle kopyalama
+4. son kayıt hariç silme
+5. kayıtlar arasında geçiş
+6. sektör, senaryo, brüt gelir, net sonuç, 12 ay sonu nakit ve risk karşılaştırması
+7. bütün çalışma alanları ve proje takip verileriyle JSON yedeği
+8. şema, sürüm, kapsam, boyut, proje sayısı ve takip anahtarı doğrulaması
+9. platform ve bağımsız sektör yedeklerinin birbirinden ayrılması
+10. yalnız mevcut portföye ait takip anahtarlarının dışa aktarılması ve değiştirilmesi
+
+Portföy karşılaştırması mevcut sektör motorlarını çağırır; yeni finans formülü oluşturmaz. Steam master motoru ve golden sonuçlar değişmez.
 
 ## Kaynak ve finans ilkeleri
 
@@ -71,25 +82,29 @@ Oyun / Dijital Yayıncılık için korunan master nakit alanları (`months`, `re
 - Tedarikçi indirimi maliyeti; tedarikçi vadesi ödeme zamanını etkiler.
 - Amortisman P&L gideridir ve nakitten ikinci kez düşülmez.
 - Vergi ve muhasebe oranları düzenlenebilir varsayımdır; uzman teyidi gerekir.
-- Bağımsız HTML, rapor ve takip yeni finans motoru oluşturamaz.
-- Rapor ve takip görünümü yatırım tavsiyesi değildir.
+- Bağımsız HTML, rapor, takip ve portföy yeni finans motoru oluşturamaz.
+- Rapor, takip ve portföy görünümü yatırım tavsiyesi değildir.
 
 ## Güncel doğrulama
 
-- 212/212 test
-- sekiz sektör gerçek takip sözleşmesi
-- Steam nakit adaptörü
-- HTML kaçış güvenliği
+- 222/222 test
+- sekiz sektör v2 profil sözleşmesi
+- eski varsayılan ve Steam golden sonuç korumaları
 - gerçek uygulama smoke testi
+- rapor ve takip HTML kaçış güvenliği
+- takip proje/iş türü izolasyonu
+- portföy kayıt yaşam döngüsü ve 50 kayıt sınırı
+- yedek şema, kapsam ve yabancı takip anahtarı reddi
 - bütün JavaScript modüllerinin içe aktarım kontrolü
-- takip özellikli sekiz bağımsız HTML’nin deterministik üretimi
+- portföy özellikli sekiz bağımsız HTML’nin deterministik üretimi
 
 ## Sıradaki aşama
 
-### Aşama 9 — Çoklu kayıt ve veri taşınabilirliği
+### Aşama 10 — Yayınlama ve son kalite
 
-1. fizibiliteleri işletme/proje adıyla saklamak
-2. birden fazla kayıt arasında geçiş yapmak
-3. takip verileri dahil tam yedek dışa aktarmak
-4. yedeği doğrulayarak içe aktarmak
-5. kayıtları yan yana karşılaştıran portföy görünümü oluşturmak
+1. gerçek tarayıcı uçtan uca testleri
+2. mobil ekran ve klavye kullanımı
+3. erişilebilirlik denetimi
+4. eski yerel veri sürümlerinin migrasyon testleri
+5. production dağıtımı ve sürümleme
+6. yayın öncesi güvenlik ve performans denetimi
