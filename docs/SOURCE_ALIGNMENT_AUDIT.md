@@ -1,8 +1,8 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.20.0
+## Güncel durum — v0.21.0
 
-Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Çalışan finans motorları silinmez veya çıktı katmanlarında yeniden yazılmaz. Sektör, bağımsız HTML ve rapor aynı hesap sözleşmesini kullanır.
+Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Çalışan finans motorları silinmez veya çıktı/takip katmanlarında yeniden yazılmaz. Sektör, bağımsız HTML, fizibilite raporu ve gerçek takip aynı hesap sözleşmesini kullanır.
 
 ## Tamamlanan aşamalar
 
@@ -41,23 +41,27 @@ Her geçişte eski varsayılan finans sonucu testle korundu; iş türüne özel 
 
 ### Aşama 7 — Finansal rapor katmanı
 
-Ana platform ve bağımsız hesaplayıcılar ortak rapor sözleşmesine bağlandı.
-
-Rapor şunları taşır:
-
-1. sektör, iş türü, aktif senaryo ve motor sürümü
-2. yönetici özeti
-3. dengeli / koşullu / riskli model görünümü
-4. sektörün kendi KPI kartları
-5. kritik, dikkat ve bilgi uyarıları
-6. üç senaryo karşılaştırması
-7. finansal dağılım
-8. minimum nakit, dönem sonu nakit ve ilk negatif ay
-9. 12 aylık nakit akışı
-10. yalnız görünür form varsayımları ve tablolar
-11. kullanım sınırı
+Ana platform ve bağımsız hesaplayıcılar ortak rapor sözleşmesine bağlandı. Rapor yönetici özeti, model görünümü, sektör KPI’ları, uyarılar, senaryo karşılaştırması, finansal dağılım, 12 aylık nakit ve görünür varsayım denetim izi taşır.
 
 Rapor finansal sonucu yeniden hesaplamaz. Sektörün normalize girdisi, `calculateModel`, `buildPresentation`, uyarı ve nakit çıktıları kullanılır. Kullanıcı metni HTML olarak çalıştırılmaz; belgeye kaçışlanarak yazılır.
+
+### Aşama 8 — Gerçek takip modu
+
+Tahmin ve gerçekleşen veri birbirinden ayrıldı.
+
+Takip kapsamı:
+
+1. sektör + alt iş türü bazlı yerel kayıt
+2. aylık tahsilat, değişken/sabit gider, paydaş, vergi ve dönem sonu nakit
+3. finansman, destek, kurulum ve kredi hareketlerinin ayrı kaydı
+4. operasyon hacmi, sapma nedeni ve dönem notu
+5. tahsilat, faaliyet sonucu, net nakit hareketi ve dönem sonu nakit sapmaları
+6. tahsilat, faaliyet sonucu, nakit ve hacim trendleri
+7. takip CSV’si ve çevrimdışı tek HTML takip raporu
+
+Takip katmanı gerçekleşen verileri finans motorunun girdilerine geri yazmaz. Boş alanlar otomatik sıfır sayılmaz. Finansman ve destek faaliyet sonucuna değil yalnız net nakit hareketine girer.
+
+Oyun / Dijital Yayıncılık için korunan master nakit alanları (`months`, `receiptTry`, `publisherCostTry`, `developerOutflowTry`, `cashTry`) yalnız okuma adaptörüyle ortak takip modeline çevrilir. Master finans motoru ve golden sonuçlar değiştirilmez.
 
 ## Kaynak ve finans ilkeleri
 
@@ -67,16 +71,25 @@ Rapor finansal sonucu yeniden hesaplamaz. Sektörün normalize girdisi, `calcula
 - Tedarikçi indirimi maliyeti; tedarikçi vadesi ödeme zamanını etkiler.
 - Amortisman P&L gideridir ve nakitten ikinci kez düşülmez.
 - Vergi ve muhasebe oranları düzenlenebilir varsayımdır; uzman teyidi gerekir.
-- Bağımsız HTML ve rapor yeni finans motoru oluşturamaz.
-- Rapor görünümü yatırım tavsiyesi değildir.
+- Bağımsız HTML, rapor ve takip yeni finans motoru oluşturamaz.
+- Rapor ve takip görünümü yatırım tavsiyesi değildir.
+
+## Güncel doğrulama
+
+- 212/212 test
+- sekiz sektör gerçek takip sözleşmesi
+- Steam nakit adaptörü
+- HTML kaçış güvenliği
+- gerçek uygulama smoke testi
+- bütün JavaScript modüllerinin içe aktarım kontrolü
+- takip özellikli sekiz bağımsız HTML’nin deterministik üretimi
 
 ## Sıradaki aşama
 
-### Aşama 8 — Gerçek takip modu
+### Aşama 9 — Çoklu kayıt ve veri taşınabilirliği
 
-1. Tahmin ve gerçekleşen dönem verilerini ayrı saklamak
-2. Aylık gerçekleşen ciro, gider, kâr ve nakit kayıtlarını girmek
-3. Bütçe-gerçekleşen farkını göstermek
-4. Sapma nedenlerini ve dönem trendini izlemek
-5. Tahmin raporu ile gerçekleşen raporu karşılaştırmak
-6. Finans motorlarının mevcut golden sonuçlarını korumak
+1. fizibiliteleri işletme/proje adıyla saklamak
+2. birden fazla kayıt arasında geçiş yapmak
+3. takip verileri dahil tam yedek dışa aktarmak
+4. yedeği doğrulayarak içe aktarmak
+5. kayıtları yan yana karşılaştıran portföy görünümü oluşturmak
