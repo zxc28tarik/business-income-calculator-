@@ -2,35 +2,16 @@ name: Test and syntax check
 on:
   push:
   pull_request:
-permissions:
-  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Apply v0.22 backup scope isolation
-        shell: bash
-        run: |
-          set +e
-          node scripts/fix-v022-backup-scope.mjs > v022-integration.log 2>&1
-          status=$?
-          cat v022-integration.log
-          exit "$status"
-      - name: Upload v0.22 integration log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: v022-integration-log
-          path: v022-integration.log
       - name: Run tests
         shell: bash
         run: |
@@ -57,17 +38,3 @@ jobs:
         with:
           name: standalone-html
           path: standalone/*.html
-      - name: Materialize v0.22 backup scope isolation
-        if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-        shell: bash
-        run: |
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "v0.22 backup scope files are already current."
-            exit 0
-          fi
-          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "fix: materialize v0.22 backup scope isolation"
-          git push origin HEAD:"$BRANCH"
