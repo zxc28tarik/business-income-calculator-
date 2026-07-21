@@ -27,6 +27,8 @@ jobs:
           status=$?
           cat v021-integration.log
           exit "$status"
+      - name: Apply v0.21 tracking compatibility fix
+        run: node scripts/fix-v021-tracking.mjs
       - name: Upload v0.21 integration log
         if: always()
         uses: actions/upload-artifact@v4
