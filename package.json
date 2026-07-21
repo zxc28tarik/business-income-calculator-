@@ -1,1 +1,1 @@
-{"name":"business-income-calculator","version":"0.21.0","private":true,"type":"module","scripts":{"test":"node --test","check":"node scripts/check-modules.mjs","build:standalone":"node scripts/build-standalone.mjs"},"engines":{"node":">=20"}}
+{"name":"business-income-calculator","version":"0.22.0","private":true,"type":"module","scripts":{"test":"node --test","check":"node scripts/check-modules.mjs","build:standalone":"node scripts/build-standalone.mjs"},"engines":{"node":">=20"}}

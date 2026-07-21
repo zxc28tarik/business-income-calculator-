@@ -103,7 +103,7 @@ function renderTrends(model) {
   return items.map(([label, trend]) => `<div class="tracking-trend-item"><span>${escapeHtml(label)}</span><strong>${escapeHtml(trendText(trend))}</strong><small>${rate(trend?.rate)}</small></div>`).join("");
 }
 
-export function createTrackingController({ elements, getContext, storagePrefix = "business-income-calculator:tracking:v0.1" }) {
+export function createTrackingController({ elements, getContext, getProjectId = () => "legacy", storagePrefix = "business-income-calculator:tracking:v0.1" }) {
   let visible = false;
   let currentModel = null;
   let currentStorageKey = "";
@@ -112,15 +112,31 @@ export function createTrackingController({ elements, getContext, storagePrefix =
     return typeof getContext === "function" ? getContext() : null;
   }
 
-  function storageKey(ctx) {
+  function projectId() {
+    return String(getProjectId?.() || "legacy").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 100) || "legacy";
+  }
+
+  function legacyStorageKey(ctx) {
     return `${storagePrefix}:${ctx.sector.id}:${resolveTrackingScope(ctx.inputs)}`;
+  }
+
+  function storageKey(ctx) {
+    return `${storagePrefix}:${projectId()}:${ctx.sector.id}:${resolveTrackingScope(ctx.inputs)}`;
   }
 
   function loadRecords(ctx) {
     const key = storageKey(ctx);
     currentStorageKey = key;
+    let raw = safeGet(key);
+    if (!raw) {
+      const legacy = safeGet(legacyStorageKey(ctx));
+      if (legacy) {
+        raw = legacy;
+        safeSet(key, legacy);
+      }
+    }
     try {
-      return normalizeTrackingRecords(JSON.parse(safeGet(key) || "[]"));
+      return normalizeTrackingRecords(JSON.parse(raw || "[]"));
     } catch {
       return [];
     }

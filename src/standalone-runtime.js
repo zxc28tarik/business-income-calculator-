@@ -24,10 +24,27 @@ import {
 } from "./ui/results-view.js";
 import { exportFinancialReport } from "./report/report-controller.js";
 import { createTrackingController } from "./tracking/tracking-controller.js";
+import { createPortfolioController } from "./portfolio/portfolio-controller.js";
+import { buildProjectFinancialSummary } from "./portfolio/portfolio-summary.js";
 
 export function mountStandaloneCalculator(sector) {
   const storageKey = `business-income-calculator:standalone:${sector.id}:${sector.version}`;
+  const portfolioStorageKey = `business-income-calculator:standalone-portfolio:${sector.id}:v0.1`;
+  const trackingStoragePrefix = "business-income-calculator:tracking:v0.1";
   const elements = {
+    projectSelect: document.querySelector("#projectSelect"),
+    projectNewButton: document.querySelector("#projectNewButton"),
+    projectRenameButton: document.querySelector("#projectRenameButton"),
+    projectDuplicateButton: document.querySelector("#projectDuplicateButton"),
+    portfolioButton: document.querySelector("#portfolioButton"),
+    portfolioPanel: document.querySelector("#portfolioPanel"),
+    portfolioTable: document.querySelector("#portfolioTable"),
+    portfolioDeleteButton: document.querySelector("#portfolioDeleteButton"),
+    portfolioCloseButton: document.querySelector("#portfolioCloseButton"),
+    backupExportButton: document.querySelector("#backupExportButton"),
+    backupImportButton: document.querySelector("#backupImportButton"),
+    backupImportInput: document.querySelector("#backupImportInput"),
+
     pageTitle: document.querySelector("#pageTitle"),
     pageSubtitle: document.querySelector("#pageSubtitle"),
     sectorSummary: document.querySelector("#sectorSummary"),
@@ -56,6 +73,40 @@ export function mountStandaloneCalculator(sector) {
 
   let state = loadState();
   let lastRendered = null;
+  let portfolioController = null;
+  portfolioController = createPortfolioController({
+    elements: {
+      projectSelect: elements.projectSelect,
+      newButton: elements.projectNewButton,
+      renameButton: elements.projectRenameButton,
+      duplicateButton: elements.projectDuplicateButton,
+      deleteButton: elements.portfolioDeleteButton,
+      toggleButton: elements.portfolioButton,
+      panel: elements.portfolioPanel,
+      table: elements.portfolioTable,
+      closeButton: elements.portfolioCloseButton,
+      exportButton: elements.backupExportButton,
+      importButton: elements.backupImportButton,
+      importInput: elements.backupImportInput,
+    },
+    storageKey: portfolioStorageKey,
+    trackingPrefix: trackingStoragePrefix,
+    appVersion: "0.22.0",
+    initialWorkspace: state,
+    createWorkspace: createDefaultState,
+    normalizeWorkspace: normalizeState,
+    getWorkspace: () => state,
+    setWorkspace: (workspace) => {
+      state = normalizeState(workspace);
+      persistLegacyState();
+      renderShell();
+      render();
+    },
+    summarizeWorkspace,
+    initialName: sector.name,
+  });
+  state = portfolioController.getActiveWorkspace();
+  persistLegacyState();
   const trackingController = createTrackingController({
     elements: {
       toggleButton: elements.trackingButton,
@@ -68,6 +119,8 @@ export function mountStandaloneCalculator(sector) {
       reportButton: elements.trackingReportButton,
     },
     getContext: () => lastRendered,
+    getProjectId: () => portfolioController.getActiveProjectId(),
+    storagePrefix: trackingStoragePrefix,
   });
 
   renderShell();
@@ -102,7 +155,7 @@ export function mountStandaloneCalculator(sector) {
     return createDefaultState();
   }
 
-  function saveState() {
+  function persistLegacyState() {
     try {
       localStorage.setItem(storageKey, JSON.stringify(state));
     } catch {
@@ -110,8 +163,22 @@ export function mountStandaloneCalculator(sector) {
     }
   }
 
+  function saveState() {
+    persistLegacyState();
+    portfolioController?.syncActiveWorkspace();
+  }
+
   function currentInputs() {
     return state.scenarioInputs[state.activeScenario];
+  }
+
+  function summarizeWorkspace(workspace) {
+    const normalized = normalizeState(workspace);
+    return buildProjectFinancialSummary({
+      sector,
+      scenarioId: normalized.activeScenario,
+      inputs: normalized.scenarioInputs[normalized.activeScenario],
+    });
   }
 
   function renderShell() {

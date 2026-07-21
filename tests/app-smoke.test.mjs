@@ -38,7 +38,7 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.21\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.22\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -50,7 +50,7 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
   }
 
   const requiredIds = [
-    "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher",
+    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher",
     "formSections", "resetButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "warnings",
     "kpiGrid", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
   ];
@@ -64,7 +64,7 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   const html = await readApplicationHtml();
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
-    "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
+    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
     "#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",
     "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
@@ -81,6 +81,9 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   globalThis.localStorage = {
     getItem(key) { return store.get(key) ?? null; },
     setItem(key, value) { store.set(key, value); },
+    removeItem(key) { store.delete(key); },
+    key(index) { return [...store.keys()][index] ?? null; },
+    get length() { return store.size; },
   };
 
   await import(`../src/app.js?smoke=${Date.now()}`);
@@ -88,6 +91,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);
   assert.match(html, /Gerçek Takip/);
   assert.match(html, /Tahmin–Gerçekleşen Takibi/);
+  assert.match(html, /İşletme ve proje karşılaştırması/);
+  assert.match(elements.get("#projectSelect").innerHTML, /İlk işletmem/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net k.r/);
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş satış kanalı karmasını kullan/);
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);

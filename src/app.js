@@ -25,10 +25,26 @@ import {
 } from "./ui/results-view.js";
 import { exportFinancialReport } from "./report/report-controller.js";
 import { createTrackingController } from "./tracking/tracking-controller.js";
+import { createPortfolioController } from "./portfolio/portfolio-controller.js";
+import { buildProjectFinancialSummary } from "./portfolio/portfolio-summary.js";
 
 const STORAGE_KEY = "business-income-calculator:platform:v0.2";
+const PORTFOLIO_STORAGE_KEY = "business-income-calculator:portfolio:v0.1";
+const TRACKING_STORAGE_PREFIX = "business-income-calculator:tracking:v0.1";
 const OLD_CAFE_KEY = "business-income-calculator:cafe:v0.1";
 const elements = {
+  projectSelect: document.querySelector("#projectSelect"),
+  projectNewButton: document.querySelector("#projectNewButton"),
+  projectRenameButton: document.querySelector("#projectRenameButton"),
+  projectDuplicateButton: document.querySelector("#projectDuplicateButton"),
+  portfolioButton: document.querySelector("#portfolioButton"),
+  portfolioPanel: document.querySelector("#portfolioPanel"),
+  portfolioTable: document.querySelector("#portfolioTable"),
+  portfolioDeleteButton: document.querySelector("#portfolioDeleteButton"),
+  portfolioCloseButton: document.querySelector("#portfolioCloseButton"),
+  backupExportButton: document.querySelector("#backupExportButton"),
+  backupImportButton: document.querySelector("#backupImportButton"),
+  backupImportInput: document.querySelector("#backupImportInput"),
   sectorSelect: document.querySelector("#sectorSelect"),
   pageTitle: document.querySelector("#pageTitle"),
   pageSubtitle: document.querySelector("#pageSubtitle"),
@@ -58,6 +74,39 @@ const elements = {
 
 let state = loadState();
 let lastRendered = null;
+let portfolioController = null;
+portfolioController = createPortfolioController({
+  elements: {
+    projectSelect: elements.projectSelect,
+    newButton: elements.projectNewButton,
+    renameButton: elements.projectRenameButton,
+    duplicateButton: elements.projectDuplicateButton,
+    deleteButton: elements.portfolioDeleteButton,
+    toggleButton: elements.portfolioButton,
+    panel: elements.portfolioPanel,
+    table: elements.portfolioTable,
+    closeButton: elements.portfolioCloseButton,
+    exportButton: elements.backupExportButton,
+    importButton: elements.backupImportButton,
+    importInput: elements.backupImportInput,
+  },
+  storageKey: PORTFOLIO_STORAGE_KEY,
+  trackingPrefix: TRACKING_STORAGE_PREFIX,
+  appVersion: "0.22.0",
+  initialWorkspace: state,
+  createWorkspace: createDefaultState,
+  normalizeWorkspace: normalizeState,
+  getWorkspace: () => state,
+  setWorkspace: (workspace) => {
+    state = normalizeState(workspace);
+    persistLegacyState();
+    renderSectorShell();
+    render();
+  },
+  summarizeWorkspace,
+});
+state = portfolioController.getActiveWorkspace();
+persistLegacyState();
 const trackingController = createTrackingController({
   elements: {
     toggleButton: elements.trackingButton,
@@ -70,6 +119,8 @@ const trackingController = createTrackingController({
     reportButton: elements.trackingReportButton,
   },
   getContext: () => lastRendered,
+  getProjectId: () => portfolioController.getActiveProjectId(),
+  storagePrefix: TRACKING_STORAGE_PREFIX,
 });
 
 renderSectorOptions();
@@ -134,8 +185,13 @@ function loadState() {
   return fresh;
 }
 
-function saveState() {
+function persistLegacyState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function saveState() {
+  persistLegacyState();
+  portfolioController?.syncActiveWorkspace();
 }
 
 function currentSector() {
@@ -149,6 +205,17 @@ function currentSectorState() {
 function currentInputs() {
   const sectorState = currentSectorState();
   return sectorState.scenarioInputs[sectorState.activeScenario];
+}
+
+function summarizeWorkspace(workspace) {
+  const normalized = normalizeState(workspace);
+  const sector = getSector(normalized.activeSectorId);
+  const sectorState = normalized.sectors[sector.id];
+  return buildProjectFinancialSummary({
+    sector,
+    scenarioId: sectorState.activeScenario,
+    inputs: sectorState.scenarioInputs[sectorState.activeScenario],
+  });
 }
 
 function renderSectorOptions() {

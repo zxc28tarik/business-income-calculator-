@@ -26,6 +26,9 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /CSV \/ Excel/);
       assert.match(html, /Rapor \/ HTML/);
       assert.match(html, /Gerçek Takip/);
+      assert.match(html, /Portföy/);
+      assert.match(html, /business-income-calculator-backup-v1/);
+      assert.match(html, /İşletme ve proje karşılaştırması/);
       assert.match(html, /Tahmin–Gerçekleşen Takibi/);
       assert.match(html, /GERÇEK TAKİP RAPORU/);
       assert.match(html, /FİNANSAL FİZİBİLİTE RAPORU/);
