@@ -22,6 +22,7 @@ import {
   renderWaterfall,
   resolveCashFlowColumns,
 } from "./ui/results-view.js";
+import { exportFinancialReport } from "./report/report-controller.js";
 
 export function mountStandaloneCalculator(sector) {
   const storageKey = `business-income-calculator:standalone:${sector.id}:${sector.version}`;
@@ -33,6 +34,7 @@ export function mountStandaloneCalculator(sector) {
     formSections: document.querySelector("#formSections"),
     resetButton: document.querySelector("#resetButton"),
     exportCsvButton: document.querySelector("#exportCsvButton"),
+    reportButton: document.querySelector("#reportButton"),
     printButton: document.querySelector("#printButton"),
     warnings: document.querySelector("#warnings"),
     kpiGrid: document.querySelector("#kpiGrid"),
@@ -201,6 +203,7 @@ export function mountStandaloneCalculator(sector) {
       render();
     });
     elements.exportCsvButton.addEventListener("click", exportCsv);
+    elements.reportButton.addEventListener("click", exportReport);
     elements.printButton.addEventListener("click", () => window.print());
   }
 
@@ -218,7 +221,12 @@ export function mountStandaloneCalculator(sector) {
     renderScenarioTable(elements.scenarioTable, sector, scenarios);
     renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
     renderBreakdown(elements.breakdown, presentation.breakdown);
-    lastRendered = { result, presentation };
+    lastRendered = { sector, scenarioId: state.activeScenario, inputs, result, presentation, scenarios };
+  }
+
+  function exportReport() {
+    if (!lastRendered) return;
+    exportFinancialReport(lastRendered);
   }
 
   function exportCsv() {

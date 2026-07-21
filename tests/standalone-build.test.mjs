@@ -24,6 +24,8 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /URL\.createObjectURL\(new Blob/);
       assert.match(html, /mountStandaloneCalculator/);
       assert.match(html, /CSV \/ Excel/);
+      assert.match(html, /Rapor \/ HTML/);
+      assert.match(html, /FİNANSAL FİZİBİLİTE RAPORU/);
       assert.match(html, /12 aylık nakit akışı/);
       assert.doesNotMatch(html, /<script[^>]+src=/i);
       assert.doesNotMatch(html, /<link[^>]+rel=["']stylesheet/i);

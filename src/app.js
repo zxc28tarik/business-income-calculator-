@@ -23,6 +23,7 @@ import {
   renderWaterfall,
   resolveCashFlowColumns,
 } from "./ui/results-view.js";
+import { exportFinancialReport } from "./report/report-controller.js";
 
 const STORAGE_KEY = "business-income-calculator:platform:v0.2";
 const OLD_CAFE_KEY = "business-income-calculator:cafe:v0.1";
@@ -35,6 +36,7 @@ const elements = {
   formSections: document.querySelector("#formSections"),
   resetButton: document.querySelector("#resetButton"),
   exportCsvButton: document.querySelector("#exportCsvButton"),
+  reportButton: document.querySelector("#reportButton"),
   printButton: document.querySelector("#printButton"),
   warnings: document.querySelector("#warnings"),
   kpiGrid: document.querySelector("#kpiGrid"),
@@ -265,6 +267,7 @@ function attachEvents() {
   });
 
   elements.exportCsvButton.addEventListener("click", exportCsv);
+  elements.reportButton.addEventListener("click", exportReport);
   elements.printButton.addEventListener("click", () => window.print());
 }
 
@@ -285,7 +288,12 @@ function render() {
   renderScenarioTable(elements.scenarioTable, sector, scenarios);
   renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
   renderBreakdown(elements.breakdown, presentation.breakdown);
-  lastRendered = { sector, result, presentation };
+  lastRendered = { sector, scenarioId: sectorState.activeScenario, inputs, result, presentation, scenarios };
+}
+
+function exportReport() {
+  if (!lastRendered) return;
+  exportFinancialReport(lastRendered);
 }
 
 function exportCsv() {
