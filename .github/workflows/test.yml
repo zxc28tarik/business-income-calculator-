@@ -46,7 +46,7 @@ jobs:
         run: |
           BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git fetch origin "$BRANCH"
-          git checkout -B "$BRANCH" "origin/$BRANCH"
+          git checkout -B "$BRANCH" FETCH_HEAD
           npm run build:standalone
           node scripts/finalize-v019.mjs
           if [ -z "$(git status --porcelain)" ]; then
