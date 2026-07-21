@@ -83,6 +83,7 @@ export function createPortfolioController({
   elements,
   storageKey,
   trackingPrefix,
+  backupScope = "platform",
   appVersion,
   initialWorkspace,
   createWorkspace,
@@ -92,7 +93,14 @@ export function createPortfolioController({
   summarizeWorkspace,
   initialName = "İlk işletmem",
 }) {
-  const normalizeOptions = { createWorkspace, normalizeWorkspace, initialWorkspace, initialName, trackingPrefix };
+  const normalizeOptions = {
+    createWorkspace,
+    normalizeWorkspace,
+    initialWorkspace,
+    initialName,
+    trackingPrefix,
+    backupScope,
+  };
   let visible = false;
   let portfolio = loadPortfolio();
 
@@ -113,6 +121,10 @@ export function createPortfolioController({
     return getActiveProject(portfolio);
   }
 
+  function projectIds() {
+    return new Set(portfolio.projects.map((project) => project.id));
+  }
+
   function syncActiveWorkspace() {
     const active = activeProject();
     if (!active) return;
@@ -120,19 +132,37 @@ export function createPortfolioController({
     savePortfolio();
   }
 
+  function migrateLegacyTracking() {
+    const prefix = `${trackingPrefix}:`;
+    const knownIds = projectIds();
+    const activeId = portfolio.activeProjectId;
+    for (const key of allStorageKeys()) {
+      if (!key.startsWith(prefix)) continue;
+      const remainder = key.slice(prefix.length);
+      const firstSegment = remainder.split(":")[0];
+      if (knownIds.has(firstSegment) || firstSegment.startsWith("project-")) continue;
+      const value = safeGet(key);
+      const targetKey = `${prefix}${activeId}:${remainder}`;
+      if (value != null && safeGet(targetKey) == null) safeSet(targetKey, value);
+    }
+  }
+
   function trackingEntries() {
     const entries = {};
+    const prefixes = portfolio.projects.map((project) => `${trackingPrefix}:${project.id}:`);
     for (const key of allStorageKeys()) {
-      if (!key.startsWith(`${trackingPrefix}:`)) continue;
+      if (!prefixes.some((prefix) => key.startsWith(prefix))) continue;
       const value = safeGet(key);
       if (typeof value === "string") entries[key] = value;
     }
     return entries;
   }
 
-  function clearTrackingEntries(projectId = null) {
-    const prefix = projectId ? `${trackingPrefix}:${projectId}:` : `${trackingPrefix}:`;
-    for (const key of allStorageKeys()) if (key.startsWith(prefix)) safeRemove(key);
+  function clearTrackingEntriesForIds(ids) {
+    const prefixes = [...ids].map((id) => `${trackingPrefix}:${id}:`);
+    for (const key of allStorageKeys()) {
+      if (prefixes.some((prefix) => key.startsWith(prefix))) safeRemove(key);
+    }
   }
 
   function copyTrackingEntries(sourceId, targetId) {
@@ -208,7 +238,7 @@ export function createPortfolioController({
     try {
       const removedId = active.id;
       portfolio = removeProject(portfolio, removedId);
-      clearTrackingEntries(removedId);
+      clearTrackingEntriesForIds([removedId]);
       savePortfolio();
       setWorkspace(clone(activeProject().workspace));
       render();
@@ -217,7 +247,12 @@ export function createPortfolioController({
 
   function exportBackup() {
     syncActiveWorkspace();
-    const backup = buildPortfolioBackup({ portfolio, trackingEntries: trackingEntries(), appVersion });
+    const backup = buildPortfolioBackup({
+      portfolio,
+      trackingEntries: trackingEntries(),
+      appVersion,
+      scope: backupScope,
+    });
     const date = new Date().toISOString().slice(0, 10);
     downloadJson(backup, `business-income-calculator-yedek-${date}.json`);
   }
@@ -230,7 +265,8 @@ export function createPortfolioController({
     try {
       const parsed = parsePortfolioBackup(await file.text(), normalizeOptions);
       if (!confirm(`${parsed.portfolio.projects.length} kayıt içe aktarılacak. Mevcut portföy ve takip verileri değiştirilsin mi?`)) return;
-      clearTrackingEntries();
+      const previousIds = projectIds();
+      clearTrackingEntriesForIds(previousIds);
       for (const [key, value] of Object.entries(parsed.trackingEntries)) safeSet(key, value);
       portfolio = parsed.portfolio;
       savePortfolio();
@@ -246,7 +282,11 @@ export function createPortfolioController({
     elements.renameButton.addEventListener("click", renameActive);
     elements.duplicateButton.addEventListener("click", duplicateActive);
     elements.deleteButton.addEventListener("click", deleteActive);
-    elements.toggleButton.addEventListener("click", () => { visible = !visible; render(); });
+    elements.toggleButton.addEventListener("click", () => {
+      visible = !visible;
+      if (visible) syncActiveWorkspace();
+      render();
+    });
     elements.closeButton.addEventListener("click", () => { visible = false; render(); });
     elements.exportButton.addEventListener("click", exportBackup);
     elements.importButton.addEventListener("click", () => elements.importInput.click());
@@ -257,6 +297,8 @@ export function createPortfolioController({
     });
   }
 
+  migrateLegacyTracking();
+  savePortfolio();
   attach();
   render();
   return {
