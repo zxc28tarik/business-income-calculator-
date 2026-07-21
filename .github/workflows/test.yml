@@ -17,24 +17,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Apply v0.21 actual tracking integration
+      - name: Apply v0.22 portfolio integration
         shell: bash
         run: |
           set +e
-          node scripts/finalize-v021.mjs > v021-integration.log 2>&1
+          node scripts/finalize-v022.mjs > v022-integration.log 2>&1
           status=$?
-          cat v021-integration.log
+          cat v022-integration.log
           exit "$status"
-      - name: Apply v0.21 tracking compatibility fix
-        run: node scripts/fix-v021-tracking.mjs
-      - name: Apply zero variance classification fix
-        run: node scripts/fix-v021-zero-variance.mjs
-      - name: Upload v0.21 integration log
+      - name: Upload v0.22 integration log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v021-integration-log
-          path: v021-integration.log
+          name: v022-integration-log
+          path: v022-integration.log
       - name: Run tests
         shell: bash
         run: |
@@ -42,7 +38,7 @@ jobs:
           npm test > test-output.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            tail -n 55 test-output.log
+            tail -n 70 test-output.log
             exit "$status"
           fi
           cat test-output.log
@@ -61,17 +57,17 @@ jobs:
         with:
           name: standalone-html
           path: standalone/*.html
-      - name: Materialize v0.21 actual tracking mode
+      - name: Materialize v0.22 portfolio mode
         if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         shell: bash
         run: |
           if [ -z "$(git status --porcelain)" ]; then
-            echo "v0.21 tracking files are already current."
+            echo "v0.22 portfolio files are already current."
             exit 0
           fi
           BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "feat: materialize v0.21 actual tracking mode"
+          git commit -m "feat: materialize v0.22 portfolio mode"
           git push origin HEAD:"$BRANCH"
