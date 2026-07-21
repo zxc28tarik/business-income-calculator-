@@ -19,6 +19,8 @@ jobs:
           node-version: 24
       - name: Apply v0.20 report integration
         run: node scripts/finalize-v020.mjs
+      - name: Apply v0.21 actual tracking integration
+        run: node scripts/finalize-v021.mjs
       - name: Run tests
         shell: bash
         run: |
@@ -26,7 +28,7 @@ jobs:
           npm test > test-output.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            tail -n 45 test-output.log
+            tail -n 55 test-output.log
             exit "$status"
           fi
           cat test-output.log
@@ -45,17 +47,17 @@ jobs:
         with:
           name: standalone-html
           path: standalone/*.html
-      - name: Materialize v0.20 report layer
+      - name: Materialize v0.21 actual tracking mode
         if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         shell: bash
         run: |
           if [ -z "$(git status --porcelain)" ]; then
-            echo "v0.20 report files are already current."
+            echo "v0.21 tracking files are already current."
             exit 0
           fi
           BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "feat: materialize v0.20 report layer"
+          git commit -m "feat: materialize v0.21 actual tracking mode"
           git push origin HEAD:"$BRANCH"
