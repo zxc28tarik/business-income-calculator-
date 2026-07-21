@@ -2,6 +2,19 @@
 
 Sektör bazlı finansal fizibilite ve 12 aylık nakit akışı platformu.
 
+## v0.19.0 — Bağımsız tek HTML çıktıları
+
+Aşama 6 tamamlandı. Sekiz sektörün her biri ana platformdan bağımsız açılabilen tek HTML dosyası olarak üretilebilir.
+
+- CSS, ortak UI ve sektör motoru dosyanın içine gömülür.
+- Harici CDN, JavaScript veya stil dosyası kullanılmaz.
+- Senaryo, tablo, CSV, yazdırma, KPI, uyarı ve 12 aylık nakit görünümü korunur.
+- Çıktılar aynı sektör motorlarını kullanır; ayrı formül kopyası içermez.
+- Üretim komutu: `npm run build:standalone`
+- Dosyalar `standalone/` altında oluşur ve CI tarafından `standalone-html` artefaktı olarak yayımlanır.
+
+Ayrıntılar: `docs/STANDALONE_HTML_OUTPUTS.md`.
+
 ## v0.18.0 — Oto Hizmetleri v2 profilleri
 
 Oto Hizmetleri artık sekiz ayrı iş türü profiliyle çalışır:
@@ -78,11 +91,11 @@ npm test
 npm run check
 ```
 
-Güncel paket: **199/199 test** ve otomatik kaynak modülü kontrolü başarılı.
+Güncel paket: **201/201 test** ve otomatik kaynak modülü kontrolü başarılı.
 
 ## Sıradaki aşama
 
-Aşama 6 — Her sektör için bağımsız, tek dosyalık HTML çıktıları. Bu çıktılar ortak platformdan ayrı açılabilecek; form, hesap, sonuç ve gerekli stilleri kendi içinde taşıyacaktır. Sonrasında rapor katmanı ve gerçek takip modu ele alınacaktır.
+Aşama 7 — Rapor katmanı: sektör sonuçlarını yönetici özeti, risk/varsayım tablosu ve paylaşılabilir çıktı yapısına dönüştürmek. Sonrasında gerçek takip modu ele alınacaktır.
 
 ## İlkeler
 

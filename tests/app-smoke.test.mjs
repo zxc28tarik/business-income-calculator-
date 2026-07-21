@@ -35,7 +35,7 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.18\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.19\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);

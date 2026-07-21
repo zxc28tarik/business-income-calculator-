@@ -72,3 +72,12 @@ Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölüm
 ## Sonraki aşama
 
 Aşama 6, her sektör için bağımsız tek HTML çıktısı üretimidir. Tek HTML dosyaları ortak sektör sözleşmelerini kullanmalı; finans motorunu kopyalayan ikinci bir formül kaynağı oluşturmamalıdır. Platform ve bağımsız çıktı aynı girdide aynı sonucu vermelidir.
+
+
+## Bağımsız HTML paketleme katmanı
+
+- `src/standalone-runtime.js`: tek sektör durumu, form olayları, sonuç renderı, CSV ve yerel kayıt
+- `scripts/build-standalone.mjs`: bağımlılık grafiği, CSS gömme ve çevrimdışı Blob modül paketi
+- `tests/standalone-build.test.mjs`: sekiz çıktı, harici kaynak yasağı, boyut ve deterministik üretim
+
+Bu katman finans formülü içermez; doğrudan mevcut sektör sözleşmesini paketler.

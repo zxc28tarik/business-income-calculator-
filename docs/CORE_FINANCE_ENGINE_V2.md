@@ -94,3 +94,8 @@ Aktif sekiz sektör ailesinin tamamı v2 profil derinliğine taşınmıştır. B
 ## Tek kaynak kuralı
 
 Bağımsız HTML veya rapor çıktısı yeni bir finans motoru oluşturamaz. Platform, tek HTML ve rapor aynı sektör tanımı ve aynı hesap fonksiyonlarını kullanmalı; aynı girdide aynı finans sonucunu üretmelidir.
+
+
+## Tek HTML çıktılarında motor bütünlüğü
+
+Bağımsız HTML dosyaları yeni finans formülü tanımlamaz. Seçilen sektörün normalizasyon, senaryo, hesaplama ve sunum modülleri kaynak haliyle dosyaya gömülür. Bu nedenle ana platform ve bağımsız çıktı aynı girdide aynı finans sonucunu üretir.
