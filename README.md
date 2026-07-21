@@ -2,9 +2,24 @@
 
 Sektör bazlı finansal fizibilite ve 12 aylık nakit akışı platformu.
 
+## v0.20.0 — Finansal rapor katmanı
+
+Aşama 7 tamamlandı. Ana platform ve sekiz bağımsız hesaplayıcı artık aktif sektör, iş türü, senaryo ve güncel girdilerden paylaşılabilir tek HTML raporu üretir.
+
+- **Rapor / HTML** düğmesi ana ve bağımsız uygulamalarda bulunur.
+- Rapor çevrimdışıdır; harici CSS, JavaScript, font veya CDN kullanmaz.
+- Yönetici özeti ve dengeli / koşullu / riskli model görünümü üretir.
+- Sektörün kendi KPI, uyarı ve senaryo metriklerini korur.
+- Minimum nakit, dönem sonu nakit, ilk negatif ay ve 12 aylık nakit tablosunu içerir.
+- Yalnız görünür form alanları ve gelişmiş tablolar varsayım denetim izine alınır.
+- Tarayıcıdan yazdırılabilir veya PDF'ye çevrilebilir.
+- Rapor yeni finans formülü tanımlamaz; mevcut sektör motorlarını kullanır.
+
+Ayrıntılar: `docs/REPORT_LAYER.md`.
+
 ## v0.19.0 — Bağımsız tek HTML çıktıları
 
-Aşama 6 tamamlandı. Sekiz sektörün her biri ana platformdan bağımsız açılabilen tek HTML dosyası olarak üretilebilir.
+Sekiz sektörün her biri ana platformdan bağımsız açılabilen tek HTML dosyası olarak üretilebilir.
 
 - CSS, ortak UI ve sektör motoru dosyanın içine gömülür.
 - Harici CDN, JavaScript veya stil dosyası kullanılmaz.
@@ -17,7 +32,7 @@ Ayrıntılar: `docs/STANDALONE_HTML_OUTPUTS.md`.
 
 ## v0.18.0 — Oto Hizmetleri v2 profilleri
 
-Oto Hizmetleri artık sekiz ayrı iş türü profiliyle çalışır:
+Oto Hizmetleri sekiz ayrı iş türü profiliyle çalışır:
 
 1. Oto yıkama
 2. Oto kuaför
@@ -28,29 +43,7 @@ Oto Hizmetleri artık sekiz ayrı iş türü profiliyle çalışır:
 7. Kaporta / boya
 8. Mobil oto servis
 
-Profiller yalnız etiket değildir:
-
-- Oto yıkama: günlük talep × hizmete dönüşüm
-- Randevulu işler: planlanan randevu × gerçekleşme oranı
-- Kaporta / boya: aylık planlanan iş
-- Mobil servis: ekip × günlük servis rotası
-- İsteğe bağlı müşteri tabanı: aktif müşteri × tekrar ziyaret + yeni müşteri işi
-
-Oto v2 ayrıca şunları içerir:
-
-- düzenlenebilir hizmet / iş karması
-- hizmet bazlı fiyat, süre, sarf, enerji, parça ve tekrar işçilik
-- istasyon/lift kapasitesi ile personel üretken kapasitesinin karşılaştırılması
-- randevuya gelmeme, iptal ve kapora tahsilatı
-- düzenlenebilir personel rolleri
-- parça/sarf stok kapsamı, hedef stok, yeniden sipariş noktası ve işletme sermayesi açığı
-- düzenlenebilir tedarikçi vadesi, teslim süresi ve alım indirimi
-- taşeron iş geliri, maliyeti ve katkı marjı
-- profile özgü başabaş, KPI, uyarı ve nakit kolonları
-- finansman ile faaliyet hibesi ayrımı
-- ekipman amortismanının P&L–nakit ayrımı
-
-Eski Oto Yıkama varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/AUTO_SERVICE_BUSINESS_TYPE_PROFILES.md`.
+Oto v2; talep ve randevu, istasyon/personel kapasitesi, hizmet karması, tekrar işçilik, stok, tedarikçi, taşeron, başabaş ve nakit ekonomisini içerir. Eski Oto Yıkama varsayılan finans sonucu testle korunur. Ayrıntılar: `docs/AUTO_SERVICE_BUSINESS_TYPE_PROFILES.md`.
 
 ## Önceki v2 geçişleri
 
@@ -84,18 +77,19 @@ python -m http.server 8080
 
 Ardından `http://localhost:8080` adresine gidin.
 
-## Test
+## Test ve üretim
 
 ```bash
 npm test
 npm run check
+npm run build:standalone
 ```
 
-Güncel paket: **201/201 test** ve otomatik kaynak modülü kontrolü başarılı.
+Güncel paket: **206/206 test**, otomatik kaynak modülü kontrolü ve sekiz bağımsız HTML üretimi başarılı.
 
 ## Sıradaki aşama
 
-Aşama 7 — Rapor katmanı: sektör sonuçlarını yönetici özeti, risk/varsayım tablosu ve paylaşılabilir çıktı yapısına dönüştürmek. Sonrasında gerçek takip modu ele alınacaktır.
+Aşama 8 — Gerçek takip modu: tahmin girdileri ile gerçekleşen aylık sonuçları ayrı saklamak; bütçe-gerçekleşen farkı, sapma nedenleri, dönem trendi ve rapor karşılaştırmasını kurmak.
 
 ## İlkeler
 
@@ -105,6 +99,7 @@ Aşama 7 — Rapor katmanı: sektör sonuçlarını yönetici özeti, risk/varsa
 - Net sonuç ve nakit hareketi ayrı tutulur.
 - Tedarikçi vadesi maliyeti silmez; ödeme zamanını değiştirir.
 - Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
+- Rapor görünümü yatırım tavsiyesi değildir.
 - Ürün içinde AI yorumlayıcı veya sohbet botu yoktur.
 
 ## Lisans
