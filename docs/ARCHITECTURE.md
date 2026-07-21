@@ -7,15 +7,18 @@
 - `src/core/sector-schema.js`: alan, tablo ve koşullu görünürlük sözleşmesi
 - `src/sectors/`: sektöre ve iş türüne özel talep, gelir, kapasite, maliyet ve sunum motorları
 - `src/ui/`: ortak form ve sonuç görünümü
-- `src/report/`: ortak fizibilite raporu modeli ve paylaşılabilir belge üretimi
+- `src/report/`: fizibilite raporu modeli ve paylaşılabilir belge üretimi
 - `src/tracking/`: gerçekleşen kayıt, bütçe sapması, trend ve takip raporu
+- `src/portfolio/`: çoklu kayıt, yedek doğrulama ve portföy karşılaştırması
 - `src/sectors/registry.js`: aktif sektör listesi
 
-## Profil katmanı ilkesi
+## Sektör ve profil ilkesi
 
-Profil katmanı ortak UI veya finans yardımcılarını kopyalamaz. İş türünün gelir/talep sürücüsünü, kapasitesini, varsayımlarını, KPI ve uyarılarını sektör motoruna verir. Sektör motoru P&L, başabaş ve nakit akışını üretir.
+Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. Profil sektörleri ayrıca `businessProfiles` ve `applyBusinessType` sunabilir.
 
-## Tamamlanan v2 sektörleri
+UI, rapor, takip ve portföy katmanları sektör formüllerini bilmez. İş türü ekonomik sürücüsünü sektör motoruna verir; sektör motoru P&L, başabaş ve nakit akışını üretir.
+
+Sekiz sektör ailesinin tamamı v2 profil derinliğindedir:
 
 - Oyun / Dijital Yayıncılık
 - Kafe / Restoran
@@ -26,39 +29,59 @@ Profil katmanı ortak UI veya finans yardımcılarını kopyalamaz. İş türün
 - Fiziksel Perakende
 - Oto Hizmetleri
 
-Sekiz sektör ailesinin tamamı kendi ekonomik sürücüleri, başabaş, KPI, uyarı ve nakit sözleşmesiyle v2 derinliğindedir.
+## Bağımsız HTML paketleme
 
-## Sektör sözleşmesi
-
-Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. Profil sektörleri ayrıca `businessProfiles` ve `applyBusinessType` sunabilir. UI, rapor ve takip katmanları sektör formüllerini bilmez.
-
-## Bağımsız HTML paketleme katmanı
-
-- `src/standalone-runtime.js`: tek sektör durumu, form olayları, sonuç renderı, CSV, rapor, gerçek takip ve yerel kayıt
+- `src/standalone-runtime.js`: tek sektör formu, sonuç, CSV, rapor, takip, portföy ve yerel kayıt
 - `scripts/build-standalone.mjs`: bağımlılık grafiği, CSS gömme ve çevrimdışı Blob modül paketi
 - `tests/standalone-build.test.mjs`: sekiz çıktı, harici kaynak yasağı, boyut ve deterministik üretim
 
-Bu katman finans formülü içermez; doğrudan mevcut sektör sözleşmesini paketler.
+Bu katman finans formülü içermez; seçilen sektörün gerçek kaynak modüllerini dosyaya gömer.
 
 ## Finansal rapor katmanı
 
-- `src/report/report-model.js`: aktif sektör sonucundan ortak rapor modeli üretir
-- `src/report/report-document.js`: rapor modelini çevrimdışı, yazdırılabilir tek HTML belgeye dönüştürür
-- `src/report/report-controller.js`: ana platform ve bağımsız hesaplayıcıların ortak dışa aktarma girişidir
-- `tests/report-layer.test.mjs`: sekiz sektör, görünür varsayım, risk sınıflandırması, bağımsız HTML ve kaçış güvenliği testleri
+- `src/report/report-model.js`: aktif sektör sonucundan ortak rapor modeli
+- `src/report/report-document.js`: çevrimdışı, yazdırılabilir tek HTML belge
+- `src/report/report-controller.js`: ana ve bağımsız uygulamaların ortak dışa aktarma girişi
+- `tests/report-layer.test.mjs`: sektör, görünür varsayım, risk, bağımsız HTML ve kaçış güvenliği
 
-Rapor katmanı finansal sonucu yeniden hesaplamaz. Dengeli, koşullu ve riskli görünüm yalnız mevcut kâr, nakit ve uyarı sonuçlarını sınıflandırır; yatırım tavsiyesi değildir.
+Rapor finansal sonucu yeniden hesaplamaz; mevcut kâr, nakit, KPI ve uyarıları sınıflandırır.
 
 ## Gerçek takip katmanı
 
-- `src/tracking/tracking-model.js`: gerçekleşen kayıt normalizasyonu, plan satırı uyumu, sapma, durum ve trend
-- `src/tracking/tracking-controller.js`: yerel kayıt, aylık giriş tablosu, takip CSV’si ve uygulama bağlantısı
-- `src/tracking/tracking-report.js`: çevrimdışı, yazdırılabilir tahmin-gerçekleşen raporu
-- `tests/tracking-mode.test.mjs`: kayıt, sapma işareti, Steam uyumu, trend ve belge güvenliği testleri
+- `src/tracking/tracking-model.js`: kayıt normalizasyonu, plan uyumu, sapma, durum ve trend
+- `src/tracking/tracking-controller.js`: proje kapsamlı yerel kayıt, aylık giriş, CSV ve uygulama bağlantısı
+- `src/tracking/tracking-report.js`: çevrimdışı tahmin-gerçekleşen raporu
+- `tests/tracking-mode.test.mjs`: kayıt, sapma, Steam uyumu, trend ve belge güvenliği
 
-Takip verisi sektör ve alt iş türü kapsam anahtarıyla saklanır. Tahmin planı aktif senaryonun mevcut nakit satırlarından okunur; gerçekleşen kayıtlar finans motorunun girdilerine geri yazılmaz.
+Takip anahtarı `projectId + sectorId + businessType` kapsamındadır. Tahmin aktif senaryonun nakit satırlarından okunur; gerçekleşen kayıt finans motoruna geri yazılmaz.
 
-Ortak sektörlerde `cashFlow.rows`; Oyun / Dijital Yayıncılık master yapısında `cashFlow.months` kullanılır. Takip modeli Steam alanlarını yalnız okuma adaptörüyle ortak sözleşmeye çevirir ve master motoru değiştirmez.
+Ortak sektörlerde `cashFlow.rows`, Oyun / Dijital Yayıncılık master yapısında `cashFlow.months` okunur. Steam alanları yalnız okuma adaptörüyle ortak takip sözleşmesine çevrilir.
+
+## Çoklu kayıt ve portföy katmanı
+
+- `src/portfolio/portfolio-model.js`: proje yaşam döngüsü, sınırlar, yedek şeması ve içe aktarma doğrulaması
+- `src/portfolio/portfolio-controller.js`: yerel saklama, kayıt seçimi, kopyalama, silme ve yedek işlemleri
+- `src/portfolio/portfolio-summary.js`: aktif sektör/senaryodan ortak finans özeti
+- `tests/portfolio-model.test.mjs`: kayıt yaşam döngüsü, limit, backup ve sekiz sektör özeti
+- `tests/portfolio-backup-scope.test.mjs`: platform/standalone kapsam ve takip izolasyonu
+
+Portföy durumu:
+
+```text
+portfolio
+  activeProjectId
+  projects[]
+    id
+    name
+    createdAt / updatedAt
+    workspace
+```
+
+Ana platform projesinin `workspace` alanı sekiz sektörün bütün senaryo girdilerini taşır. Bağımsız HTML projesi yalnız kendi sektörünün senaryolarını taşır.
+
+Takip kayıtları çalışma alanına gömülmez; proje kimlikli ayrı yerel anahtarlarda tutulur. Yedek üretiminde yalnız portföydeki proje kimliklerine ait anahtarlar alınır.
+
+Yedek `scope` alanı ana platform ile bağımsız sektör dosyalarını birbirinden ayırır. İçe aktarma çalışma alanlarını hedef normalizasyonundan geçirir ve yabancı proje takip anahtarlarını reddeder.
 
 ## P&L / nakit ayrımı
 
@@ -76,12 +99,13 @@ Ortak sektörlerde `cashFlow.rows`; Oyun / Dijital Yayıncılık master yapısı
 - Steam kaynak hash ve golden testleri
 - gerçek HTML smoke testi
 - eski sektör sonucu koruma testleri
-- alt iş türü, tablo, senaryo, P&L/nakit ve kapasite testleri
-- sekiz bağımsız HTML için üretim ve deterministik paketleme testleri
-- sekiz sektör için ortak rapor sözleşmesi ve belge güvenliği testleri
-- gerçek takip normalizasyonu, sapma, trend ve Steam nakit uyumu testleri
+- profil, tablo, senaryo, P&L/nakit ve kapasite testleri
+- sekiz bağımsız HTML üretim ve deterministik paketleme testleri
+- rapor sözleşmesi ve belge güvenliği testleri
+- takip normalizasyonu, sapma, trend ve Steam nakit uyumu testleri
+- portföy yaşam döngüsü, yedek, kapsam ve takip izolasyonu testleri
 - `scripts/check-modules.mjs` ile bütün kaynak modüllerinin içe aktarım kontrolü
 
 ## Sonraki aşama
 
-Aşama 9 çoklu işletme/proje kayıtları ve veri taşınabilirliğidir. Fizibilite, takip ve rapor verileri adlandırılmış kayıtlar halinde saklanacak; tam yedek dışa aktarma, içe aktarma ve karşılaştırmalı portföy görünümü ele alınacaktır.
+Aşama 10 yayınlama ve son kalite çalışmasıdır: gerçek tarayıcı E2E, mobil/erişilebilirlik, veri migrasyonu, production dağıtımı ve sürümleme.
