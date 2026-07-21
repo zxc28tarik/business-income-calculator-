@@ -20,7 +20,19 @@ jobs:
       - name: Apply v0.20 report integration
         run: node scripts/finalize-v020.mjs
       - name: Apply v0.21 actual tracking integration
-        run: node scripts/finalize-v021.mjs
+        shell: bash
+        run: |
+          set +e
+          node scripts/finalize-v021.mjs > v021-integration.log 2>&1
+          status=$?
+          cat v021-integration.log
+          exit "$status"
+      - name: Upload v0.21 integration log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v021-integration-log
+          path: v021-integration.log
       - name: Run tests
         shell: bash
         run: |
