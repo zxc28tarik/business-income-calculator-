@@ -41,7 +41,8 @@ function sumKnown(values) {
 }
 
 function percentVariance(variance, plan) {
-  if (variance == null || !Number.isFinite(plan) || Math.abs(plan) < 1e-9) return null;
+  if (variance == null || !Number.isFinite(plan)) return null;
+  if (Math.abs(plan) < 1e-9) return Math.abs(variance) < 1e-9 ? 0 : null;
   return variance / Math.abs(plan);
 }
 
@@ -98,16 +99,16 @@ export function hasTrackingData(record) {
 
 function buildForecast(row = {}) {
   const variableCosts = Number(row.variableCostsPaid ?? row.variableCostsAccrued ?? 0) || 0;
-  const fixedCosts = Number(row.fixedCosts ?? 0) || 0;
-  const stakeholderPayouts = Number(row.stakeholderPayouts ?? 0) || 0;
+  const fixedCosts = Number(row.fixedCosts ?? row.publisherCostTry ?? 0) || 0;
+  const stakeholderPayouts = Number(row.stakeholderPayouts ?? row.developerOutflowTry ?? 0) || 0;
   const estimatedTax = Number(row.estimatedTax ?? 0) || 0;
-  const collections = Number(row.collections ?? 0) || 0;
+  const collections = Number(row.collections ?? row.receiptTry ?? 0) || 0;
   const financing = Number(row.financing ?? 0) || 0;
   const support = Number(row.support ?? 0) || 0;
   const setupCosts = Number(row.setupCosts ?? 0) || 0;
   const loanPayment = Number(row.loanPayment ?? 0) || 0;
   const cashStart = Number(row.cashStart ?? 0) || 0;
-  const cashEnd = Number(row.cashEnd ?? 0) || 0;
+  const cashEnd = Number(row.cashEnd ?? row.cashTry ?? 0) || 0;
   const operatingResult = collections - variableCosts - fixedCosts - stakeholderPayouts - estimatedTax;
   const netCashMovement = collections + financing + support
     - variableCosts - fixedCosts - stakeholderPayouts - estimatedTax - setupCosts - loanPayment;
@@ -176,10 +177,21 @@ function buildRow(forecastRow, actualRecord) {
   };
 }
 
+function resolveForecastRows(result) {
+  if (Array.isArray(result?.cashFlow?.rows)) return result.cashFlow.rows;
+  if (!Array.isArray(result?.cashFlow?.months)) return [];
+  let previousCash = Number(result.cashFlow.startCashTry ?? 0) - Number(result.cashFlow.preLaunchCashNeedTry ?? 0);
+  return result.cashFlow.months.map((row) => {
+    const adapted = { ...row, cashStart: previousCash };
+    previousCash = Number(row.cashTry ?? previousCash);
+    return adapted;
+  });
+}
+
 export function buildTrackingModel({ sector, scenarioId = "expected", result, records = [] }) {
   const normalizedRecords = normalizeTrackingRecords(records);
   const actualByMonth = new Map(normalizedRecords.map((record) => [record.month, record]));
-  const forecastRows = Array.isArray(result?.cashFlow?.rows) ? result.cashFlow.rows : [];
+  const forecastRows = resolveForecastRows(result);
   const rows = forecastRows.map((row) => buildRow(row, actualByMonth.get(Number(row.month))));
   const completedRows = rows.filter((row) => row.actual && hasTrackingData(row.actual));
   const completeFinancialRows = completedRows.filter((row) => row.actual.coreComplete);

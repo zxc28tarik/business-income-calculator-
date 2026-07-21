@@ -24,6 +24,7 @@ import {
   resolveCashFlowColumns,
 } from "./ui/results-view.js";
 import { exportFinancialReport } from "./report/report-controller.js";
+import { createTrackingController } from "./tracking/tracking-controller.js";
 
 const STORAGE_KEY = "business-income-calculator:platform:v0.2";
 const OLD_CAFE_KEY = "business-income-calculator:cafe:v0.1";
@@ -37,6 +38,14 @@ const elements = {
   resetButton: document.querySelector("#resetButton"),
   exportCsvButton: document.querySelector("#exportCsvButton"),
   reportButton: document.querySelector("#reportButton"),
+  trackingButton: document.querySelector("#trackingButton"),
+  trackingPanel: document.querySelector("#trackingPanel"),
+  trackingSummary: document.querySelector("#trackingSummary"),
+  trackingTable: document.querySelector("#trackingTable"),
+  trackingTrends: document.querySelector("#trackingTrends"),
+  trackingCloseButton: document.querySelector("#trackingCloseButton"),
+  trackingCsvButton: document.querySelector("#trackingCsvButton"),
+  trackingReportButton: document.querySelector("#trackingReportButton"),
   printButton: document.querySelector("#printButton"),
   warnings: document.querySelector("#warnings"),
   kpiGrid: document.querySelector("#kpiGrid"),
@@ -49,6 +58,19 @@ const elements = {
 
 let state = loadState();
 let lastRendered = null;
+const trackingController = createTrackingController({
+  elements: {
+    toggleButton: elements.trackingButton,
+    panel: elements.trackingPanel,
+    summary: elements.trackingSummary,
+    table: elements.trackingTable,
+    trends: elements.trackingTrends,
+    closeButton: elements.trackingCloseButton,
+    csvButton: elements.trackingCsvButton,
+    reportButton: elements.trackingReportButton,
+  },
+  getContext: () => lastRendered,
+});
 
 renderSectorOptions();
 renderSectorShell();
@@ -289,6 +311,7 @@ function render() {
   renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
   renderBreakdown(elements.breakdown, presentation.breakdown);
   lastRendered = { sector, scenarioId: sectorState.activeScenario, inputs, result, presentation, scenarios };
+  trackingController.render();
 }
 
 function exportReport() {

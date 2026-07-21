@@ -11,11 +11,14 @@ class MockElement {
     this.tagName = tagName;
     this.type = "";
     this.checked = false;
+    this.hidden = false;
+    this.attributes = new Map();
     this.listeners = new Map();
     this.classList = { toggle() {} };
   }
 
   addEventListener(type, handler) { this.listeners.set(type, handler); }
+  setAttribute(name, value) { this.attributes.set(name, String(value)); }
   dispatch(type, target = this) { this.listeners.get(type)?.({ target }); }
   querySelectorAll() { return []; }
   click() {}
@@ -35,7 +38,7 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.20\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.21\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -48,7 +51,7 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
 
   const requiredIds = [
     "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher",
-    "formSections", "resetButton", "exportCsvButton", "reportButton", "printButton", "warnings",
+    "formSections", "resetButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "warnings",
     "kpiGrid", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
   ];
   for (const id of requiredIds) {
@@ -62,7 +65,7 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
     "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
-    "#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#printButton", "#warnings",
+    "#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",
     "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
   for (const selector of requiredSelectors) assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
@@ -83,6 +86,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   await import(`../src/app.js?smoke=${Date.now()}`);
 
   assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);
+  assert.match(html, /Gerçek Takip/);
+  assert.match(html, /Tahmin–Gerçekleşen Takibi/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net k.r/);
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş satış kanalı karmasını kullan/);
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);

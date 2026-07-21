@@ -23,6 +23,7 @@ import {
   resolveCashFlowColumns,
 } from "./ui/results-view.js";
 import { exportFinancialReport } from "./report/report-controller.js";
+import { createTrackingController } from "./tracking/tracking-controller.js";
 
 export function mountStandaloneCalculator(sector) {
   const storageKey = `business-income-calculator:standalone:${sector.id}:${sector.version}`;
@@ -35,6 +36,14 @@ export function mountStandaloneCalculator(sector) {
     resetButton: document.querySelector("#resetButton"),
     exportCsvButton: document.querySelector("#exportCsvButton"),
     reportButton: document.querySelector("#reportButton"),
+    trackingButton: document.querySelector("#trackingButton"),
+    trackingPanel: document.querySelector("#trackingPanel"),
+    trackingSummary: document.querySelector("#trackingSummary"),
+    trackingTable: document.querySelector("#trackingTable"),
+    trackingTrends: document.querySelector("#trackingTrends"),
+    trackingCloseButton: document.querySelector("#trackingCloseButton"),
+    trackingCsvButton: document.querySelector("#trackingCsvButton"),
+    trackingReportButton: document.querySelector("#trackingReportButton"),
     printButton: document.querySelector("#printButton"),
     warnings: document.querySelector("#warnings"),
     kpiGrid: document.querySelector("#kpiGrid"),
@@ -47,6 +56,19 @@ export function mountStandaloneCalculator(sector) {
 
   let state = loadState();
   let lastRendered = null;
+  const trackingController = createTrackingController({
+    elements: {
+      toggleButton: elements.trackingButton,
+      panel: elements.trackingPanel,
+      summary: elements.trackingSummary,
+      table: elements.trackingTable,
+      trends: elements.trackingTrends,
+      closeButton: elements.trackingCloseButton,
+      csvButton: elements.trackingCsvButton,
+      reportButton: elements.trackingReportButton,
+    },
+    getContext: () => lastRendered,
+  });
 
   renderShell();
   attachEvents();
@@ -222,6 +244,7 @@ export function mountStandaloneCalculator(sector) {
     renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
     renderBreakdown(elements.breakdown, presentation.breakdown);
     lastRendered = { sector, scenarioId: state.activeScenario, inputs, result, presentation, scenarios };
+    trackingController.render();
   }
 
   function exportReport() {

@@ -57,7 +57,7 @@ test("sapma işaretleri gelirde ve giderde doğru yöndedir", () => {
   assert.equal(row.variance.collections, 100);
   assert.equal(row.variance.variableCosts, 50);
   assert.equal(row.variance.fixedCosts, 25);
-  assert.ok(row.actual.netCashMovement > row.actual.operatingResult, "finansman nakde eklenmeli");
+  assert.equal(row.actual.netCashMovement, row.actual.operatingResult + row.actual.financing + row.actual.support - row.actual.setupCosts - row.actual.loanPayment);
   assert.equal(row.actual.operatingResult, row.actual.collections - row.actual.variableCosts - row.actual.fixedCosts - row.actual.stakeholderPayouts - row.actual.estimatedTax, "finansman faaliyet sonucuna girmemeli");
 });
 
@@ -66,23 +66,28 @@ test("sekiz sektör bütçe-gerçekleşen modeli üretir", () => {
   for (const sector of SECTORS) {
     const inputs = sector.normalizeInputs(sector.applyScenario(structuredClone(sector.defaultInputs), "expected"));
     const result = sector.calculateModel(inputs);
-    const first = result.cashFlow.rows[0];
+    const first = result.cashFlow.rows?.[0] ?? result.cashFlow.months?.[0];
+    const collections = first.collections ?? first.receiptTry ?? 0;
+    const variableCosts = first.variableCostsPaid ?? first.variableCostsAccrued ?? 0;
+    const fixedCosts = first.fixedCosts ?? first.publisherCostTry ?? 0;
+    const stakeholderPayouts = first.stakeholderPayouts ?? first.developerOutflowTry ?? 0;
+    const cashEnd = first.cashEnd ?? first.cashTry ?? 0;
     const model = buildTrackingModel({
       sector,
       scenarioId: "expected",
       result,
       records: [{
         month: 1,
-        collections: first.collections,
-        variableCosts: first.variableCostsPaid,
-        fixedCosts: first.fixedCosts,
-        stakeholderPayouts: first.stakeholderPayouts,
-        estimatedTax: first.estimatedTax,
-        financing: first.financing,
-        support: first.support,
-        setupCosts: first.setupCosts,
-        loanPayment: first.loanPayment,
-        cashEnd: first.cashEnd,
+        collections,
+        variableCosts,
+        fixedCosts,
+        stakeholderPayouts,
+        estimatedTax: first.estimatedTax ?? 0,
+        financing: first.financing ?? 0,
+        support: first.support ?? 0,
+        setupCosts: first.setupCosts ?? 0,
+        loanPayment: first.loanPayment ?? 0,
+        cashEnd,
         volume: 100,
         reason: "volume",
       }],
