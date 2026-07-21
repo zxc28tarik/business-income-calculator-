@@ -1,8 +1,8 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.18.0
+## Güncel durum — v0.20.0
 
-Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Çalışan sektörler silinmez; her sektör kendi ekonomik yapısına göre ayrı profil katmanıyla derinleştirilir.
+Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Çalışan finans motorları silinmez veya çıktı katmanlarında yeniden yazılmaz. Sektör, bağımsız HTML ve rapor aynı hesap sözleşmesini kullanır.
 
 ## Tamamlanan aşamalar
 
@@ -30,33 +30,34 @@ Sekiz sektör ailesinin tamamı v2 profil derinliğine taşındı:
 
 Her geçişte eski varsayılan finans sonucu testle korundu; iş türüne özel talep/gelir, kapasite, gider, başabaş, KPI, uyarı, senaryo ve nakit katmanları kuruldu.
 
-### Aşama 5H — Oto Hizmetleri v2 profilleri
+### Aşama 6 — Bağımsız tek HTML çıktıları
 
-Sekiz iş türü ayrı ekonomik sürücülere bağlandı:
+- Sekiz sektör için çevrimdışı tek HTML hesaplayıcı üretildi.
+- Ortak CSS, UI ve yalnız ilgili sektör bağımlılıkları dosyaya gömüldü.
+- Harici CDN, script ve stil bağlantıları kaldırıldı.
+- Ana platformla aynı sektör motorları kullanıldı.
+- Dosya sayısı, boyut, bağımsızlık ve deterministik üretim testleri eklendi.
+- Çıktılar `standalone/` klasörüne ve CI artefaktına bağlandı.
 
-1. Oto yıkama — günlük talep × dönüşüm
-2. Oto kuaför — randevu × gerçekleşme
-3. Detaylı temizlik — randevu × gerçekleşme
-4. Lastikçi — randevu × gerçekleşme ve parça satışı
-5. Cam filmi / kaplama — randevu × gerçekleşme
-6. Küçük bakım / servis — randevu × gerçekleşme ve parça satışı
-7. Kaporta / boya — aylık planlanan iş
-8. Mobil oto servis — mobil ekip × günlük rota
+### Aşama 7 — Finansal rapor katmanı
 
-Oto v2 kapsamında:
+Ana platform ve bağımsız hesaplayıcılar ortak rapor sözleşmesine bağlandı.
 
-- hizmet/iş karması: fiyat, süre, sarf, enerji, parça ve tekrar işçilik
-- istasyon/lift kapasitesi ile personel üretken kapasitesinin karşılaştırılması
-- randevuya gelmeme, iptal ve kapora tahsilatı
-- müşteri tabanı ve tekrar ziyaret talebi
-- personel rol tablosu
-- parça/sarf stok kapsamı, hedef stok ve yeniden sipariş noktası
-- tedarikçi vadesi, teslim süresi ve alım indirimi
-- taşeron iş geliri, maliyeti ve katkı marjı
-- faaliyet hibesi ile finansman ayrımı
-- profile özgü başabaş, KPI, uyarı ve nakit kolonları
+Rapor şunları taşır:
 
-uygulandı. Eski Oto Yıkama varsayılan sonucu testle korunur.
+1. sektör, iş türü, aktif senaryo ve motor sürümü
+2. yönetici özeti
+3. dengeli / koşullu / riskli model görünümü
+4. sektörün kendi KPI kartları
+5. kritik, dikkat ve bilgi uyarıları
+6. üç senaryo karşılaştırması
+7. finansal dağılım
+8. minimum nakit, dönem sonu nakit ve ilk negatif ay
+9. 12 aylık nakit akışı
+10. yalnız görünür form varsayımları ve tablolar
+11. kullanım sınırı
+
+Rapor finansal sonucu yeniden hesaplamaz. Sektörün normalize girdisi, `calculateModel`, `buildPresentation`, uyarı ve nakit çıktıları kullanılır. Kullanıcı metni HTML olarak çalıştırılmaz; belgeye kaçışlanarak yazılır.
 
 ## Kaynak ve finans ilkeleri
 
@@ -66,18 +67,16 @@ uygulandı. Eski Oto Yıkama varsayılan sonucu testle korunur.
 - Tedarikçi indirimi maliyeti; tedarikçi vadesi ödeme zamanını etkiler.
 - Amortisman P&L gideridir ve nakitten ikinci kez düşülmez.
 - Vergi ve muhasebe oranları düzenlenebilir varsayımdır; uzman teyidi gerekir.
+- Bağımsız HTML ve rapor yeni finans motoru oluşturamaz.
+- Rapor görünümü yatırım tavsiyesi değildir.
 
 ## Sıradaki aşama
 
-### Aşama 6 — Bağımsız tek HTML çıktıları
+### Aşama 8 — Gerçek takip modu
 
-1. Her sektör için kendi başına açılan tek HTML üretmek
-2. Gerekli stil ve JavaScript'i dosya içine gömmek
-3. Sektör ve alt iş türü hesap sözleşmesini ortak platformla aynı kaynaktan üretmek
-4. Bağımsız çıktıların golden ve smoke testlerini eklemek
-5. Platform ile tek HTML sonuçlarının aynı girdide aynı finans sonucunu verdiğini doğrulamak
-
-## Daha sonraki işler
-
-- rapor katmanı
-- gerçek takip modu
+1. Tahmin ve gerçekleşen dönem verilerini ayrı saklamak
+2. Aylık gerçekleşen ciro, gider, kâr ve nakit kayıtlarını girmek
+3. Bütçe-gerçekleşen farkını göstermek
+4. Sapma nedenlerini ve dönem trendini izlemek
+5. Tahmin raporu ile gerçekleşen raporu karşılaştırmak
+6. Finans motorlarının mevcut golden sonuçlarını korumak
