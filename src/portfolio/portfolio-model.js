@@ -137,10 +137,17 @@ export function removeProject(portfolio, projectId) {
   return { ...portfolio, activeProjectId, projects };
 }
 
-export function buildPortfolioBackup({ portfolio, trackingEntries = {}, appVersion = "", generatedAt = new Date().toISOString() }) {
+export function buildPortfolioBackup({
+  portfolio,
+  trackingEntries = {},
+  appVersion = "",
+  scope = "platform",
+  generatedAt = new Date().toISOString(),
+}) {
   return {
     schema: BACKUP_SCHEMA,
     version: 1,
+    scope: String(scope),
     appVersion: String(appVersion),
     generatedAt,
     portfolio: clone(portfolio),
@@ -155,18 +162,30 @@ export function parsePortfolioBackup(text, options) {
   let raw;
   try { raw = JSON.parse(text); } catch { throw new Error("Yedek dosyası geçerli JSON değil."); }
   if (raw?.schema !== BACKUP_SCHEMA || raw?.version !== 1) throw new Error("Yedek dosyası bu uygulamanın desteklenen biçiminde değil.");
+  const expectedScope = String(options.backupScope ?? "platform");
+  if (String(raw.scope ?? "") !== expectedScope) throw new Error("Yedek dosyası farklı bir hesaplayıcı kapsamına ait.");
   const portfolio = normalizePortfolioState(raw.portfolio, options);
+  const validProjectIds = new Set(portfolio.projects.map((project) => project.id));
   const trackingEntries = {};
+  const prefix = `${options.trackingPrefix}:`;
   for (const [key, value] of Object.entries(raw.trackingEntries ?? {})) {
-    if (!String(key).startsWith(options.trackingPrefix) || typeof value !== "string") continue;
-    if (value.length > 1_000_000) continue;
+    const normalizedKey = String(key).slice(0, 300);
+    if (!normalizedKey.startsWith(prefix) || typeof value !== "string") continue;
+    const projectId = normalizedKey.slice(prefix.length).split(":")[0];
+    if (!validProjectIds.has(projectId) || value.length > 1_000_000) continue;
     try {
       const parsed = JSON.parse(value);
       if (!Array.isArray(parsed)) continue;
     } catch { continue; }
-    trackingEntries[String(key).slice(0, 300)] = value;
+    trackingEntries[normalizedKey] = value;
   }
-  return { portfolio, trackingEntries, appVersion: String(raw.appVersion ?? ""), generatedAt: String(raw.generatedAt ?? "") };
+  return {
+    portfolio,
+    trackingEntries,
+    scope: expectedScope,
+    appVersion: String(raw.appVersion ?? ""),
+    generatedAt: String(raw.generatedAt ?? ""),
+  };
 }
 
 export const PORTFOLIO_LIMITS = { maxProjects: MAX_PROJECTS, maxNameLength: MAX_NAME_LENGTH };
