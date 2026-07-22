@@ -1,8 +1,8 @@
 # Kaynak Uyum Denetimi
 
-## Güncel durum — v0.22.0
+## Güncel durum — v0.23.0
 
-Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Finans motorları çıktı, takip veya portföy katmanlarında yeniden yazılmaz. Ana platform, bağımsız HTML, rapor, gerçek takip ve portföy karşılaştırması aynı sektör sözleşmelerini kullanır.
+Proje, korunan Steam Yayıncısı master kaynağı ve ortak sektör şeması üzerinde ilerler. Finans motorları çıktı, takip, portföy, migrasyon veya yayın katmanlarında yeniden yazılmaz. Ana platform, bağımsız HTML, rapor, gerçek takip, portföy karşılaştırması ve production artefaktı aynı sektör sözleşmelerini kullanır.
 
 ## Tamamlanan aşamalar
 
@@ -74,6 +74,25 @@ Uygulanan sözleşme:
 
 Portföy karşılaştırması mevcut sektör motorlarını çağırır; yeni finans formülü oluşturmaz. Steam master motoru ve golden sonuçlar değişmez.
 
+### Aşama 10 — Yayınlama ve son kalite
+
+`v0.23.0` ile yayın öncesi kalite ve dağıtım katmanı tamamlandı:
+
+- Playwright Chromium masaüstü ve Pixel 7 mobil matrisi
+- sektör/form, portföy, proje takip izolasyonu, JSON yedeği ve standalone gerçek tarayıcı akışları
+- ciddi/kritik WCAG A/AA ihlallerini durduran axe denetimi
+- mobil sayfa düzeyinde yatay taşma kontrolü
+- erişilebilir dinamik tablo etiketleri, skip-link ve görünür klavye odağı
+- `scripts/build-production.mjs` ile ayrı `dist/` üretim paketi
+- production paketine test, geliştirme betiği ve `node_modules` sızmasını engelleyen sınır testi
+- v0.21 proje kimliği içermeyen takip anahtarlarını hedef veriyi ezmeden taşıyan migrasyon
+- `package-lock.json` ile sabitlenmiş tarayıcı test bağımlılıkları
+- gerçek `dist/` artefaktını Chromium içinde doğrulayan release kalite kapısı
+- yalnız `main` veya elle tetiklenen, kalite kapılı GitHub Pages workflow’u
+- sürümleme, yayın kontrol listesi ve geri alma belgesi
+
+Pages workflow dosyası hazırdır; taslak PR production ortamına dağıtılmaz. Gerçek Pages yayını için PR’nin açık onayla `main` dalına birleştirilmesi ve depo Pages kaynağının GitHub Actions olarak ayarlanması gerekir.
+
 ## Kaynak ve finans ilkeleri
 
 - Steam formu diğer sektörlere kopyalanmaz.
@@ -82,12 +101,12 @@ Portföy karşılaştırması mevcut sektör motorlarını çağırır; yeni fin
 - Tedarikçi indirimi maliyeti; tedarikçi vadesi ödeme zamanını etkiler.
 - Amortisman P&L gideridir ve nakitten ikinci kez düşülmez.
 - Vergi ve muhasebe oranları düzenlenebilir varsayımdır; uzman teyidi gerekir.
-- Bağımsız HTML, rapor, takip ve portföy yeni finans motoru oluşturamaz.
+- Bağımsız HTML, rapor, takip, portföy, migrasyon ve yayın katmanı yeni finans motoru oluşturamaz.
 - Rapor, takip ve portföy görünümü yatırım tavsiyesi değildir.
 
 ## Güncel doğrulama
 
-- 222/222 test
+- 227/227 birim ve entegrasyon testi
 - sekiz sektör v2 profil sözleşmesi
 - eski varsayılan ve Steam golden sonuç korumaları
 - gerçek uygulama smoke testi
@@ -95,16 +114,18 @@ Portföy karşılaştırması mevcut sektör motorlarını çağırır; yeni fin
 - takip proje/iş türü izolasyonu
 - portföy kayıt yaşam döngüsü ve 50 kayıt sınırı
 - yedek şema, kapsam ve yabancı takip anahtarı reddi
+- eski takip anahtarı migrasyon testleri
 - bütün JavaScript modüllerinin içe aktarım kontrolü
 - portföy özellikli sekiz bağımsız HTML’nin deterministik üretimi
+- production artefakt sınır testi
+- gerçek `dist/` üzerinde Chromium masaüstü ve mobil E2E
+- ciddi/kritik WCAG A/AA axe ihlali bulunmaması
+- sürüm ve Pages workflow sözleşmesinin otomatik testi
 
-## Sıradaki aşama
+## Yayın durumu
 
-### Aşama 10 — Yayınlama ve son kalite
-
-1. gerçek tarayıcı uçtan uca testleri
-2. mobil ekran ve klavye kullanımı
-3. erişilebilirlik denetimi
-4. eski yerel veri sürümlerinin migrasyon testleri
-5. production dağıtımı ve sürümleme
-6. yayın öncesi güvenlik ve performans denetimi
+- Taslak PR açık ve birleştirilmemiştir.
+- `main` dalı doğrudan değiştirilmemiştir.
+- Production `dist/` paketi CI artefaktı olarak üretilir.
+- GitHub Pages dağıtımı yalnız `main` dalında veya elle çalışır.
+- Birleştirme ve canlı yayın kullanıcı onayı olmadan yapılmaz.
