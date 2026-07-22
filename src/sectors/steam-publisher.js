@@ -8,9 +8,14 @@ import {
 } from "./steam-publisher-config.js";
 import { calculateSteamPublisherReferenceModel } from "./steam-publisher-core.js";
 import {
+  STEAM_BUSINESS_PROFILE_DEFAULTS,
+  STEAM_BUSINESS_PROFILES,
+  applySteamBusinessProfileScenario,
+} from "./steam-business-profile-engine.js";
+import {
   STEAM_PUBLISHER_CASH_FLOW_COLUMNS,
-  STEAM_PUBLISHER_FORM_SECTIONS,
-} from "./steam-publisher-form.js";
+  STEAM_PROFILED_FORM_SECTIONS,
+} from "./steam-publisher-profile-form.js";
 import {
   buildSteamPublisherPresentation,
   mapSteamPublisherCashFlow,
@@ -28,6 +33,13 @@ export {
 } from "./steam-publisher-config.js";
 
 export {
+  STEAM_BUSINESS_PROFILE_DEFAULTS,
+  STEAM_BUSINESS_PROFILES,
+  buildSteamBusinessProfileInput,
+  applySteamBusinessProfileScenario,
+} from "./steam-business-profile-engine.js";
+
+export {
   buildSteamPublisherWarnings,
   buildSteamPublisherWaterfall,
   calculateSteamPublisherReferenceModel,
@@ -36,6 +48,7 @@ export {
 
 const STEAM_UI_DEFAULT_INPUTS = {
   ...STEAM_PUBLISHER_DEFAULT_INPUTS,
+  ...STEAM_BUSINESS_PROFILE_DEFAULTS,
   operationsReleaseTry: 120000,
   operationsCommunityTry: 90000,
   operationsToolsTry: 40000,
@@ -57,7 +70,9 @@ function normalizeUiInputs(rawInputs = {}) {
 }
 
 function applyUiScenario(baseInputs, scenarioId) {
-  return normalizeUiInputs(applySteamPublisherScenario(normalizeUiInputs(baseInputs), scenarioId));
+  const normalized = normalizeUiInputs(baseInputs);
+  const masterScenario = applySteamPublisherScenario(normalized, scenarioId);
+  return normalizeUiInputs(applySteamBusinessProfileScenario(masterScenario, scenarioId));
 }
 
 function calculateModel(rawInputs) {
@@ -67,9 +82,7 @@ function calculateModel(rawInputs) {
 
 function calculateScenarioComparison(scenarioInputs = {}) {
   return Object.entries(STEAM_PUBLISHER_SCENARIOS).map(([id, scenario]) => {
-    const input = normalizeUiInputs(
-      scenarioInputs[id] ?? applyUiScenario(STEAM_UI_DEFAULT_INPUTS, id),
-    );
+    const input = normalizeUiInputs(scenarioInputs[id] ?? applyUiScenario(STEAM_UI_DEFAULT_INPUTS, id));
     return { id, label: scenario.label, input, result: calculateModel(input) };
   });
 }
@@ -78,13 +91,14 @@ export const STEAM_PUBLISHER_SECTOR = assertSectorDefinition({
   id: "game_digital_publishing",
   name: "Oyun / Dijital Yayıncılık",
   family: "Dijital ürün ve yayıncılık",
-  description: "Steam yayıncılığı için satış, platform kesintileri, recoup, geliştirici settlement, vergi ve nakit akışı modeli.",
-  version: "0.10.0",
+  description: "Steam, kendi yayınlama, mobil oyun, DLC, dijital ürün ve publisher–developer paylaşımı için profil tabanlı fizibilite modeli.",
+  version: "0.11.0",
   status: "simulation",
   businessTypes: STEAM_PUBLISHER_BUSINESS_TYPES,
+  businessProfiles: STEAM_BUSINESS_PROFILES,
   defaultInputs: STEAM_UI_DEFAULT_INPUTS,
   scenarios: STEAM_PUBLISHER_SCENARIOS,
-  formSections: STEAM_PUBLISHER_FORM_SECTIONS,
+  formSections: STEAM_PROFILED_FORM_SECTIONS,
   cashFlowColumns: STEAM_PUBLISHER_CASH_FLOW_COLUMNS,
   normalizeInputs: normalizeUiInputs,
   applyScenario: applyUiScenario,

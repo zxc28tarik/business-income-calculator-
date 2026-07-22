@@ -1,93 +1,129 @@
 # Mimari Notları
 
-## Katmanlar
+## Ana katmanlar
 
-- `src/core/finance-engine.js`: Sektörden bağımsız vergi, komisyon, paydaş, başabaş, nakit akışı ve şelale yardımcıları.
-- `src/core/sector-schema.js`: Her sektörün kimlik, form ve fonksiyon sözleşmesini doğrular.
-- `src/sectors/registry.js`: Uygulamada kullanılabilen sektörleri tek listede toplar.
-- `src/sectors/cafe-*.js`: Yiyecek-içecek modeli.
-- `src/sectors/ecommerce-*.js`: E-ticaret/pazaryeri modeli.
-- `src/sectors/beauty-*.js`: Güzellik/kuaför/bakım modeli.
-- `src/sectors/agency-*.js`: Ajans/freelancer/danışmanlık modeli.
-- `src/sectors/saas-*.js`: SaaS/abonelik ve birim ekonomisi modeli.
-- `src/sectors/retail-*.js`: Fiziksel perakende, stok ve mağaza modeli.
-- `src/sectors/auto-*.js`: Oto hizmetleri, kapasite, parça geliri ve ekipman modeli.
-- `src/app.js`: Sektörden bağımsız form, senaryo, yerel kayıt, CSV/PDF ve sonuç render katmanı.
-- `tests/`: Ortak finans, şema, uygulama açılışı ve sektör özel kabul testleri.
-- `.github/workflows/test.yml`: Push ve pull requestlerde test/sözdizimi doğrulaması.
+- `src/core/finance-engine.js`: sektör bağımsız vergi, komisyon, başabaş ve nakit yardımcıları
+- `src/core/master-finance-engine-v2.js`: korunan Steam master motoru
+- `src/core/sector-schema.js`: alan, tablo ve koşullu görünürlük sözleşmesi
+- `src/sectors/`: sektöre ve iş türüne özel talep, gelir, kapasite, maliyet ve sunum motorları
+- `src/ui/`: ortak form ve sonuç görünümü
+- `src/report/`: fizibilite raporu modeli ve paylaşılabilir belge üretimi
+- `src/tracking/`: gerçekleşen kayıt, bütçe sapması, trend ve takip raporu
+- `src/portfolio/`: çoklu kayıt, yedek doğrulama ve portföy karşılaştırması
+- `src/migrations/`: yerel veri şeması migrasyonları
+- `src/sectors/registry.js`: aktif sektör listesi
 
-## Ortak hesap zinciri
+## Sektör ve profil ilkesi
+
+Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. Profil sektörleri ayrıca `businessProfiles` ve `applyBusinessType` sunabilir.
+
+UI, rapor, takip, portföy ve yayın katmanları sektör formüllerini bilmez. İş türü ekonomik sürücüsünü sektör motoruna verir; sektör motoru P&L, başabaş ve nakit akışını üretir.
+
+Sekiz sektör ailesinin tamamı v2 profil derinliğindedir:
+
+- Oyun / Dijital Yayıncılık
+- Kafe / Restoran
+- E-Ticaret / Pazaryeri
+- Güzellik / Kuaför / Bakım
+- Ajans / Freelancer / Danışmanlık
+- SaaS / Abonelik
+- Fiziksel Perakende
+- Oto Hizmetleri
+
+## Bağımsız HTML paketleme
+
+- `src/standalone-runtime.js`: tek sektör formu, sonuç, CSV, rapor, takip, portföy ve yerel kayıt
+- `scripts/build-standalone.mjs`: bağımlılık grafiği, CSS gömme ve çevrimdışı Blob modül paketi
+- `tests/standalone-build.test.mjs`: sekiz çıktı, harici kaynak yasağı, boyut ve deterministik üretim
+
+Bu katman finans formülü içermez; seçilen sektörün gerçek kaynak modüllerini dosyaya gömer.
+
+## Finansal rapor katmanı
+
+- `src/report/report-model.js`: aktif sektör sonucundan ortak rapor modeli
+- `src/report/report-document.js`: çevrimdışı, yazdırılabilir tek HTML belge
+- `src/report/report-controller.js`: ana ve bağımsız uygulamaların ortak dışa aktarma girişi
+- `tests/report-layer.test.mjs`: sektör, görünür varsayım, risk, bağımsız HTML ve kaçış güvenliği
+
+Rapor finansal sonucu yeniden hesaplamaz; mevcut kâr, nakit, KPI ve uyarıları sınıflandırır.
+
+## Gerçek takip katmanı
+
+- `src/tracking/tracking-model.js`: kayıt normalizasyonu, plan uyumu, sapma, durum ve trend
+- `src/tracking/tracking-controller.js`: proje kapsamlı yerel kayıt, aylık giriş, CSV ve uygulama bağlantısı
+- `src/tracking/tracking-report.js`: çevrimdışı tahmin-gerçekleşen raporu
+- `tests/tracking-mode.test.mjs`: kayıt, sapma, Steam uyumu, trend ve belge güvenliği
+
+Takip anahtarı `projectId + sectorId + businessType` kapsamındadır. Tahmin aktif senaryonun nakit satırlarından okunur; gerçekleşen kayıt finans motoruna geri yazılmaz.
+
+Ortak sektörlerde `cashFlow.rows`, Oyun / Dijital Yayıncılık master yapısında `cashFlow.months` okunur. Steam alanları yalnız okuma adaptörüyle ortak takip sözleşmesine çevrilir.
+
+## Çoklu kayıt ve portföy katmanı
+
+- `src/portfolio/portfolio-model.js`: proje yaşam döngüsü, sınırlar, yedek şeması ve içe aktarma doğrulaması
+- `src/portfolio/portfolio-controller.js`: yerel saklama, kayıt seçimi, kopyalama, silme ve yedek işlemleri
+- `src/portfolio/portfolio-summary.js`: aktif sektör/senaryodan ortak finans özeti
+- `tests/portfolio-model.test.mjs`: kayıt yaşam döngüsü, limit, backup ve sekiz sektör özeti
+- `tests/portfolio-backup-scope.test.mjs`: platform/standalone kapsam ve takip izolasyonu
+
+Portföy durumu:
 
 ```text
-Brüt müşteri harcaması / hizmet / proje / abonelik / mağaza / araç geliri
-- fiyata dahil KDV ayrımı
-- iade / kayıp / no-show (sektörde varsa)
-- platform ve ödeme komisyonları
-= komisyon sonrası net gelir
-
-Komisyon sonrası net gelir
-- satışa veya hizmete bağlı değişken maliyetler
-= katkı
-
-Katkı
-- sabit giderler
-- nakit dışı amortisman
-- paydaş / ortak payı
-= vergi öncesi kâr
-
-Vergi öncesi kâr
-- pozitif kâr üzerinden vergi ön tahmini
-= net kâr
+portfolio
+  activeProjectId
+  projects[]
+    id
+    name
+    createdAt / updatedAt
+    workspace
 ```
 
-Finansman ve hibe/destek P&L zincirine girmez; nakit akışında ayrı gösterilir.
+Ana platform projesinin `workspace` alanı sekiz sektörün bütün senaryo girdilerini taşır. Bağımsız HTML projesi yalnız kendi sektörünün senaryolarını taşır.
 
-## Oto hizmetleri kapasite ve gelir modeli
+Takip kayıtları çalışma alanına gömülmez; proje kimlikli ayrı yerel anahtarlarda tutulur. Yedek üretiminde yalnız portföydeki proje kimliklerine ait anahtarlar alınır.
 
-```text
-monthly_vehicles = daily_vehicles × open_days
-daily_capacity = service_stations × working_hours × 60 / service_duration
-service_revenue = monthly_vehicles × service_price
-parts_revenue = monthly_vehicles × parts_revenue_per_vehicle
-```
+Yedek `scope` alanı ana platform ile bağımsız sektör dosyalarını birbirinden ayırır. İçe aktarma çalışma alanlarını hedef normalizasyonundan geçirir ve yabancı proje takip anahtarlarını reddeder.
 
-Parça maliyeti yalnız parça gelirine uygulanır. Sarf ve araç başı su/elektrik değişken giderdir. Sabit abonelik/fatura, personel, kira ve reklam sabit giderdir.
+## Yerel veri migrasyonu
 
-Ekipman yatırımı kurulum sırasında nakitten bir kez düşer. Aylık amortisman `totalFixedCosts` içinde P&L gideridir; `cashFixedCosts` içine alınmaz. Bu nedenle nakit akışında ikinci kez düşmez.
+- `src/migrations/storage-migrations.js`: eski proje kimliği içermeyen takip anahtarlarını portföy kapsamına taşır
+- `tests/storage-migrations.test.mjs`: tekrar çalıştırma, üzerine yazmama, yabancı sektör ve bozuk veri testleri
 
-## Nakit ve P&L ayrımı
+Migrasyon hedef veriyi ezmez, eski anahtarları silmez ve kapsam başına bir kez çalışır. Bağımsız HTML yalnız kendi sektörünün eski takip anahtarını taşır.
 
-- `totalFixedCosts`: P&L sabit giderleri ve amortisman.
-- `cashFixedCosts`: Gerçek aylık sabit nakit çıkışları.
-- `cashVariableCosts`: Tedarikçi vadesine tabi değişken nakit çıkışları.
-- Kurulum, stok ve ekipman yatırımı seçilen ayda tek seferlik nakit çıkışıdır.
-- Tahsilat ve tedarikçi vadeleri P&L sonucunu değiştirmez.
+## Production ve yayın katmanı
 
-## Sektör sözleşmesi
+- `scripts/build-production.mjs`: yayınlanabilir `dist/` artefaktını üretir
+- `tests/production-build.test.mjs`: artefakt içeriği ve dışlama sınırlarını doğrular
+- `playwright.config.js`: masaüstü ve Pixel 7 Chromium matrisi
+- `tests/e2e/application.spec.js`: sektör, hesap, portföy, takip, yedek, standalone, mobil taşma ve axe akışları
+- `.github/workflows/test.yml`: her push/PR için release kalite kapısı
+- `.github/workflows/deploy-pages.yml`: yalnız `main` veya elle tetiklenen GitHub Pages dağıtımı
 
-Her sektör şu parçaları sağlar:
+E2E testi `BIC_E2E_ROOT=dist` ile gerçek yayın artefaktını sunar. Pages dağıtımı test, modül kontrolü, production build ve Chromium kalite kapısı geçmeden çalışmaz.
 
-```text
-kimlik ve durum
-iş türleri
-varsayılan girdiler
-senaryo tanımları
-form bölümleri
-normalizeInputs
-applyScenario
-calculateModel
-calculateScenarioComparison
-buildPresentation
-```
+## P&L / nakit ayrımı
 
-Uygulama arayüzü sektör formüllerini bilmez. Sektör modeli standart sonuç ve sunum verisi üretir; ortak UI aynı KPI, şelale, senaryo, nakit ve döküm panellerini kullanır.
+- Finansman ve yatırım P&L geliri değildir.
+- P&L faaliyet hibesi ile tek seferlik hibe nakit girişi ayrıdır.
+- Ürün, parça, sarf, enerji, kullanım, tekrar işçilik ve taşeron dönemsel P&L gideridir.
+- Tedarikçi vadesi maliyeti silmez; nakit ödeme zamanını değiştirir.
+- Ekipman ve ilk stok yatırımı kurulum nakdinde bir kez gösterilir.
+- Amortisman yalnız P&L gideridir ve nakitten ikinci kez düşülmez.
+- Gerçek takipte finansman/destek net nakit hareketine girer, faaliyet sonucuna girmez.
 
-## Sonraki geliştirme aşaması
+## Test mimarisi
 
-İlk sektör backlogu v0.7 ile tamamlanır. Sonraki mimari çalışma rapor katmanıdır:
-
-- PDF rapor şablonu
-- Excel/CSV rapor yapısı
-- paylaşılabilir senaryo bağlantısı
-- mali müşavir özeti
-- yatırımcı/ortak özeti
+- ortak motor ve sektör kabul testleri
+- Steam kaynak hash ve golden testleri
+- gerçek HTML smoke testi
+- eski sektör sonucu koruma testleri
+- profil, tablo, senaryo, P&L/nakit ve kapasite testleri
+- sekiz bağımsız HTML üretim ve deterministik paketleme testleri
+- rapor sözleşmesi ve belge güvenliği testleri
+- takip normalizasyonu, sapma, trend ve Steam nakit uyumu testleri
+- portföy yaşam döngüsü, yedek, kapsam ve takip izolasyonu testleri
+- storage migrasyonu testleri
+- production artefakt sınır testi
+- Chromium masaüstü/mobil E2E ve axe WCAG kalite kapısı
+- `scripts/check-modules.mjs` ile bütün kaynak modüllerinin içe aktarım kontrolü

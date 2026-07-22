@@ -1,87 +1,75 @@
 # Kaynak Uyumlu Finans Motoru v2
 
-Bu motor, `Steam Yayıncı Finansal Fizibilite & Net Kâr Hesaplayıcı v2` master prototipinin hesap zincirinden çıkarılmıştır.
+## Kaynak
 
-## Amaç
+Ayrıntılı yayıncı motoru, korunan Steam Yayıncısı master prototipinin hesap sırasından çıkarılmıştır. Orijinal kaynak değiştirilmez ve hash testiyle korunur.
 
-Mevcut `src/core/finance-engine.js` sade sektör prototiplerini çalıştırmaya devam eder. Yeni `src/core/master-finance-engine-v2.js` ise master modeldeki ayrıntılı finans katmanlarını kaynak sonuçlarını değiştirmeden saf fonksiyonlara ayırır.
+## Motor katmanları
 
-Bu paralel yaklaşımın nedeni, çalışan yedi sektörü tek seferde kırmadan kontrollü geçiş yapmaktır.
+- `src/core/master-finance-engine-v2.js`: Steam master hesap zinciri
+- `src/core/finance-engine.js`: sektör bağımsız vergi, komisyon, başabaş ve nakit yardımcıları
+- `src/core/sector-schema.js`: sayı, oran, seçim, metin, checkbox, tablo ve koşullu görünürlük sözleşmesi
 
-## Kaynaktan çıkarılan hesap zinciri
+Her sektör Steam formülünü kopyalamaz. Ortak yardımcıları kullanır; kendi gelir, gider, kapasite, paydaş ve nakit yapısını sektör modüllerinde kurar.
 
-1. Yerel/basit satış ve para birimi dönüşümü
-2. Dahil, fiyat üstü veya vergisiz işlem vergisi ayrımı
-3. İade ve ters ibraz
-4. Sabit veya kademeli platform komisyonu
-5. ABD kaynaklı gelir stopajı
-6. Platform ödemesi
-7. Banka, ödeme sağlayıcı ve kur makası
-8. Recoupable/non-recoupable gider havuzu
-9. Havuzdan veya geliştirici payından recoup
-10. Advance ve milestone mahsubu
-11. Geliştirici hakedişi ve nakit royalty
-12. IP ve co-publisher payları
-13. Yayıncı P&L
-14. Kurum veya dilimli şahıs vergisi
-15. Yabancı stopaj mahsubu
-16. Teknopark veya yüzde 80 ihracat indirimi
-17. Temettü ve şirkette kalan kâr
-18. 12 aylık nakit, recoup kapanışı ve runway
-19. Birim başabaş çözümü
+## Tamamlanan sektör geçişleri
 
-## Ana fonksiyonlar
+- Oyun / Dijital Yayıncılık: 6 profil, Steam master ve recoup sözleşmesi
+- Kafe / Restoran: 11 profil, talep, kapasite, kanal ve ürün karması
+- E-Ticaret / Pazaryeri: 10 profil, trafik, ürün, reklam, lojistik ve stok
+- Güzellik / Kuaför / Bakım: 8 profil, fiziksel/personel kapasitesi ve tekrar ziyaret
+- Ajans / Freelancer / Danışmanlık: 10 profil, proje, retainer, saat, ekip ve taşeron
+- SaaS / Abonelik: 8 profil, plan karması, churn, expansion, API ve destek
+- Fiziksel Perakende: 7 profil, trafik, ürün, tedarikçi ve işletme sermayesi
+- Oto Hizmetleri: 8 profil, randevu, istasyon/personel, parça, stok ve taşeron
 
-- `calculatePlatformLayer`
-- `calculatePublisherReceipt`
-- `calculateRecoup`
-- `calculateDeveloperSettlement`
-- `calculatePublisherPnl`
-- `calculatePublisherTax`
-- `calculatePublisherCashFlow`
-- `calculatePublisherModel`
-- `solvePublisherBreakevenUnits`
+Her sektörün eski varsayılan finans sonucu koruma testine sahiptir.
 
-## Kaynak sadakati
+## Sabit finans kuralları
 
-Aşağıdaki davranışlar master prototipten aynen korunmuştur:
+- Finansman ve yatırım P&L geliri değildir.
+- Net kâr ve nakit hareketi ayrı hesaplanır.
+- Amortisman P&L gideridir; nakitten ikinci kez düşülmez.
+- Kurulum, ekipman ve ilk stok yatırımı tek seferlik nakit çıkışıdır.
+- Satılan ürün, malzeme, sarf, teslimat, kullanım, tekrar işçilik ve taşeron dönemsel P&L gideridir.
+- Tedarikçi indirimi maliyeti; tedarikçi vadesi nakit zamanlamasını etkiler.
+- Hibe nakit girişi ile vergilendirilebilir P&L faaliyet hibesi ayrı alanlardır.
+- Vergi oranları düzenlenebilir varsayımdır ve uzman teyidi gerektirir.
 
-- Yatırım/finansman P&L geliri değildir; başlangıç nakdini artırır.
-- Hibe/destek P&L içinde ayrı gelir satırıdır.
-- Recoup gideri P&L'den ikinci kez düşülmez; settlement zamanlamasını ve geliştirici ödemesini etkiler.
-- Advance geliştiriciye toplam ödemede yer alır ve recoupable ise royalty'den mahsup edilir.
-- Kur makası tahsilat aşamasında uygulanır.
-- Stopaj mahsubu hesaplanan Türkiye vergisi ile sınırlıdır.
-- Teknopark ve yüzde 80 ihracat indirimi aynı anda kullanılmaz.
-- Nakit tablosu vergi ödeme takvimini içermez; masterdaki yaklaşık model korunur.
+## Tek kaynak kuralı
 
-## Golden sonuçlar
+Platform, bağımsız HTML ve rapor aynı sektör tanımı ve aynı hesap fonksiyonlarını kullanır. Çıktı katmanları yeni bir finans motoru oluşturamaz ve aynı girdide farklı finans sonucu üretemez.
 
-Master varsayımlarıyla üç senaryo sabitlenmiştir:
+### Bağımsız HTML
 
-| Senaryo | Yayıncı tahsilatı | Vergi öncesi kâr | Yayıncı net kârı | 12. ay nakit |
-|---|---:|---:|---:|---:|
-| Kötümser | 5.266.876,96 TL | -80.249,22 TL | -80.249,22 TL | 2.732.309,83 TL |
-| Beklenen | 19.116.222,30 TL | 5.399.488,92 TL | 4.751.287,39 TL | 8.054.971,34 TL |
-| İyimser | 48.043.751,78 TL | 16.890.500,71 TL | 14.430.374,90 TL | 19.108.291,58 TL |
+Bağımsız HTML dosyaları seçilen sektörün normalizasyon, senaryo, hesaplama ve sunum modüllerini kaynak haliyle gömer. Ayrı formül kopyası içermez.
 
-Bu değerlerden biri değişirse test paketi başarısız olur. Bilinçli formül değişikliği yapılacaksa önce kaynak farkı belgelenmeli, sonra golden değerler açıkça güncellenmelidir.
+### Finansal rapor
+
+Rapor katmanı şu hazır sonuçları kullanır:
+
+1. aktif senaryonun normalize edilmiş girdisi
+2. `calculateModel` sonucu
+3. `buildPresentation` KPI, dağılım ve senaryo metrikleri
+4. sektörün kendi uyarıları
+5. sektörün nakit akışı satır ve kolonları
+6. form şemasındaki görünür varsayımlar
+
+Rapor katmanı vergi, maliyet, kâr, başabaş veya nakit değerini yeniden hesaplamaz. Dengeli, koşullu ve riskli görünüm; var olan net sonuç, dönem sonu nakit ve uyarı seviyelerinin rapor amaçlı sınıflandırmasıdır. Yatırım tavsiyesi değildir.
+
+## Çıktı güvenliği
+
+- Kullanıcı metni HTML olarak çalıştırılmaz; kaçışlanır.
+- Rapor harici script, stil veya CDN kullanmaz.
+- Raporun yazdırma/PDF işlevi tarayıcı üzerinden çalışır.
+- Rapor kullanım sınırını ve uzman teyidi uyarısını taşır.
 
 ## Geçiş durumu
 
-Tamamlanan:
+- Aşama 5: sekiz sektörün v2 profil geçişi tamamlandı.
+- Aşama 6: sekiz bağımsız tek HTML hesaplayıcı tamamlandı.
+- Aşama 7: ortak finansal rapor katmanı tamamlandı.
 
-- Master kaynak koruması
-- Hash testi
-- Saf v2 motor çıkarımı
-- Oyun/dijital yayıncılık için kaynak giriş modeli
-- Üç senaryo golden testleri
-- Yatırım, hibe, vergi, recoup ve normalizasyon testleri
+## Sıradaki aşama
 
-Henüz tamamlanmayan:
-
-- Tablo, checkbox ve koşullu panel destekli sektör şeması
-- Steam yayıncısı formunun platform arayüzüne bağlanması
-- Diğer oyun/dijital yayıncılık iş türlerinin ayrı varsayım profilleri
-- Mevcut yedi sektörün v2 motora kontrollü taşınması
-- Bağımsız tek HTML sektör üretimi
+Aşama 8 gerçek takip modudur. Tahmin girdileri ile gerçekleşen aylık sonuçlar ayrı veri sözleşmelerinde tutulacak; bütçe-gerçekleşen farkı ve dönem trendi mevcut finans motorları bozulmadan üretilecektir.
