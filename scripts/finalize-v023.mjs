@@ -54,6 +54,17 @@ async function patchVersionMarkers() {
   await write(standaloneTest, standalone);
 }
 
+async function patchBrowserAuditFindings() {
+  const file = "styles-advanced.css";
+  let content = await read(file);
+  const marker = "/* v0.23 gerçek tarayıcı denetimi düzeltmeleri */";
+  if (!content.includes(marker)) {
+    content += `\n\n${marker}\n.panel-card,.table-scroll,.input-table-scroll{min-width:0;max-width:100%}\n.sector-summary .eyebrow{color:#d7e6dc}\n.kpi-card.negative .label,.kpi-card.negative .note{color:#46524c}\n@media(max-width:680px){.portfolio-panel,.tracking-panel,.results-panel>section{min-width:0;max-width:100%}}\n`;
+  }
+  await write(file, content);
+}
+
 await patchPortfolioController();
 await patchVersionMarkers();
+await patchBrowserAuditFindings();
 console.log("v0.23 release integration applied.");
