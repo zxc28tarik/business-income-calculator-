@@ -10,13 +10,14 @@
 - `src/report/`: fizibilite raporu modeli ve paylaşılabilir belge üretimi
 - `src/tracking/`: gerçekleşen kayıt, bütçe sapması, trend ve takip raporu
 - `src/portfolio/`: çoklu kayıt, yedek doğrulama ve portföy karşılaştırması
+- `src/migrations/`: yerel veri şeması migrasyonları
 - `src/sectors/registry.js`: aktif sektör listesi
 
 ## Sektör ve profil ilkesi
 
 Her sektör kimlik, iş türleri, varsayılan girdiler, senaryolar, form bölümleri, normalizasyon, hesaplama, karşılaştırma ve sunum fonksiyonlarını sağlar. Profil sektörleri ayrıca `businessProfiles` ve `applyBusinessType` sunabilir.
 
-UI, rapor, takip ve portföy katmanları sektör formüllerini bilmez. İş türü ekonomik sürücüsünü sektör motoruna verir; sektör motoru P&L, başabaş ve nakit akışını üretir.
+UI, rapor, takip, portföy ve yayın katmanları sektör formüllerini bilmez. İş türü ekonomik sürücüsünü sektör motoruna verir; sektör motoru P&L, başabaş ve nakit akışını üretir.
 
 Sekiz sektör ailesinin tamamı v2 profil derinliğindedir:
 
@@ -83,6 +84,24 @@ Takip kayıtları çalışma alanına gömülmez; proje kimlikli ayrı yerel ana
 
 Yedek `scope` alanı ana platform ile bağımsız sektör dosyalarını birbirinden ayırır. İçe aktarma çalışma alanlarını hedef normalizasyonundan geçirir ve yabancı proje takip anahtarlarını reddeder.
 
+## Yerel veri migrasyonu
+
+- `src/migrations/storage-migrations.js`: eski proje kimliği içermeyen takip anahtarlarını portföy kapsamına taşır
+- `tests/storage-migrations.test.mjs`: tekrar çalıştırma, üzerine yazmama, yabancı sektör ve bozuk veri testleri
+
+Migrasyon hedef veriyi ezmez, eski anahtarları silmez ve kapsam başına bir kez çalışır. Bağımsız HTML yalnız kendi sektörünün eski takip anahtarını taşır.
+
+## Production ve yayın katmanı
+
+- `scripts/build-production.mjs`: yayınlanabilir `dist/` artefaktını üretir
+- `tests/production-build.test.mjs`: artefakt içeriği ve dışlama sınırlarını doğrular
+- `playwright.config.js`: masaüstü ve Pixel 7 Chromium matrisi
+- `tests/e2e/application.spec.js`: sektör, hesap, portföy, takip, yedek, standalone, mobil taşma ve axe akışları
+- `.github/workflows/test.yml`: her push/PR için release kalite kapısı
+- `.github/workflows/deploy-pages.yml`: yalnız `main` veya elle tetiklenen GitHub Pages dağıtımı
+
+E2E testi `BIC_E2E_ROOT=dist` ile gerçek yayın artefaktını sunar. Pages dağıtımı test, modül kontrolü, production build ve Chromium kalite kapısı geçmeden çalışmaz.
+
 ## P&L / nakit ayrımı
 
 - Finansman ve yatırım P&L geliri değildir.
@@ -104,8 +123,7 @@ Yedek `scope` alanı ana platform ile bağımsız sektör dosyalarını birbirin
 - rapor sözleşmesi ve belge güvenliği testleri
 - takip normalizasyonu, sapma, trend ve Steam nakit uyumu testleri
 - portföy yaşam döngüsü, yedek, kapsam ve takip izolasyonu testleri
+- storage migrasyonu testleri
+- production artefakt sınır testi
+- Chromium masaüstü/mobil E2E ve axe WCAG kalite kapısı
 - `scripts/check-modules.mjs` ile bütün kaynak modüllerinin içe aktarım kontrolü
-
-## Sonraki aşama
-
-Aşama 10 yayınlama ve son kalite çalışmasıdır: gerçek tarayıcı E2E, mobil/erişilebilirlik, veri migrasyonu, production dağıtımı ve sürümleme.
