@@ -1,4 +1,5 @@
 import { escapeHtml, formatValue } from "../ui/formatters.js";
+import { migrateLegacyTrackingEntries } from "../migrations/storage-migrations.js";
 import {
   addProject,
   buildPortfolioBackup,
@@ -103,6 +104,17 @@ export function createPortfolioController({
   };
   let visible = false;
   let portfolio = loadPortfolio();
+  const standaloneSectorId = String(backupScope).startsWith("standalone:")
+    ? String(backupScope).slice("standalone:".length)
+    : null;
+  migrateLegacyTrackingEntries({
+    storage: localStorage,
+    trackingPrefix,
+    activeProjectId: portfolio.activeProjectId,
+    knownProjectIds: portfolio.projects.map((project) => project.id),
+    allowedSectorIds: standaloneSectorId ? [standaloneSectorId] : null,
+    scope: backupScope || storageKey,
+  });
 
   function loadPortfolio() {
     try {

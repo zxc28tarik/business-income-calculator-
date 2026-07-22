@@ -93,7 +93,7 @@ portfolioController = createPortfolioController({
   storageKey: PORTFOLIO_STORAGE_KEY,
   trackingPrefix: TRACKING_STORAGE_PREFIX,
   backupScope: "platform",
-  appVersion: "0.22.0",
+  appVersion: "0.23.0",
   initialWorkspace: state,
   createWorkspace: createDefaultState,
   normalizeWorkspace: normalizeState,

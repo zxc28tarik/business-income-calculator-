@@ -92,7 +92,7 @@ export function mountStandaloneCalculator(sector) {
     storageKey: portfolioStorageKey,
     trackingPrefix: trackingStoragePrefix,
     backupScope: `standalone:${sector.id}`,
-    appVersion: "0.22.0",
+    appVersion: "0.23.0",
     initialWorkspace: state,
     createWorkspace: createDefaultState,
     normalizeWorkspace: normalizeState,

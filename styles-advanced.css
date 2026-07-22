@@ -67,3 +67,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   .section-heading{align-items:flex-start;gap:10px;flex-direction:column}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+
+/* v0.23 gerçek tarayıcı denetimi düzeltmeleri */
+.panel-card,.table-scroll,.input-table-scroll{min-width:0;max-width:100%}
+.sector-summary .eyebrow{color:#d7e6dc}
+.kpi-card.negative .label,.kpi-card.negative .note{color:#46524c}
+@media(max-width:680px){.portfolio-panel,.tracking-panel,.results-panel>section{min-width:0;max-width:100%}}
