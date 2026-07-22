@@ -16,10 +16,14 @@ function fieldWrapper(field, inputs, content, extraClass = "") {
   </div>`;
 }
 
+function tableControlLabel(column, rowIndex) {
+  return `${column.label} · Satır ${rowIndex + 1}`;
+}
+
 function renderTableCell(field, column, row, rowIndex) {
-  const attrs = `data-table-key="${field.key}" data-row-index="${rowIndex}" data-column-key="${column.key}" data-cell-type="${column.type}"`;
+  const attrs = `data-table-key="${field.key}" data-row-index="${rowIndex}" data-column-key="${column.key}" data-cell-type="${column.type}" aria-label="${escapeHtml(tableControlLabel(column, rowIndex))}"`;
   if (column.type === "boolean") {
-    return `<input ${attrs} type="checkbox" aria-label="${escapeHtml(column.label)}" />`;
+    return `<input ${attrs} type="checkbox" />`;
   }
   if (column.type === "select") {
     return `<select ${attrs}>${column.options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}</select>`;
@@ -36,16 +40,16 @@ function renderTableField(field, inputs) {
   const maxReached = Number.isInteger(field.maxRows) && rows.length >= field.maxRows;
   const table = `
     <div class="table-field-heading">
-      <div><label>${escapeHtml(field.label)}</label>${field.hint ? `<span class="field-hint">${escapeHtml(field.hint)}</span>` : ""}</div>
+      <div><span class="table-field-label">${escapeHtml(field.label)}</span>${field.hint ? `<span class="field-hint">${escapeHtml(field.hint)}</span>` : ""}</div>
       ${field.allowAdd === false ? "" : `<button type="button" class="table-action" data-table-add="${field.key}" ${maxReached ? "disabled" : ""}>Satır ekle</button>`}
     </div>
-    <div class="input-table-scroll">
+    <div class="input-table-scroll" role="region" aria-label="${escapeHtml(field.label)}" tabindex="0">
       <table class="input-table">
-        <thead><tr>${field.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}${field.allowRemove === false ? "" : "<th>İşlem</th>"}</tr></thead>
+        <thead><tr>${field.columns.map((column) => `<th scope="col">${escapeHtml(column.label)}</th>`).join("")}${field.allowRemove === false ? "" : "<th scope=\"col\">İşlem</th>"}</tr></thead>
         <tbody>
           ${rows.length ? rows.map((row, rowIndex) => `
             <tr>${field.columns.map((column) => `<td>${renderTableCell(field, column, row, rowIndex)}</td>`).join("")}
-            ${field.allowRemove === false ? "" : `<td><button type="button" class="table-remove" data-table-remove="${field.key}" data-row-index="${rowIndex}" ${rows.length <= (field.minRows ?? 0) ? "disabled" : ""}>Sil</button></td>`}</tr>
+            ${field.allowRemove === false ? "" : `<td><button type="button" class="table-remove" data-table-remove="${field.key}" data-row-index="${rowIndex}" aria-label="${escapeHtml(`${field.label} satır ${rowIndex + 1} sil`)}" ${rows.length <= (field.minRows ?? 0) ? "disabled" : ""}>Sil</button></td>`}</tr>
           `).join("") : `<tr><td colspan="${field.columns.length + (field.allowRemove === false ? 0 : 1)}" class="empty-table">Henüz satır yok.</td></tr>`}
         </tbody>
       </table>
