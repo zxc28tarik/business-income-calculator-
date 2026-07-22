@@ -1,1 +1,21 @@
-{"name":"business-income-calculator","version":"0.22.0","private":true,"type":"module","scripts":{"test":"node --test","check":"node scripts/check-modules.mjs","build:standalone":"node scripts/build-standalone.mjs"},"engines":{"node":">=20"}}
+{
+  "name": "business-income-calculator",
+  "version": "0.23.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "check": "node scripts/check-modules.mjs",
+    "build:standalone": "node scripts/build-standalone.mjs",
+    "build:production": "node scripts/build-production.mjs",
+    "verify:release": "npm test && npm run check && npm run build:production && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.61.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
