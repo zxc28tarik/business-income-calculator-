@@ -4,24 +4,121 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Sektör bazlı ciro, net kâr, başabaş, 12 aylık nakit akışı ve gerçekleşen takip hesaplayıcısı." />
-<meta name="theme-color" content="#153f2d" />
+<meta name="theme-color" content="#174a35" />
 <title>Business Income Calculator</title>
 <link rel="stylesheet" href="./styles.css" />
 <link rel="stylesheet" href="./styles-advanced.css" />
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Ana içeriğe geç</a>
-<header class="topbar"><div><p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.23.0</p><h1 id="pageTitle">Sektör Bazlı Finansal Fizibilite</h1><p id="pageSubtitle" class="subtitle">Cirodan net kâra, başabaştan 12 aylık nakit akışına kadar düzenlenebilir ön fizibilite.</p></div><div class="topbar-actions"><label class="project-picker" for="projectSelect"><span>Kayıt</span><select id="projectSelect"></select></label><button id="projectNewButton" class="secondary-button" type="button">Yeni</button><button id="projectRenameButton" class="secondary-button" type="button">Adlandır</button><button id="projectDuplicateButton" class="secondary-button" type="button">Kopyala</button><button id="portfolioButton" class="secondary-button" type="button" aria-expanded="false">Portföy</button><button id="backupExportButton" class="secondary-button" type="button">Yedek</button><button id="backupImportButton" class="secondary-button" type="button">İçe Aktar</button><input id="backupImportInput" type="file" accept="application/json,.json" aria-label="Yedek dosyası seç" hidden /><label class="sector-picker" for="sectorSelect"><span>Sektör</span><select id="sectorSelect"></select></label><button id="exportCsvButton" class="secondary-button" type="button">CSV / Excel</button><button id="reportButton" class="secondary-button" type="button">Rapor / HTML</button><button id="trackingButton" class="secondary-button" type="button" aria-expanded="false">Gerçek Takip</button><button id="printButton" class="secondary-button" type="button">Yazdır / PDF</button><button id="resetButton" class="secondary-button" type="button">Bu sektörü sıfırla</button></div></header>
-<main id="mainContent" class="layout"><aside class="input-panel" aria-label="Hesaplama girdileri"><section class="sector-summary" id="sectorSummary"></section><div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div><div id="formSections"></div></aside><section class="results-panel" aria-live="polite">
-<section id="portfolioPanel" class="panel-card portfolio-panel" aria-label="İşletme ve proje karşılaştırması" hidden><div class="section-heading"><div><p class="eyebrow">KAYITLAR · PORTFÖY</p><h2>İşletme ve proje karşılaştırması</h2></div><div class="portfolio-actions"><button id="portfolioDeleteButton" class="secondary-button" type="button">Aktif kaydı sil</button><button id="portfolioCloseButton" class="secondary-button" type="button">Kapat</button></div></div><p class="subtitle">Her kayıt kendi sektör, senaryo, varsayım ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p><div class="table-scroll" role="region" aria-label="Portföy karşılaştırma tablosu" tabindex="0"><table id="portfolioTable" class="portfolio-table"></table></div></section><section id="trackingPanel" class="panel-card tracking-panel" aria-label="Tahmin ve gerçekleşen takibi" hidden><div class="section-heading"><div><p class="eyebrow">BÜTÇE · GERÇEKLEŞEN</p><h2>Tahmin–Gerçekleşen Takibi</h2></div><div class="tracking-actions"><button id="trackingCsvButton" class="secondary-button" type="button">Takip CSV</button><button id="trackingReportButton" class="secondary-button" type="button">Takip Raporu</button><button id="trackingCloseButton" class="secondary-button" type="button">Kapat</button></div></div><p class="subtitle">Aylık gerçekleşen tahsilat, gider, nakit ve sapma nedenlerini sektör ve iş türü bazında kaydedin.</p><div id="trackingSummary" class="tracking-summary"></div><div class="table-scroll tracking-table-scroll" role="region" aria-label="Aylık gerçekleşen veri tablosu" tabindex="0"><table id="trackingTable" class="tracking-table"></table></div><div id="trackingTrends" class="tracking-trends"></div></section><section><div class="section-heading"><div><p class="eyebrow">RİSK KONTROLÜ</p><h2>Uyarılar</h2></div></div><div id="warnings" class="warnings"></div></section>
-<section><div class="section-heading"><div><p class="eyebrow">ANA SONUÇLAR</p><h2>KPI özeti</h2></div></div><div id="kpiGrid" class="kpi-grid"></div></section>
-<section class="panel-card"><div class="section-heading"><div><p class="eyebrow">DAĞILIM</p><h2>Kim ne alıyor?</h2></div></div><div id="keySplit" class="key-split"></div></section>
-<section class="panel-card"><div class="section-heading"><div><p class="eyebrow">ŞELALE</p><h2>Brüt cirodan net kâra</h2></div></div><div id="waterfall" class="waterfall"></div></section>
-<section class="panel-card"><div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div><div class="table-scroll" role="region" aria-label="Senaryo karşılaştırma tablosu" tabindex="0"><table id="scenarioTable"></table></div></section>
-<section class="panel-card"><div class="section-heading"><div><p class="eyebrow">NAKİT</p><h2>12 aylık nakit akışı</h2></div></div><div class="table-scroll" role="region" aria-label="12 aylık nakit akışı tablosu" tabindex="0"><table id="cashFlowTable"></table></div></section>
-<section class="panel-card"><div class="section-heading"><div><p class="eyebrow">DENETİM İZİ</p><h2>Ayrıntılı döküm</h2></div></div><div id="breakdown" class="breakdown"></div></section>
-<p class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe, teşvik ve muhasebe uygulamaları uzmanlarla teyit edilmelidir.</p>
-</section></main>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-brand">
+      <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.23.0</p>
+      <h1 id="pageTitle">Sektör Bazlı Finansal Fizibilite</h1>
+      <p id="pageSubtitle" class="subtitle">Cirodan net kâra, başabaştan 12 aylık nakit akışına kadar düzenlenebilir ön fizibilite.</p>
+    </div>
+
+    <div class="workspace-context" aria-label="Çalışma alanı">
+      <div class="workspace-pickers">
+        <label class="project-picker control-picker" for="projectSelect">
+          <span>İşletme kaydı</span>
+          <select id="projectSelect"></select>
+        </label>
+        <label class="sector-picker control-picker" for="sectorSelect">
+          <span>Sektör</span>
+          <select id="sectorSelect"></select>
+        </label>
+      </div>
+
+      <div class="primary-actions" aria-label="Ana işlemler">
+        <button id="projectNewButton" class="primary-button" type="button">Yeni kayıt</button>
+        <button id="trackingButton" class="secondary-button" type="button" aria-expanded="false">Gerçek takip</button>
+        <button id="portfolioButton" class="secondary-button" type="button" aria-expanded="false">Portföy</button>
+        <button id="reportButton" class="secondary-button" type="button">Rapor al</button>
+      </div>
+
+      <div class="utility-actions" aria-label="Kayıt ve dışa aktarma işlemleri">
+        <button id="projectRenameButton" class="utility-button" type="button">Adını değiştir</button>
+        <button id="projectDuplicateButton" class="utility-button" type="button">Kaydı kopyala</button>
+        <button id="exportCsvButton" class="utility-button" type="button">CSV indir</button>
+        <button id="printButton" class="utility-button" type="button">Yazdır / PDF</button>
+        <button id="backupExportButton" class="utility-button" type="button">Tam yedek indir</button>
+        <button id="backupImportButton" class="utility-button" type="button">Yedek içe aktar</button>
+        <button id="resetButton" class="utility-button danger-button" type="button">Sektör verisini sıfırla</button>
+      </div>
+      <input id="backupImportInput" type="file" accept="application/json,.json" aria-label="Yedek dosyası seç" hidden />
+      <p class="autosave-note">Değişiklikler bu tarayıcıda otomatik saklanır.</p>
+    </div>
+  </div>
+</header>
+
+<main id="mainContent" class="layout">
+  <aside class="input-panel" aria-label="Hesaplama girdileri">
+    <section class="sector-summary" id="sectorSummary"></section>
+    <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
+    <div id="formSections"></div>
+  </aside>
+
+  <section class="results-panel" aria-live="polite">
+    <section id="portfolioPanel" class="panel-card portfolio-panel" aria-label="İşletme ve proje karşılaştırması" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">KAYITLAR · PORTFÖY</p><h2>İşletme ve proje karşılaştırması</h2></div>
+        <div class="portfolio-actions"><button id="portfolioDeleteButton" class="secondary-button" type="button">Aktif kaydı sil</button><button id="portfolioCloseButton" class="secondary-button" type="button">Kapat</button></div>
+      </div>
+      <p class="section-description">Her kayıt kendi sektör, senaryo, varsayım ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p>
+      <div class="table-scroll" role="region" aria-label="Portföy karşılaştırma tablosu" tabindex="0"><table id="portfolioTable" class="portfolio-table"></table></div>
+    </section>
+
+    <section id="trackingPanel" class="panel-card tracking-panel" aria-label="Tahmin ve gerçekleşen takibi" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">BÜTÇE · GERÇEKLEŞEN</p><h2>Tahmin–Gerçekleşen Takibi</h2></div>
+        <div class="tracking-actions"><button id="trackingCsvButton" class="secondary-button" type="button">Takip CSV</button><button id="trackingReportButton" class="secondary-button" type="button">Takip Raporu</button><button id="trackingCloseButton" class="secondary-button" type="button">Kapat</button></div>
+      </div>
+      <p class="section-description">Aylık gerçekleşen tahsilat, gider, nakit ve sapma nedenlerini sektör ve iş türü bazında kaydedin.</p>
+      <div id="trackingSummary" class="tracking-summary"></div>
+      <div class="table-scroll tracking-table-scroll" role="region" aria-label="Aylık gerçekleşen veri tablosu" tabindex="0"><table id="trackingTable" class="tracking-table"></table></div>
+      <div id="trackingTrends" class="tracking-trends"></div>
+    </section>
+
+    <section class="result-section warning-section">
+      <div class="section-heading"><div><p class="eyebrow">RİSK KONTROLÜ</p><h2>Uyarılar</h2></div></div>
+      <div id="warnings" class="warnings"></div>
+    </section>
+
+    <section class="result-section kpi-section">
+      <div class="section-heading"><div><p class="eyebrow">ANA SONUÇLAR</p><h2>KPI özeti</h2></div></div>
+      <div id="kpiGrid" class="kpi-grid"></div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-heading"><div><p class="eyebrow">DAĞILIM</p><h2>Kim ne alıyor?</h2></div></div>
+      <div id="keySplit" class="key-split"></div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-heading"><div><p class="eyebrow">ŞELALE</p><h2>Brüt cirodan net kâra</h2></div></div>
+      <div id="waterfall" class="waterfall"></div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>
+      <div class="table-scroll" role="region" aria-label="Senaryo karşılaştırma tablosu" tabindex="0"><table id="scenarioTable"></table></div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-heading"><div><p class="eyebrow">NAKİT</p><h2>12 aylık nakit akışı</h2></div></div>
+      <div class="table-scroll" role="region" aria-label="12 aylık nakit akışı tablosu" tabindex="0"><table id="cashFlowTable"></table></div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-heading"><div><p class="eyebrow">DENETİM İZİ</p><h2>Ayrıntılı döküm</h2></div></div>
+      <div id="breakdown" class="breakdown"></div>
+    </section>
+
+    <p class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe, teşvik ve muhasebe uygulamaları uzmanlarla teyit edilmelidir.</p>
+  </section>
+</main>
 <script type="module" src="./src/app.js"></script>
 </body>
 </html>
