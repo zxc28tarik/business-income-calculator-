@@ -35,10 +35,21 @@ function cashRows(result) {
   return result.cashFlow?.rows ?? result.cashFlow?.months ?? [];
 }
 
-function netResult(sectorId, result) {
-  return sectorId === "game_digital_publishing"
-    ? result.tax.pubNet
-    : result.netProfit;
+function roundNumber(value) {
+  assert.equal(typeof value, "number", "Finans tabanı için sayısal değer bekleniyor");
+  assert.equal(Number.isFinite(value), true, "Finans tabanı sonlu değer üretmelidir");
+  return Number(value.toPrecision(15));
+}
+
+function netResult(sector, result) {
+  const direct = result.netProfit ?? result.tax?.pubNet;
+  if (Number.isFinite(direct)) return direct;
+
+  const presentation = sector.buildPresentation(result);
+  const netKpi = presentation.kpis.find((kpi) =>
+    kpi.id === "net_profit" || /net k[âa]r/i.test(kpi.label),
+  );
+  return netKpi?.value;
 }
 
 test("v0.24 arayüz çalışmaları sekiz sektörün v0.23 varsayılan finans sonucunu değiştirmez", () => {
@@ -56,17 +67,17 @@ test("v0.24 arayüz çalışmaları sekiz sektörün v0.23 varsayılan finans so
     const input = sector.normalizeInputs(structuredClone(sector.defaultInputs));
     const result = sector.calculateModel(input);
     const rows = cashRows(result);
-    const endCash = rows.at(-1)?.cashEnd ?? null;
+    const endCash = rows.at(-1)?.cashEnd;
     const minimumCash = rows.length
       ? Math.min(...rows.map((row) => row.cashEnd))
-      : null;
+      : undefined;
     const actual = {
       name: sector.name,
       sectorVersion: sector.version,
       resultHash: resultHash(result),
-      netResult: Number(netResult(sector.id, result).toPrecision(15)),
-      cashEnd: Number(endCash.toPrecision(15)),
-      cashMinimum: Number(minimumCash.toPrecision(15)),
+      netResult: roundNumber(netResult(sector, result)),
+      cashEnd: roundNumber(endCash),
+      cashMinimum: roundNumber(minimumCash),
     };
     actualBySector[sector.id] = actual;
 
