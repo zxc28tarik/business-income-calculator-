@@ -33,6 +33,10 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /id="exportMenuButton"[^>]+aria-expanded="false"/);
       assert.match(html, /id="dataMenuButton"[^>]+aria-expanded="false"/);
       assert.match(html, /id="moreMenuButton"[^>]+aria-expanded="false"/);
+      assert.match(html, /id="viewModeSwitcher"[^>]+aria-label="Form görünümü"/);
+      assert.match(html, /data-view-mode="simple"[^>]+aria-pressed="true"/);
+      assert.match(html, /data-view-mode="advanced"[^>]+aria-pressed="false"/);
+      assert.match(html, /id="viewModeNote"/);
       assert.match(html, /id="autosaveStatus"[^>]+aria-live="polite"/);
       assert.match(html, /<dialog id="resetDialog"/);
       assert.match(html, /Evet, sektör verisini sıfırla/);

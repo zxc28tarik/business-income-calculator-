@@ -1,4 +1,4 @@
-.conditional-hidden { display: none !important; }
+.conditional-hidden, .view-mode-hidden { display: none !important; }
 
 .boolean-field { align-self: stretch; }
 .checkbox-control {

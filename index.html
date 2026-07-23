@@ -82,8 +82,17 @@
   <aside class="input-panel" aria-label="Hesaplama girdileri">
     <section class="sector-summary" id="sectorSummary"></section>
     <div class="scenario-toolbar">
-      <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
-      <p id="autosaveStatus" class="autosave-status" data-state="saved" aria-live="polite"><span aria-hidden="true">●</span> Kaydedildi</p>
+      <div class="scenario-control-row">
+        <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
+        <div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü">
+          <button type="button" data-view-mode="simple" aria-pressed="true">Basit</button>
+          <button type="button" data-view-mode="advanced" aria-pressed="false">Gelişmiş</button>
+        </div>
+      </div>
+      <div class="toolbar-status">
+        <p id="viewModeNote" class="view-mode-note">Yalnız temel varsayımlar gösteriliyor.</p>
+        <p id="autosaveStatus" class="autosave-status" data-state="saved" aria-live="polite"><span aria-hidden="true">●</span> Kaydedildi</p>
+      </div>
     </div>
     <div id="formSections"></div>
   </aside>

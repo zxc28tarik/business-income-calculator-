@@ -106,7 +106,7 @@ Pages workflow dosyası hazırdır; taslak PR production ortamına dağıtılmaz
 
 ## Güncel doğrulama
 
-- 228/228 birim ve entegrasyon testi
+- 232/232 birim ve entegrasyon testi
 - sekiz sektör v2 profil sözleşmesi
 - eski varsayılan ve Steam golden sonuç korumaları
 - gerçek uygulama smoke testi

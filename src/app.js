@@ -14,6 +14,11 @@ import {
   syncFormVisibility,
 } from "./ui/form-view.js";
 import {
+  DEFAULT_VIEW_MODE,
+  normalizeViewMode,
+  VIEW_MODE_STORAGE_KEY,
+} from "./ui/view-mode.js";
+import {
   renderBreakdown,
   renderCashFlow,
   renderKeySplit,
@@ -59,6 +64,8 @@ const elements = {
   pageSubtitle: document.querySelector("#pageSubtitle"),
   sectorSummary: document.querySelector("#sectorSummary"),
   scenarioSwitcher: document.querySelector("#scenarioSwitcher"),
+  viewModeSwitcher: document.querySelector("#viewModeSwitcher"),
+  viewModeNote: document.querySelector("#viewModeNote"),
   autosaveStatus: document.querySelector("#autosaveStatus"),
   formSections: document.querySelector("#formSections"),
   resetButton: document.querySelector("#resetButton"),
@@ -88,6 +95,7 @@ const elements = {
 };
 
 let state = loadState();
+let viewMode = loadViewMode();
 let lastRendered = null;
 let portfolioController = null;
 let autosaveTimer = null;
@@ -203,6 +211,22 @@ function loadState() {
   return fresh;
 }
 
+function loadViewMode() {
+  try {
+    return normalizeViewMode(localStorage.getItem(VIEW_MODE_STORAGE_KEY));
+  } catch {
+    return DEFAULT_VIEW_MODE;
+  }
+}
+
+function saveViewMode() {
+  try {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+  } catch {
+    // Görünüm tercihi kaydedilemese de hesaplama çalışmaya devam eder.
+  }
+}
+
 function persistLegacyState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -274,6 +298,7 @@ function renderSectorShell() {
     <span>${escapeHtml(sector.version)} · ${sector.status === "simulation" ? "Simülasyon modu" : escapeHtml(sector.status)}</span>
   `;
   renderScenarioButtons();
+  renderViewModeControl();
   renderForm();
 }
 
@@ -286,7 +311,18 @@ function renderScenarioButtons() {
 }
 
 function renderForm() {
-  elements.formSections.innerHTML = renderFormHtml(currentSector(), currentInputs());
+  elements.formSections.innerHTML = renderFormHtml(currentSector(), currentInputs(), { viewMode });
+}
+
+function renderViewModeControl() {
+  elements.viewModeSwitcher.querySelectorAll?.("[data-view-mode]").forEach((button) => {
+    const active = button.dataset.viewMode === viewMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  elements.viewModeNote.textContent = viewMode === "advanced"
+    ? "Bütün sektör ayrıntıları gösteriliyor."
+    : "Yalnız temel varsayımlar gösteriliyor.";
 }
 
 function updateCurrentInputs(patch) {
@@ -440,6 +476,16 @@ function attachEvents() {
     render();
   });
 
+  elements.viewModeSwitcher.addEventListener("click", (event) => {
+    const nextMode = event.target.dataset.viewMode;
+    if (!nextMode || normalizeViewMode(nextMode) === viewMode) return;
+    viewMode = normalizeViewMode(nextMode);
+    saveViewMode();
+    renderViewModeControl();
+    renderForm();
+    render();
+  });
+
   for (const menu of actionMenus()) {
     menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
   }
@@ -493,7 +539,7 @@ function render() {
   const scenarios = sector.calculateScenarioComparison(sectorState.scenarioInputs);
 
   syncFormInputs(elements.formSections, inputs);
-  syncFormVisibility(elements.formSections, sector, inputs);
+  syncFormVisibility(elements.formSections, sector, inputs, viewMode);
   renderWarnings(elements.warnings, result.warnings);
   renderKPIs(elements.kpiGrid, presentation.kpis);
   renderKeySplit(elements.keySplit, presentation.keySplit);

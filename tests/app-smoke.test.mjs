@@ -58,7 +58,7 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
   }
 
   const requiredIds = [
-    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "recordMenuButton", "recordMenu", "exportMenuButton", "exportMenu", "exportMenuReportButton", "dataMenuButton", "dataMenu", "moreMenuButton", "moreMenu", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher", "autosaveStatus",
+    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "recordMenuButton", "recordMenu", "exportMenuButton", "exportMenu", "exportMenuReportButton", "dataMenuButton", "dataMenu", "moreMenuButton", "moreMenu", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher", "viewModeSwitcher", "viewModeNote", "autosaveStatus",
     "formSections", "resetButton", "resetDialog", "resetSectorName", "resetScenarioName", "resetCancelButton", "resetConfirmButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "warnings",
     "kpiGrid", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
   ];
@@ -72,7 +72,7 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   const html = await readApplicationHtml();
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
-    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#recordMenuButton", "#recordMenu", "#exportMenuButton", "#exportMenu", "#exportMenuReportButton", "#dataMenuButton", "#dataMenu", "#moreMenuButton", "#moreMenu", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher", "#autosaveStatus",
+    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#recordMenuButton", "#recordMenu", "#exportMenuButton", "#exportMenu", "#exportMenuReportButton", "#dataMenuButton", "#dataMenu", "#moreMenuButton", "#moreMenu", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher", "#viewModeSwitcher", "#viewModeNote", "#autosaveStatus",
     "#formSections", "#resetButton", "#resetDialog", "#resetSectorName", "#resetScenarioName", "#resetCancelButton", "#resetConfirmButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",
     "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
@@ -108,6 +108,9 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net k.r/);
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş satış kanalı karmasını kullan/);
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
+  assert.match(elements.get("#formSections").innerHTML, /data-field-importance="advanced"/);
+  assert.match(elements.get("#formSections").innerHTML, /view-mode-hidden/);
+  assert.equal(elements.get("#viewModeNote").textContent, "Yalnız temel varsayımlar gösteriliyor.");
   assert.match(elements.get("#sectorSelect").innerHTML, /E-Ticaret \/ Pazaryeri/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Güzellik \/ Kuaför \/ Bakım/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Ajans \/ Freelancer \/ Danışmanlık/);
@@ -204,6 +207,11 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#kpiGrid").innerHTML, /Yayıncı net kârı/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Recoup bakiyesi/);
   assert.match(elements.get("#breakdown").innerHTML, /Geliştirici settlement/);
+
+  elements.get("#viewModeSwitcher").dispatch("click", { dataset: { viewMode: "advanced" } });
+  assert.equal(elements.get("#viewModeNote").textContent, "Bütün sektör ayrıntıları gösteriliyor.");
+  assert.equal(store.get("business-income-calculator:ui:view-mode:v0.24"), "advanced");
+  assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);
 
   const recordMenuButton = elements.get("#recordMenuButton");
   const recordMenu = elements.get("#recordMenu");

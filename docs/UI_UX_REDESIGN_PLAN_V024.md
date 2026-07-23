@@ -1,6 +1,6 @@
 # Business Income Calculator — v0.24 Profesyonel UI/UX Yenileme Planı
 
-**Belge durumu:** Uygulama sürüyor; Aşama 0, Aşama 1 ve Aşama 2 tamamlandı  
+**Belge durumu:** Uygulama sürüyor; Aşama 0, Aşama 1, Aşama 2 ve Aşama 3 tamamlandı
 **Hedef sürüm:** `v0.24.0`  
 **Kapsam:** Ana platform + 8 bağımsız tek HTML hesaplayıcı + rapor/yazdırma görünümü  
 **Temel ilke:** Finans motorları, golden sonuçlar, veri şemaları ve hesaplama sırası değiştirilmeyecek.  
@@ -1215,6 +1215,8 @@ Görevler:
 
 ### Aşama 3 — Basit/Gelişmiş form görünümü
 
+**Durum:** Tamamlandı. Sekiz sektör ve sekiz bağımsız HTML aynı görünüm sözleşmesini kullanıyor; Basit görünüm iş türüne göre 10–16 temel alan gösteriyor, gelişmiş tabloları gizliyor ve görünüm tercihini finans verisinden ayrı saklıyor.
+
 Görevler:
 
 - alan önem seviyeleri,
@@ -1359,27 +1361,27 @@ Görevler:
 
 ### P0 — Yayın engelleyici
 
-- [ ] Finans sonuçlarının birebir korunması
-- [ ] Üst eylemlerin sadeleştirilmesi
+- [x] Finans sonuçlarının birebir korunması
+- [x] Üst eylemlerin sadeleştirilmesi
 - [ ] Karar özeti + 4 ana KPI
-- [ ] Basit/Gelişmiş görünüm
+- [x] Basit/Gelişmiş görünüm
 - [ ] Mobil yatay taşma olmaması
-- [ ] Sıfırlama/silme onayı
+- [x] Sıfırlama/silme onayı
 - [ ] WCAG ciddi/kritik ihlal olmaması
 
 ### P1 — Ana kalite
 
-- [ ] Bölüm özetleri
+- [x] Bölüm özetleri
 - [ ] Uyarı önem sistemi
 - [ ] İkincil KPI genişletme
 - [ ] Nakit özet satırı
 - [ ] Ayrıntılı döküm akordeonu
 - [ ] Portföy ve tracking düzeni
-- [ ] Standalone eşliği
+- [x] Standalone eşliği
 
 ### P2 — İnce iyileştirmeler
 
-- [ ] Otomatik kayıt durumu
+- [x] Otomatik kayıt durumu
 - [ ] İlk kullanım kısa yönlendirmesi
 - [ ] %200 zoom güçlendirmeleri
 - [ ] Yüksek kontrast tercihi
