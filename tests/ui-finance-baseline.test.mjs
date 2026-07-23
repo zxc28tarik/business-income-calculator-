@@ -46,6 +46,9 @@ test("v0.24 arayüz çalışmaları sekiz sektörün v0.23 varsayılan finans so
   assert.equal(baseline.sourceVersion, "0.23.0");
   assert.equal(Object.keys(baseline.sectors).length, SECTORS.length);
 
+  const actualBySector = {};
+  const mismatches = [];
+
   for (const sector of SECTORS) {
     const expected = baseline.sectors[sector.id];
     assert.ok(expected, `${sector.id} için finans tabanı bulunamadı`);
@@ -57,12 +60,26 @@ test("v0.24 arayüz çalışmaları sekiz sektörün v0.23 varsayılan finans so
     const minimumCash = rows.length
       ? Math.min(...rows.map((row) => row.cashEnd))
       : null;
+    const actual = {
+      name: sector.name,
+      sectorVersion: sector.version,
+      resultHash: resultHash(result),
+      netResult: Number(netResult(sector.id, result).toPrecision(15)),
+      cashEnd: Number(endCash.toPrecision(15)),
+      cashMinimum: Number(minimumCash.toPrecision(15)),
+    };
+    actualBySector[sector.id] = actual;
 
-    assert.equal(sector.name, expected.name, `${sector.id} adı değişti`);
-    assert.equal(sector.version, expected.sectorVersion, `${sector.id} motor sürümü değişti`);
-    assert.equal(resultHash(result), expected.resultHash, `${sector.id} finans sonucu değişti`);
-    assert.equal(Number(netResult(sector.id, result).toPrecision(15)), expected.netResult, `${sector.id} net sonucu değişti`);
-    assert.equal(Number(endCash.toPrecision(15)), expected.cashEnd, `${sector.id} 12 ay sonu nakdi değişti`);
-    assert.equal(Number(minimumCash.toPrecision(15)), expected.cashMinimum, `${sector.id} minimum nakdi değişti`);
+    for (const key of Object.keys(actual)) {
+      if (actual[key] !== expected[key]) {
+        mismatches.push(`${sector.id}.${key}: beklenen=${expected[key]} gerçek=${actual[key]}`);
+      }
+    }
   }
+
+  assert.deepEqual(
+    mismatches,
+    [],
+    `Finans tabanı uyuşmuyor:\n${mismatches.join("\n")}\n\nGerçek taban:\n${JSON.stringify(actualBySector, null, 2)}`,
+  );
 });
