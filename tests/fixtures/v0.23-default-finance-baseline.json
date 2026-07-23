@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "sourceVersion": "0.23.0",
+  "description": "v0.24 UI yenilemesi öncesi sekiz sektörün varsayılan finans sonucu regresyon kilidi. warnings ve waterfall sunum alanları hash dışında tutulur.",
+  "sectors": {
+    "cafe_restaurant": {
+      "name": "Kafe / Restoran",
+      "sectorVersion": "0.12.0",
+      "resultHash": "a92892c5d968d89cc92a9db1c67489854f73f2c0d31c22c5aa689be63474f325",
+      "netResult": -36164,
+      "cashEnd": 361854.641507712,
+      "cashMinimum": 158029.966623457
+    },
+    "ecommerce_marketplace": {
+      "name": "E-Ticaret / Pazaryeri",
+      "sectorVersion": "0.13.0",
+      "resultHash": "cc397b20f7e68b4ad44e3974b407646628857d307ac368f6d531ed9da278d887",
+      "netResult": -207900.053333333,
+      "cashEnd": -1800124.52207888,
+      "cashMinimum": -1800124.52207888
+    },
+    "beauty_personal_care": {
+      "name": "Güzellik / Kuaför / Bakım",
+      "sectorVersion": "v2.0",
+      "resultHash": "6a0732f5351a86dedeed520def1e71e693dc331f04da26ea0265718ae03ae1c7",
+      "netResult": 27077.526,
+      "cashEnd": 1612896.68638342,
+      "cashMinimum": 262966.67408
+    },
+    "agency_freelance_consulting": {
+      "name": "Ajans / Freelancer / Danışmanlık",
+      "sectorVersion": "0.15.0",
+      "resultHash": "a2adc4b9030e01b00c89ed9cbc532eaf9d726cdd04b22eba13ba94709f1760eb",
+      "netResult": 127762.5,
+      "cashEnd": 1421086.37302816,
+      "cashMinimum": -428901
+    },
+    "saas_subscription": {
+      "name": "SaaS / Abonelik",
+      "sectorVersion": "0.16.0",
+      "resultHash": "ba2f4494998346c3fd4ffbcfa1449ec08efd6ac0a3cd323f42f2fb27b7353cd6",
+      "netResult": -104172.03125,
+      "cashEnd": 619388.185416665,
+      "cashMinimum": 100402.694270833
+    },
+    "physical_retail": {
+      "name": "Fiziksel Perakende",
+      "sectorVersion": "0.17.0",
+      "resultHash": "937ed5a22a9150d29b71b3e76938f00f0e44065f0c69466d8ab9c931e48c5e9f",
+      "netResult": -70115.7119791667,
+      "cashEnd": 228469.550564589,
+      "cashMinimum": 148629.91336871
+    },
+    "auto_services": {
+      "name": "Oto Hizmetleri",
+      "sectorVersion": "0.18.0",
+      "resultHash": "3276466c57866b9dc8228ae8b3cabffb19c6566f2657d1a926e619881215091b",
+      "netResult": -12975.9583333333,
+      "cashEnd": 1104865.67891832,
+      "cashMinimum": 367676.1825
+    },
+    "game_digital_publishing": {
+      "name": "Oyun / Dijital Yayıncılık",
+      "sectorVersion": "0.11.0",
+      "resultHash": "e61954b85ae1c0152d3532b346d0ef9c96bf425d60d04fd403b4ce84c7d153b7",
+      "netResult": 4751287.3905193,
+      "cashEnd": 8054971.34361476,
+      "cashMinimum": 654166.666666667
+    }
+  }
+}
