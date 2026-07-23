@@ -29,6 +29,13 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /Rapor \/ HTML/);
       assert.match(html, /Gerçek Takip/);
       assert.match(html, /Portföy/);
+      assert.match(html, /id="recordMenuButton"[^>]+aria-expanded="false"/);
+      assert.match(html, /id="exportMenuButton"[^>]+aria-expanded="false"/);
+      assert.match(html, /id="dataMenuButton"[^>]+aria-expanded="false"/);
+      assert.match(html, /id="moreMenuButton"[^>]+aria-expanded="false"/);
+      assert.match(html, /id="autosaveStatus"[^>]+aria-live="polite"/);
+      assert.match(html, /<dialog id="resetDialog"/);
+      assert.match(html, /Evet, sektör verisini sıfırla/);
       assert.match(html, /business-income-calculator-backup-v1/);
       assert.match(html, /İşletme ve proje karşılaştırması/);
       assert.match(html, /Tahmin–Gerçekleşen Takibi/);
@@ -39,6 +46,9 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.doesNotMatch(html, /<link[^>]+rel=["']stylesheet/i);
       assert.doesNotMatch(html, /src\/sectors\/registry\.js/);
       assert.ok(result.moduleCount >= 6);
+      for (const id of ["projectRenameButton", "projectDuplicateButton", "portfolioDeleteButton", "backupExportButton", "backupImportButton", "exportCsvButton", "printButton", "resetButton"]) {
+        assert.equal(html.match(new RegExp(`\\bid="${id}"`, "g"))?.length, 1, `${result.file}: ${id} bir kez bulunmalıdır`);
+      }
     }
   } finally {
     await rm(outputDir, { recursive: true, force: true });

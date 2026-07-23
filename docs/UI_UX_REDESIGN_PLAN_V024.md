@@ -1,6 +1,6 @@
 # Business Income Calculator — v0.24 Profesyonel UI/UX Yenileme Planı
 
-**Belge durumu:** Uygulama öncesi ana plan  
+**Belge durumu:** Uygulama sürüyor; Aşama 0, Aşama 1 ve Aşama 2 tamamlandı  
 **Hedef sürüm:** `v0.24.0`  
 **Kapsam:** Ana platform + 8 bağımsız tek HTML hesaplayıcı + rapor/yazdırma görünümü  
 **Temel ilke:** Finans motorları, golden sonuçlar, veri şemaları ve hesaplama sırası değiştirilmeyecek.  
@@ -1096,7 +1096,7 @@ Yeni test alanları:
 
 ### 20.2 Finans regresyon testleri
 
-- 227 mevcut testin tamamı geçmeli.
+- 228 mevcut testin tamamı geçmeli.
 - Bütün golden sonuçlar değişmeden kalmalı.
 - Aynı girdi için v0.23 ve v0.24 finans çıktısı birebir aynı olmalı.
 - Rapor ve CSV sayısal değerleri aynı kalmalı.
@@ -1180,7 +1180,7 @@ Görevler:
 
 Çıkış ölçütü:
 
-- mevcut 227 test yeşil,
+- mevcut 228 test yeşil,
 - sekiz varsayılan sonuç hash’i kayıtlı.
 
 ### Aşama 1 — Tasarım tokenları ve kabuk

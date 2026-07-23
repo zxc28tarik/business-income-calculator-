@@ -15,19 +15,27 @@ class MockElement {
     this.attributes = new Map();
     this.listeners = new Map();
     this.classList = { toggle() {} };
+    this.open = false;
   }
 
   addEventListener(type, handler) { this.listeners.set(type, handler); }
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
-  dispatch(type, target = this) { this.listeners.get(type)?.({ target }); }
+  dispatch(type, target = this, detail = {}) { this.listeners.get(type)?.({ target, ...detail }); }
   querySelectorAll() { return []; }
-  click() {}
+  click() { this.dispatch("click"); }
+  focus() { if (globalThis.document) globalThis.document.activeElement = this; }
+  showModal() { this.open = true; }
+  close() { this.open = false; this.dispatch("close"); }
 }
 
 function extractElementsFromHtml(html) {
   const elements = new Map();
   const pattern = /<([a-z][a-z0-9-]*)\b[^>]*\bid="([^"]+)"[^>]*>/gi;
-  for (const match of html.matchAll(pattern)) elements.set(`#${match[2]}`, new MockElement(match[1].toUpperCase()));
+  for (const match of html.matchAll(pattern)) {
+    const element = new MockElement(match[1].toUpperCase());
+    element.hidden = /\shidden(?:\s|\/?>)/i.test(match[0]);
+    elements.set(`#${match[2]}`, element);
+  }
   return elements;
 }
 
@@ -50,8 +58,8 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
   }
 
   const requiredIds = [
-    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher",
-    "formSections", "resetButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "warnings",
+    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "recordMenuButton", "recordMenu", "exportMenuButton", "exportMenu", "exportMenuReportButton", "dataMenuButton", "dataMenu", "moreMenuButton", "moreMenu", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher", "autosaveStatus",
+    "formSections", "resetButton", "resetDialog", "resetSectorName", "resetScenarioName", "resetCancelButton", "resetConfirmButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "warnings",
     "kpiGrid", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
   ];
   for (const id of requiredIds) {
@@ -64,17 +72,21 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   const html = await readApplicationHtml();
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
-    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
-    "#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",
+    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#recordMenuButton", "#recordMenu", "#exportMenuButton", "#exportMenu", "#exportMenuReportButton", "#dataMenuButton", "#dataMenu", "#moreMenuButton", "#moreMenu", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher", "#autosaveStatus",
+    "#formSections", "#resetButton", "#resetDialog", "#resetSectorName", "#resetScenarioName", "#resetCancelButton", "#resetConfirmButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",
     "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
   for (const selector of requiredSelectors) assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
 
+  const documentListeners = new Map();
   globalThis.document = {
     title: "",
+    activeElement: null,
     querySelector(selector) { return elements.get(selector) ?? null; },
     querySelectorAll() { return []; },
     createElement(tagName) { return new MockElement(String(tagName).toUpperCase()); },
+    addEventListener(type, handler) { documentListeners.set(type, handler); },
+    dispatch(type, event) { documentListeners.get(type)?.(event); },
   };
   globalThis.window = { print() {} };
   const store = new Map();
@@ -192,4 +204,25 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#kpiGrid").innerHTML, /Yayıncı net kârı/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Recoup bakiyesi/);
   assert.match(elements.get("#breakdown").innerHTML, /Geliştirici settlement/);
+
+  const recordMenuButton = elements.get("#recordMenuButton");
+  const recordMenu = elements.get("#recordMenu");
+  assert.equal(recordMenu.hidden, true);
+  recordMenuButton.click();
+  assert.equal(recordMenu.hidden, false);
+  assert.equal(recordMenuButton.attributes.get("aria-expanded"), "true");
+  globalThis.document.dispatch("keydown", { key: "Escape", preventDefault() {} });
+  assert.equal(recordMenu.hidden, true);
+  assert.equal(recordMenuButton.attributes.get("aria-expanded"), "false");
+  assert.equal(globalThis.document.activeElement, recordMenuButton);
+
+  elements.get("#scenarioSwitcher").dispatch("click", { dataset: { scenario: "pessimistic" } });
+  assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="pessimistic"/);
+  elements.get("#resetButton").click();
+  assert.equal(elements.get("#resetDialog").open, true);
+  assert.equal(elements.get("#resetSectorName").textContent, "Oyun / Dijital Yayıncılık");
+  assert.equal(elements.get("#resetScenarioName").textContent, "Kötümser");
+  elements.get("#resetConfirmButton").click();
+  assert.equal(elements.get("#resetDialog").open, false);
+  assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="expected"/);
 });

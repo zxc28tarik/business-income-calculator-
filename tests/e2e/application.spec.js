@@ -49,6 +49,7 @@ test("çoklu kayıt ve proje bazlı gerçek takip tarayıcıda ayrışır", asyn
   await page.locator("#projectSelect").selectOption(secondId);
   await expect(page.locator('[data-tracking-key="collections"]').first()).toHaveValue("123456");
 
+  await page.locator("#recordMenuButton").click();
   await page.locator("#projectDuplicateButton").click();
   await expect(page.locator("#projectSelect option")).toHaveCount(3);
   await page.locator("#portfolioButton").click();
@@ -59,6 +60,7 @@ test("çoklu kayıt ve proje bazlı gerçek takip tarayıcıda ayrışır", asyn
 test("tam JSON yedeği tarayıcıdan indirilebilir", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name.includes("mobile"), "İndirme akışı masaüstü projesinde bir kez çalışır.");
   await page.goto("/");
+  await page.locator("#dataMenuButton").click();
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#backupExportButton").click();
   const download = await downloadPromise;
@@ -70,12 +72,65 @@ test("tam JSON yedeği tarayıcıdan indirilebilir", async ({ page }, testInfo) 
   expect(backup.portfolio.projects.length).toBeGreaterThanOrEqual(1);
 });
 
+test("üst eylem menüleri klavye ve dışarı tıklamayla güvenli kapanır", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".primary-actions > button")).toHaveCount(4);
+
+  await page.locator("#recordMenuButton").click();
+  await expect(page.locator("#recordMenuButton")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#recordMenu")).toBeVisible();
+  await expect(page.locator("#projectRenameButton")).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#recordMenu")).toBeHidden();
+  await expect(page.locator("#recordMenuButton")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#recordMenuButton")).toBeFocused();
+
+  await page.locator("#exportMenuButton").click();
+  await expect(page.locator("#exportMenu")).toBeVisible();
+  await page.locator("#pageTitle").click();
+  await expect(page.locator("#exportMenu")).toBeHidden();
+});
+
+test("sektör sıfırlama ancak açıklamalı onaydan sonra uygulanır", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#sectorSelect").selectOption("ecommerce_marketplace");
+  const price = page.locator("#productPrice");
+  await price.fill("950");
+  await expect(page.locator("#autosaveStatus")).toContainText("Kaydedildi");
+
+  await page.locator("#moreMenuButton").click();
+  await page.locator("#resetButton").click();
+  await expect(page.locator("#resetDialog")).toBeVisible();
+  await expect(page.locator("#resetSectorName")).toHaveText("E-Ticaret / Pazaryeri");
+  await expect(page.locator("#resetScenarioName")).toHaveText("Beklenen");
+  await expect(page.locator("#resetCancelButton")).toBeFocused();
+
+  await page.locator("#resetCancelButton").click();
+  await expect(page.locator("#resetDialog")).toBeHidden();
+  await expect(price).toHaveValue("950");
+
+  await page.locator("#moreMenuButton").click();
+  await page.locator("#resetButton").click();
+  await page.locator("#resetConfirmButton").click();
+  await expect(page.locator("#resetDialog")).toBeHidden();
+  await expect(price).not.toHaveValue("950");
+  await expect(page.locator("#autosaveStatus")).toContainText("Kaydedildi");
+});
+
 test("bağımsız tek HTML gerçek Chromium içinde açılır", async ({ page }) => {
   const errors = watchRuntimeErrors(page);
   await page.goto("/standalone/cafe-restaurant-calculator.html");
   await expect(page.locator("#pageTitle")).toContainText("Kafe / Restoran");
   await expect(page.locator("#kpiGrid .kpi-card").first()).toBeVisible();
   await expect(page.locator("#projectSelect")).toBeVisible();
+  await page.locator("#moreMenuButton").click();
+  await expect(page.locator("#moreMenu")).toBeVisible();
+  await page.locator("#resetButton").click();
+  await expect(page.locator("#resetDialog")).toBeVisible();
+  await expect(page.locator("#resetSectorName")).toHaveText("Kafe / Restoran");
+  await page.locator("#resetCancelButton").click();
+  await expect(page.locator("#resetDialog")).toBeHidden();
   expect(errors).toEqual([]);
 });
 

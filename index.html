@@ -38,17 +38,42 @@
         <button id="reportButton" class="secondary-button" type="button">Rapor al</button>
       </div>
 
-      <div class="utility-actions" aria-label="Kayıt ve dışa aktarma işlemleri">
-        <button id="projectRenameButton" class="utility-button" type="button">Adını değiştir</button>
-        <button id="projectDuplicateButton" class="utility-button" type="button">Kaydı kopyala</button>
-        <button id="exportCsvButton" class="utility-button" type="button">CSV indir</button>
-        <button id="printButton" class="utility-button" type="button">Yazdır / PDF</button>
-        <button id="backupExportButton" class="utility-button" type="button">Tam yedek indir</button>
-        <button id="backupImportButton" class="utility-button" type="button">Yedek içe aktar</button>
-        <button id="resetButton" class="utility-button danger-button" type="button">Sektör verisini sıfırla</button>
+      <div class="action-menus" aria-label="Diğer işlemler">
+        <div class="action-menu">
+          <button id="recordMenuButton" class="utility-button menu-button" type="button" aria-expanded="false" aria-controls="recordMenu">Kayıt <span aria-hidden="true">⌄</span></button>
+          <div id="recordMenu" class="menu-panel" role="menu" aria-labelledby="recordMenuButton" hidden>
+            <button id="projectRenameButton" type="button" role="menuitem" data-menu-action>Adlandır</button>
+            <button id="projectDuplicateButton" type="button" role="menuitem" data-menu-action>Kopyala</button>
+            <button id="portfolioDeleteButton" class="danger-menu-item" type="button" role="menuitem" data-menu-action>Aktif kaydı sil</button>
+          </div>
+        </div>
+
+        <div class="action-menu">
+          <button id="exportMenuButton" class="utility-button menu-button" type="button" aria-expanded="false" aria-controls="exportMenu">Dışa aktar <span aria-hidden="true">⌄</span></button>
+          <div id="exportMenu" class="menu-panel" role="menu" aria-labelledby="exportMenuButton" hidden>
+            <button id="exportMenuReportButton" type="button" role="menuitem" data-menu-action>Rapor / HTML</button>
+            <button id="exportCsvButton" type="button" role="menuitem" data-menu-action>CSV / Excel</button>
+            <button id="printButton" type="button" role="menuitem" data-menu-action>Yazdır / PDF</button>
+          </div>
+        </div>
+
+        <div class="action-menu">
+          <button id="dataMenuButton" class="utility-button menu-button" type="button" aria-expanded="false" aria-controls="dataMenu">Veri <span aria-hidden="true">⌄</span></button>
+          <div id="dataMenu" class="menu-panel" role="menu" aria-labelledby="dataMenuButton" hidden>
+            <button id="backupExportButton" type="button" role="menuitem" data-menu-action>Tam yedek indir</button>
+            <button id="backupImportButton" type="button" role="menuitem" data-menu-action>Yedek içe aktar</button>
+          </div>
+        </div>
+
+        <div class="action-menu">
+          <button id="moreMenuButton" class="utility-button menu-button" type="button" aria-expanded="false" aria-controls="moreMenu">Diğer <span aria-hidden="true">⌄</span></button>
+          <div id="moreMenu" class="menu-panel" role="menu" aria-labelledby="moreMenuButton" hidden>
+            <button id="resetButton" class="danger-menu-item" type="button" role="menuitem" data-menu-action>Sektör verisini sıfırla</button>
+            <a href="#usageDisclaimer" role="menuitem" data-menu-action>Yardım / kullanım sınırı</a>
+          </div>
+        </div>
       </div>
       <input id="backupImportInput" type="file" accept="application/json,.json" aria-label="Yedek dosyası seç" hidden />
-      <p class="autosave-note">Değişiklikler bu tarayıcıda otomatik saklanır.</p>
     </div>
   </div>
 </header>
@@ -56,7 +81,10 @@
 <main id="mainContent" class="layout">
   <aside class="input-panel" aria-label="Hesaplama girdileri">
     <section class="sector-summary" id="sectorSummary"></section>
-    <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
+    <div class="scenario-toolbar">
+      <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
+      <p id="autosaveStatus" class="autosave-status" data-state="saved" aria-live="polite"><span aria-hidden="true">●</span> Kaydedildi</p>
+    </div>
     <div id="formSections"></div>
   </aside>
 
@@ -64,7 +92,7 @@
     <section id="portfolioPanel" class="panel-card portfolio-panel" aria-label="İşletme ve proje karşılaştırması" hidden>
       <div class="section-heading">
         <div><p class="eyebrow">KAYITLAR · PORTFÖY</p><h2>İşletme ve proje karşılaştırması</h2></div>
-        <div class="portfolio-actions"><button id="portfolioDeleteButton" class="secondary-button" type="button">Aktif kaydı sil</button><button id="portfolioCloseButton" class="secondary-button" type="button">Kapat</button></div>
+        <div class="portfolio-actions"><button id="portfolioCloseButton" class="secondary-button" type="button">Kapat</button></div>
       </div>
       <p class="section-description">Her kayıt kendi sektör, senaryo, varsayım ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p>
       <div class="table-scroll" role="region" aria-label="Portföy karşılaştırma tablosu" tabindex="0"><table id="portfolioTable" class="portfolio-table"></table></div>
@@ -116,9 +144,28 @@
       <div id="breakdown" class="breakdown"></div>
     </section>
 
-    <p class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe, teşvik ve muhasebe uygulamaları uzmanlarla teyit edilmelidir.</p>
+    <p id="usageDisclaimer" class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe, teşvik ve muhasebe uygulamaları uzmanlarla teyit edilmelidir.</p>
   </section>
 </main>
+
+<dialog id="resetDialog" class="confirmation-dialog" aria-labelledby="resetDialogTitle" aria-describedby="resetDialogDescription">
+  <form method="dialog">
+    <div class="dialog-icon" aria-hidden="true">!</div>
+    <div>
+      <p class="eyebrow">GERİ ALINAMAZ İŞLEM</p>
+      <h2 id="resetDialogTitle">Sektör verisini sıfırla</h2>
+    </div>
+    <p id="resetDialogDescription">Bu sektöre ait tüm senaryoların kayıtlı varsayımları varsayılan değerlere döndürülecek.</p>
+    <dl class="reset-summary">
+      <div><dt>Sektör</dt><dd id="resetSectorName">—</dd></div>
+      <div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>
+    </dl>
+    <div class="dialog-actions">
+      <button id="resetCancelButton" class="secondary-button" type="button" autofocus>İptal</button>
+      <button id="resetConfirmButton" class="danger-confirm-button" type="button">Evet, sektör verisini sıfırla</button>
+    </div>
+  </form>
+</dialog>
 <script type="module" src="./src/app.js"></script>
 </body>
 </html>
