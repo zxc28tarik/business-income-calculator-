@@ -22,7 +22,7 @@ export function renderWarnings(element, warnings) {
 
 export function renderKPIs(element, cards) {
   element.innerHTML = cards.map((card) => `
-    <article class="kpi-card ${card.negative ? "negative" : ""}">
+    <article class="kpi-card ${card.negative ? "negative" : ""} ${card.positive ? "positive" : ""}">
       <div class="label">${escapeHtml(card.label)}</div>
       <div class="value">${formatValue(card.value, card.format, card)}</div>
       <div class="note">${escapeHtml(card.note ?? "")}</div>

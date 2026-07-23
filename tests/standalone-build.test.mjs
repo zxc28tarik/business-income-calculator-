@@ -38,6 +38,11 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /data-view-mode="advanced"[^>]+aria-pressed="false"/);
       assert.match(html, /id="viewModeNote"/);
       assert.match(html, /id="autosaveStatus"[^>]+aria-live="polite"/);
+      assert.match(html, /id="decisionSummary"/);
+      assert.match(html, /id="kpiGrid"/);
+      assert.match(html, /id="secondaryKpiGrid"[^>]+data-expanded="false"/);
+      assert.match(html, /id="secondaryKpiToggle"[^>]+aria-expanded="false"/);
+      assert.match(html, /Dört ana gösterge/);
       assert.match(html, /<dialog id="resetDialog"/);
       assert.match(html, /Evet, sektör verisini sıfırla/);
       assert.match(html, /business-income-calculator-backup-v1/);

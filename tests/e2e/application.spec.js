@@ -51,6 +51,38 @@ test("Basit ve Gelişmiş görünüm aynı finans sonucunu kullanır", async ({ 
   expect(errors).toEqual([]);
 });
 
+test("karar özeti, dört ana gösterge ve ikincil gösterge açılımı çalışır", async ({ page }) => {
+  const errors = watchRuntimeErrors(page);
+  await page.goto("/");
+
+  await expect(page.locator("#decisionSummary .decision-card")).toBeVisible();
+  await expect(page.locator("#decisionSummary")).toContainText("Mevcut varsayımlara göre");
+  await expect(page.locator("#kpiGrid .kpi-card")).toHaveCount(4);
+  await expect(page.locator("#kpiGrid .kpi-card").nth(0)).toContainText("Aylık net");
+  await expect(page.locator("#kpiGrid .kpi-card").nth(2)).toContainText("başabaş", { ignoreCase: true });
+  await expect(page.locator("#kpiGrid .kpi-card").nth(3)).toContainText("12 ay sonu nakit");
+
+  const initialVisible = await page.locator("#secondaryKpiGrid .kpi-card:visible").count();
+  const total = await page.locator("#secondaryKpiGrid .kpi-card").count();
+  expect(initialVisible).toBeLessThanOrEqual(6);
+  expect(total).toBeGreaterThan(initialVisible);
+  await page.locator("#secondaryKpiToggle").click();
+  await expect(page.locator("#secondaryKpiToggle")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#secondaryKpiGrid .kpi-card:visible")).toHaveCount(total);
+
+  const order = await page.evaluate(() => {
+    const results = document.querySelector(".results-panel");
+    return [...results.children]
+      .map((node) => node.classList.contains("decision-section") ? "decision"
+        : node.classList.contains("kpi-section") ? "primary"
+          : node.classList.contains("warning-section") ? "warning"
+            : null)
+      .filter(Boolean);
+  });
+  expect(order).toEqual(["decision", "primary", "warning"]);
+  expect(errors).toEqual([]);
+});
+
 test("çoklu kayıt ve proje bazlı gerçek takip tarayıcıda ayrışır", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name.includes("mobile"), "Yoğun portföy akışı masaüstü projesinde bir kez çalışır.");
   await page.goto("/");

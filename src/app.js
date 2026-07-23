@@ -19,6 +19,10 @@ import {
   VIEW_MODE_STORAGE_KEY,
 } from "./ui/view-mode.js";
 import {
+  buildDecisionHierarchy,
+  renderDecisionSummary,
+} from "./ui/decision-summary.js";
+import {
   renderBreakdown,
   renderCashFlow,
   renderKeySplit,
@@ -85,8 +89,11 @@ const elements = {
   trackingCsvButton: document.querySelector("#trackingCsvButton"),
   trackingReportButton: document.querySelector("#trackingReportButton"),
   printButton: document.querySelector("#printButton"),
+  decisionSummary: document.querySelector("#decisionSummary"),
   warnings: document.querySelector("#warnings"),
   kpiGrid: document.querySelector("#kpiGrid"),
+  secondaryKpiGrid: document.querySelector("#secondaryKpiGrid"),
+  secondaryKpiToggle: document.querySelector("#secondaryKpiToggle"),
   keySplit: document.querySelector("#keySplit"),
   waterfall: document.querySelector("#waterfall"),
   scenarioTable: document.querySelector("#scenarioTable"),
@@ -100,6 +107,7 @@ let lastRendered = null;
 let portfolioController = null;
 let autosaveTimer = null;
 let resetDialogTrigger = null;
+let secondaryKpisExpanded = false;
 portfolioController = createPortfolioController({
   elements: {
     projectSelect: elements.projectSelect,
@@ -486,6 +494,11 @@ function attachEvents() {
     render();
   });
 
+  elements.secondaryKpiToggle.addEventListener("click", () => {
+    secondaryKpisExpanded = !secondaryKpisExpanded;
+    renderSecondaryKpiDisclosure();
+  });
+
   for (const menu of actionMenus()) {
     menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
   }
@@ -536,12 +549,16 @@ function render() {
   const inputs = currentInputs();
   const result = sector.calculateModel(inputs);
   const presentation = sector.buildPresentation(result);
+  const hierarchy = buildDecisionHierarchy({ sector, result, presentation });
   const scenarios = sector.calculateScenarioComparison(sectorState.scenarioInputs);
 
   syncFormInputs(elements.formSections, inputs);
   syncFormVisibility(elements.formSections, sector, inputs, viewMode);
+  renderDecisionSummary(elements.decisionSummary, hierarchy.decision);
+  renderKPIs(elements.kpiGrid, hierarchy.primaryKpis);
   renderWarnings(elements.warnings, result.warnings);
-  renderKPIs(elements.kpiGrid, presentation.kpis);
+  renderKPIs(elements.secondaryKpiGrid, hierarchy.secondaryKpis);
+  renderSecondaryKpiDisclosure(hierarchy.secondaryKpis.length);
   renderKeySplit(elements.keySplit, presentation.keySplit);
   renderWaterfall(elements.waterfall, result.waterfall);
   renderScenarioTable(elements.scenarioTable, sector, scenarios);
@@ -549,6 +566,15 @@ function render() {
   renderBreakdown(elements.breakdown, presentation.breakdown);
   lastRendered = { sector, scenarioId: sectorState.activeScenario, inputs, result, presentation, scenarios };
   trackingController.render();
+}
+
+function renderSecondaryKpiDisclosure(count = elements.secondaryKpiGrid.children?.length ?? 0) {
+  const canExpand = count > 6;
+  if (!canExpand) secondaryKpisExpanded = false;
+  elements.secondaryKpiGrid.dataset.expanded = String(secondaryKpisExpanded);
+  elements.secondaryKpiToggle.hidden = !canExpand;
+  elements.secondaryKpiToggle.setAttribute("aria-expanded", String(secondaryKpisExpanded));
+  elements.secondaryKpiToggle.textContent = secondaryKpisExpanded ? "Daha az göster" : "Tüm göstergeleri göster";
 }
 
 function exportReport() {

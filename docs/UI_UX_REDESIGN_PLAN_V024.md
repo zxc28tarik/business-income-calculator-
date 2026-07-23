@@ -1,6 +1,6 @@
 # Business Income Calculator — v0.24 Profesyonel UI/UX Yenileme Planı
 
-**Belge durumu:** Uygulama sürüyor; Aşama 0, Aşama 1, Aşama 2 ve Aşama 3 tamamlandı
+**Belge durumu:** Uygulama sürüyor; Aşama 0, Aşama 1, Aşama 2, Aşama 3 ve Aşama 4 tamamlandı
 **Hedef sürüm:** `v0.24.0`  
 **Kapsam:** Ana platform + 8 bağımsız tek HTML hesaplayıcı + rapor/yazdırma görünümü  
 **Temel ilke:** Finans motorları, golden sonuçlar, veri şemaları ve hesaplama sırası değiştirilmeyecek.  
@@ -1363,7 +1363,7 @@ Görevler:
 
 - [x] Finans sonuçlarının birebir korunması
 - [x] Üst eylemlerin sadeleştirilmesi
-- [ ] Karar özeti + 4 ana KPI
+- [x] Karar özeti + 4 ana KPI
 - [x] Basit/Gelişmiş görünüm
 - [ ] Mobil yatay taşma olmaması
 - [x] Sıfırlama/silme onayı
@@ -1373,7 +1373,7 @@ Görevler:
 
 - [x] Bölüm özetleri
 - [ ] Uyarı önem sistemi
-- [ ] İkincil KPI genişletme
+- [x] İkincil KPI genişletme
 - [ ] Nakit özet satırı
 - [ ] Ayrıntılı döküm akordeonu
 - [ ] Portföy ve tracking düzeni

@@ -118,14 +118,27 @@
       <div id="trackingTrends" class="tracking-trends"></div>
     </section>
 
-    <section class="result-section warning-section">
-      <div class="section-heading"><div><p class="eyebrow">RİSK KONTROLÜ</p><h2>Uyarılar</h2></div></div>
-      <div id="warnings" class="warnings"></div>
+    <section class="result-section decision-section" aria-labelledby="decisionHeading">
+      <div class="section-heading"><div><p class="eyebrow">KARAR ÖZETİ</p><h2 id="decisionHeading">Bu model ne söylüyor?</h2></div></div>
+      <div id="decisionSummary"></div>
     </section>
 
     <section class="result-section kpi-section">
-      <div class="section-heading"><div><p class="eyebrow">ANA SONUÇLAR</p><h2>KPI özeti</h2></div></div>
+      <div class="section-heading"><div><p class="eyebrow">ANA SONUÇLAR</p><h2>Dört ana gösterge</h2></div></div>
       <div id="kpiGrid" class="kpi-grid"></div>
+    </section>
+
+    <section class="result-section warning-section">
+      <div class="section-heading"><div><p class="eyebrow">RİSK KONTROLÜ</p><h2>Kritik uyarılar</h2></div></div>
+      <div id="warnings" class="warnings"></div>
+    </section>
+
+    <section class="result-section secondary-kpi-section">
+      <div class="section-heading">
+        <div><p class="eyebrow">AYRINTILI GÖSTERGELER</p><h2>İkincil göstergeler</h2></div>
+        <button id="secondaryKpiToggle" class="secondary-button disclosure-button" type="button" aria-expanded="false" aria-controls="secondaryKpiGrid">Tüm göstergeleri göster</button>
+      </div>
+      <div id="secondaryKpiGrid" class="kpi-grid secondary-kpi-grid" data-expanded="false"></div>
     </section>
 
     <section class="panel-card">
