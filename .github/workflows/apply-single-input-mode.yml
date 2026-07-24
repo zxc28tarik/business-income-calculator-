@@ -23,7 +23,13 @@ jobs:
           node-version: 24
           cache: npm
       - name: Apply requested product change
-        run: node scripts/apply-single-input-mode.mjs
+        run: node scripts/apply-single-input-mode.mjs 2>&1 | tee transform.log
+      - name: Upload transformation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-input-transform-log
+          path: transform.log
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Verify unit and integration tests
