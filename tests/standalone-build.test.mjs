@@ -47,6 +47,11 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /cash-summary-grid/);
       assert.match(html, /data-breakdown-disclosure/);
       assert.match(html, /negative-cash/);
+      assert.match(html, /workspace-dialog/);
+      assert.match(html, /portfolio-summary-card/);
+      assert.match(html, /tracking-context-item/);
+      assert.match(html, /trackingMonthsToggle/);
+      assert.match(html, /selectTrackingRows/);
       assert.match(html, /<dialog id="resetDialog"/);
       assert.match(html, /Evet, sektör verisini sıfırla/);
       assert.match(html, /business-income-calculator-backup-v1/);
