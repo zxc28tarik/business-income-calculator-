@@ -109,7 +109,7 @@ function buildReportDecision({ sector, result, presentation }) {
   const cash = cashMetrics(result);
   const status = hierarchy.decision.status;
   return {
-    id: status,
+    id: status === "dikkat" ? "kosullu" : status,
     status,
     label: hierarchy.decision.statusLabel,
     tone: status === "riskli" ? "hard" : status === "dikkat" ? "soft" : "positive",
