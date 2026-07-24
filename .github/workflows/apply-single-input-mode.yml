@@ -2,6 +2,8 @@ name: Apply single user input mode
 on:
   push:
     branches: [change/single-user-inputs]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
