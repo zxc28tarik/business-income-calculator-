@@ -3,6 +3,16 @@ import { cloneInputValue } from "./sector-schema.js";
 export const USER_INPUT_SCENARIO_ID = "expected";
 export const USER_INPUT_SCENARIO_LABEL = "Kullanıcı girdileri";
 
+function ensureHiddenSemantics() {
+  if (typeof document === "undefined" || document.getElementById("singleInputHiddenGuard")) return;
+  const style = document.createElement("style");
+  style.id = "singleInputHiddenGuard";
+  style.textContent = "[hidden]{display:none!important}";
+  document.head.append(style);
+}
+
+ensureHiddenSemantics();
+
 export function asSingleInputSector(definition) {
   return {
     ...definition,
