@@ -1,5 +1,16 @@
 import { test, expect } from "@playwright/test";
 
+async function openAndFill(page, selector, value) {
+  const field = page.locator(selector);
+  const section = field.locator("xpath=ancestor::details[1]");
+  if (await section.count()) {
+    const open = await section.getAttribute("open");
+    if (open == null) await section.locator("summary").click();
+  }
+  await expect(field).toBeVisible();
+  await field.fill(value);
+}
+
 test("Aşama 5 uyarı, nakit özeti ve ayrıntı panelleri çalışır", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -9,9 +20,9 @@ test("Aşama 5 uyarı, nakit özeti ve ayrıntı panelleri çalışır", async (
 
   await page.goto("/");
   await page.locator('[data-view-mode="advanced"]').click();
-  await page.locator("#rent").fill("2000000");
-  await page.locator("#materialCostRate").fill("60");
-  await page.locator("#startingCash").fill("0");
+  await openAndFill(page, "#rent", "2000000");
+  await openAndFill(page, "#materialCostRate", "60");
+  await openAndFill(page, "#startingCash", "0");
 
   await expect(page.locator("#warnings .warning").first()).toBeVisible();
   await expect(page.locator("#warnings .warning-level").first()).toContainText(/Kritik|Dikkat|Bilgi|Olumlu/);
