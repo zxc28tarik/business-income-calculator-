@@ -120,7 +120,7 @@ npm run verify:release
 
 Güncel paket:
 
-- **226/226 birim ve entegrasyon testi**
+- **234/234 birim ve entegrasyon testi**
 - bütün JavaScript kaynak modüllerinin içe aktarım kontrolü
 - sekiz bağımsız HTML’nin deterministik üretimi
 - `dist/` üretim artefaktı

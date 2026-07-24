@@ -1,4 +1,5 @@
 import { csvCell, escapeHtml, formatValue } from "../ui/formatters.js";
+import { createWorkspacePanel } from "../ui/workspace-panel.js";
 import {
   buildTrackingModel,
   hasTrackingData,
@@ -46,10 +47,18 @@ function trendText(trend) {
   return trend.direction === "up" ? "Yükseliyor" : "Düşüyor";
 }
 
+function renderContext(ctx, model, projectName) {
+  const scenarioLabel = ctx.sector.scenarios?.[ctx.scenarioId]?.label ?? ctx.scenarioId;
+  return `
+    <div class="tracking-context-item"><span>İşletme kaydı</span><strong>${escapeHtml(projectName)}</strong></div>
+    <div class="tracking-context-item"><span>Plan kapsamı</span><strong>${escapeHtml(ctx.sector.name)} · ${escapeHtml(scenarioLabel)}</strong></div>
+    <div class="tracking-context-item"><span>Gerçekleşen veri</span><strong>${model.completeFinancialMonths} / 12 ay</strong></div>`;
+}
+
 function renderSummary(model) {
   const status = STATUS_LABELS[model.overallStatus] ?? STATUS_LABELS.missing;
   return `
-    <article class="tracking-summary-card"><span>Takip durumu</span><strong class="tracking-status ${escapeHtml(model.overallStatus)}">${escapeHtml(status)}</strong><small>${model.completeFinancialMonths} karşılaştırılabilir dönem</small></article>
+    <article class="tracking-summary-card tracking-summary-primary"><span>Takip durumu</span><strong class="tracking-status ${escapeHtml(model.overallStatus)}">${escapeHtml(status)}</strong><small>${model.completeFinancialMonths} karşılaştırılabilir dönem · plan ve gerçekleşen birlikte değerlendirilir</small></article>
     <article class="tracking-summary-card"><span>Tahsilat sapması</span><strong>${signedMoney(model.totals.collectionsVariance)}</strong><small>${rate(model.totals.collectionsVarianceRate)}</small></article>
     <article class="tracking-summary-card"><span>Faaliyet sonucu sapması</span><strong>${signedMoney(model.totals.operatingResultVariance)}</strong><small>${rate(model.totals.operatingResultVarianceRate)}</small></article>
     <article class="tracking-summary-card"><span>Net nakit hareketi sapması</span><strong>${signedMoney(model.totals.netCashMovementVariance)}</strong><small>${rate(model.totals.netCashMovementVarianceRate)}</small></article>`;
@@ -65,8 +74,13 @@ function numberInput(month, key, value, label) {
   return `<input aria-label="${escapeHtml(label)}" type="number" step="0.01" data-tracking-month="${month}" data-tracking-key="${key}" value="${escapeHtml(inputValue(value))}" />`;
 }
 
-function renderTable(model) {
-  const rows = model.rows.map((row) => {
+export function selectTrackingRows(model, showAllMonths = false, compactLimit = 6) {
+  const rows = Array.isArray(model?.rows) ? model.rows : [];
+  return showAllMonths ? rows : rows.slice(0, Math.max(1, compactLimit));
+}
+
+function renderTable(model, showAllMonths) {
+  const rows = selectTrackingRows(model, showAllMonths).map((row) => {
     const actual = row.actual ?? { month: row.month };
     const planOperatingCosts = row.plan.variableCosts + row.plan.fixedCosts
       + row.plan.stakeholderPayouts + row.plan.estimatedTax;
@@ -103,10 +117,39 @@ function renderTrends(model) {
   return items.map(([label, trend]) => `<div class="tracking-trend-item"><span>${escapeHtml(label)}</span><strong>${escapeHtml(trendText(trend))}</strong><small>${rate(trend?.rate)}</small></div>`).join("");
 }
 
-export function createTrackingController({ elements, getContext, getProjectId = () => "legacy", storagePrefix = "business-income-calculator:tracking:v0.1" }) {
-  let visible = false;
+function ensureTrackingElements(elements) {
+  let context = elements.panel.querySelector("#trackingContext");
+  if (!context) {
+    context = document.createElement("div");
+    context.id = "trackingContext";
+    context.className = "tracking-context";
+    elements.panel.insertBefore(context, elements.summary);
+  }
+
+  let monthsToggle = elements.panel.querySelector("#trackingMonthsToggle");
+  if (!monthsToggle) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "tracking-table-toolbar";
+    toolbar.innerHTML = '<p>İlk altı ay gösteriliyor. Diğer dönemler saklanır, veriler silinmez.</p><button id="trackingMonthsToggle" class="secondary-button" type="button" aria-expanded="false">12 ayın tamamını göster</button>';
+    const tableRegion = elements.table.closest(".tracking-table-scroll");
+    elements.panel.insertBefore(toolbar, tableRegion ?? elements.trends);
+    monthsToggle = toolbar.querySelector("#trackingMonthsToggle");
+  }
+  return { context, monthsToggle };
+}
+
+export function createTrackingController({
+  elements,
+  getContext,
+  getProjectId = () => "legacy",
+  getProjectName = () => "Aktif kayıt",
+  storagePrefix = "business-income-calculator:tracking:v0.1",
+}) {
   let currentModel = null;
   let currentStorageKey = "";
+  let showAllMonths = false;
+  let panelControl = null;
+  const stageElements = ensureTrackingElements(elements);
 
   function context() {
     return typeof getContext === "function" ? getContext() : null;
@@ -159,15 +202,22 @@ export function createTrackingController({ elements, getContext, getProjectId = 
   }
 
   function render() {
+    if (!panelControl?.isOpen()) return;
     const ctx = context();
     if (!ctx) return;
     currentModel = buildCurrentModel();
-    elements.panel.hidden = !visible;
-    elements.toggleButton.setAttribute("aria-expanded", String(visible));
-    if (!visible) return;
+    stageElements.context.innerHTML = renderContext(ctx, currentModel, String(getProjectName?.() || "Aktif kayıt"));
     elements.summary.innerHTML = renderSummary(currentModel);
-    elements.table.innerHTML = renderTable(currentModel);
+    elements.table.innerHTML = renderTable(currentModel, showAllMonths);
     elements.trends.innerHTML = renderTrends(currentModel);
+    const hasMore = currentModel.rows.length > 6;
+    stageElements.monthsToggle.hidden = !hasMore;
+    stageElements.monthsToggle.setAttribute("aria-expanded", String(showAllMonths));
+    stageElements.monthsToggle.textContent = showAllMonths ? "Yalnız ilk 6 ayı göster" : "12 ayın tamamını göster";
+    const note = stageElements.monthsToggle.previousElementSibling;
+    if (note) note.textContent = showAllMonths
+      ? "On iki ayın tamamı gösteriliyor."
+      : "İlk altı ay gösteriliyor. Diğer dönemler saklanır, veriler silinmez.";
   }
 
   function updateRecord(event) {
@@ -230,14 +280,30 @@ export function createTrackingController({ elements, getContext, getProjectId = 
   }
 
   function attach() {
-    elements.toggleButton.addEventListener("click", () => { visible = !visible; render(); });
-    elements.closeButton.addEventListener("click", () => { visible = false; render(); });
     elements.table.addEventListener("input", updateRecord);
     elements.table.addEventListener("change", updateRecord);
     elements.csvButton.addEventListener("click", exportCsv);
     elements.reportButton.addEventListener("click", exportReport);
+    stageElements.monthsToggle.addEventListener("click", () => {
+      showAllMonths = !showAllMonths;
+      render();
+    });
   }
 
   attach();
-  return { render, getModel: () => currentModel, isVisible: () => visible };
+  panelControl = createWorkspacePanel({
+    id: "tracking",
+    panel: elements.panel,
+    toggleButton: elements.toggleButton,
+    closeButton: elements.closeButton,
+    onOpen: render,
+    onClose: () => { currentModel = null; },
+  });
+  return {
+    render,
+    getModel: () => currentModel,
+    isVisible: panelControl.isOpen,
+    open: panelControl.open,
+    close: panelControl.close,
+  };
 }

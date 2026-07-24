@@ -14,20 +14,71 @@ class MockElement {
     this.hidden = false;
     this.attributes = new Map();
     this.listeners = new Map();
-    this.classList = { toggle() {} };
+    this.childrenById = new Map();
+    this.classes = new Set();
+    this.classList = {
+      add: (...names) => names.forEach((name) => this.classes.add(name)),
+      remove: (...names) => names.forEach((name) => this.classes.delete(name)),
+      contains: (name) => this.classes.has(name),
+      toggle: (name, force) => {
+        const enabled = force == null ? !this.classes.has(name) : Boolean(force);
+        if (enabled) this.classes.add(name); else this.classes.delete(name);
+        return enabled;
+      },
+    };
+    this.open = false;
+    this.previousElementSibling = null;
   }
 
-  addEventListener(type, handler) { this.listeners.set(type, handler); }
+  addEventListener(type, handler) {
+    const handlers = this.listeners.get(type) ?? [];
+    handlers.push(handler);
+    this.listeners.set(type, handlers);
+  }
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
-  dispatch(type, target = this) { this.listeners.get(type)?.({ target }); }
+  getAttribute(name) { return this.attributes.get(name) ?? null; }
+  removeAttribute(name) { this.attributes.delete(name); }
+  dispatch(type, target = this, detail = {}) {
+    const event = { target, currentTarget: this, preventDefault() {}, ...detail };
+    for (const handler of this.listeners.get(type) ?? []) handler(event);
+  }
+  querySelector(selector) {
+    if (!selector?.startsWith("#")) return null;
+    const id = selector.slice(1);
+    if (this.childrenById.has(id)) return this.childrenById.get(id);
+    if (!this.innerHTML.includes(`id="${id}"`)) return null;
+    const child = new MockElement(id.toLowerCase().includes("button") || id.toLowerCase().includes("toggle") ? "BUTTON" : "DIV");
+    child.id = id;
+    this.childrenById.set(id, child);
+    return child;
+  }
   querySelectorAll() { return []; }
-  click() {}
+  closest() { return null; }
+  insertBefore(child) {
+    if (child?.id) this.childrenById.set(child.id, child);
+    return child;
+  }
+  append(child) {
+    if (child?.id) this.childrenById.set(child.id, child);
+    return child;
+  }
+  appendChild(child) { return this.append(child); }
+  contains() { return false; }
+  click() { this.dispatch("click"); }
+  focus() { if (globalThis.document) globalThis.document.activeElement = this; }
+  showModal() { this.open = true; }
+  close() { this.open = false; this.dispatch("close"); }
 }
 
 function extractElementsFromHtml(html) {
   const elements = new Map();
   const pattern = /<([a-z][a-z0-9-]*)\b[^>]*\bid="([^"]+)"[^>]*>/gi;
-  for (const match of html.matchAll(pattern)) elements.set(`#${match[2]}`, new MockElement(match[1].toUpperCase()));
+  for (const match of html.matchAll(pattern)) {
+    const element = new MockElement(match[1].toUpperCase());
+    element.id = match[2];
+    element.hidden = /\shidden(?:\s|\/?>)/i.test(match[0]);
+    elements.set(`#${match[2]}`, element);
+  }
   return elements;
 }
 
@@ -38,7 +89,8 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.0/);
+  assert.doesNotMatch(html, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -50,9 +102,9 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
   }
 
   const requiredIds = [
-    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher",
-    "formSections", "resetButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "warnings",
-    "kpiGrid", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
+    "projectSelect", "projectNewButton", "projectRenameButton", "projectDuplicateButton", "portfolioButton", "portfolioPanel", "portfolioTable", "portfolioDeleteButton", "portfolioCloseButton", "backupExportButton", "backupImportButton", "backupImportInput", "recordMenuButton", "recordMenu", "exportMenuButton", "exportMenu", "exportMenuReportButton", "dataMenuButton", "dataMenu", "moreMenuButton", "moreMenu", "sectorSelect", "pageTitle", "pageSubtitle", "sectorSummary", "scenarioSwitcher", "viewModeSwitcher", "viewModeNote", "autosaveStatus",
+    "formSections", "resetButton", "resetDialog", "resetSectorName", "resetScenarioName", "resetCancelButton", "resetConfirmButton", "exportCsvButton", "reportButton", "trackingButton", "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton", "trackingCsvButton", "trackingReportButton", "printButton", "decisionSummary", "warnings",
+    "kpiGrid", "secondaryKpiGrid", "secondaryKpiToggle", "keySplit", "waterfall", "scenarioTable", "cashFlowTable", "breakdown",
   ];
   for (const id of requiredIds) {
     const matches = html.match(new RegExp(`\\bid="${id}"`, "g")) ?? [];
@@ -64,18 +116,36 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   const html = await readApplicationHtml();
   const elements = extractElementsFromHtml(html);
   const requiredSelectors = [
-    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher",
-    "#formSections", "#resetButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#warnings",
-    "#kpiGrid", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
+    "#projectSelect", "#projectNewButton", "#projectRenameButton", "#projectDuplicateButton", "#portfolioButton", "#portfolioPanel", "#portfolioTable", "#portfolioDeleteButton", "#portfolioCloseButton", "#backupExportButton", "#backupImportButton", "#backupImportInput", "#recordMenuButton", "#recordMenu", "#exportMenuButton", "#exportMenu", "#exportMenuReportButton", "#dataMenuButton", "#dataMenu", "#moreMenuButton", "#moreMenu", "#sectorSelect", "#pageTitle", "#pageSubtitle", "#sectorSummary", "#scenarioSwitcher", "#viewModeSwitcher", "#viewModeNote", "#autosaveStatus",
+    "#formSections", "#resetButton", "#resetDialog", "#resetSectorName", "#resetScenarioName", "#resetCancelButton", "#resetConfirmButton", "#exportCsvButton", "#reportButton", "#trackingButton", "#trackingPanel", "#trackingSummary", "#trackingTable", "#trackingTrends", "#trackingCloseButton", "#trackingCsvButton", "#trackingReportButton", "#printButton", "#decisionSummary", "#warnings",
+    "#kpiGrid", "#secondaryKpiGrid", "#secondaryKpiToggle", "#keySplit", "#waterfall", "#scenarioTable", "#cashFlowTable", "#breakdown",
   ];
   for (const selector of requiredSelectors) assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
 
+  const documentListeners = new Map();
+  const head = new MockElement("HEAD");
+  const body = new MockElement("BODY");
   globalThis.document = {
     title: "",
+    activeElement: null,
+    head,
+    body,
     querySelector(selector) { return elements.get(selector) ?? null; },
     querySelectorAll() { return []; },
+    getElementById(id) { return elements.get(`#${id}`) ?? head.childrenById.get(id) ?? null; },
     createElement(tagName) { return new MockElement(String(tagName).toUpperCase()); },
+    addEventListener(type, handler) {
+      const handlers = documentListeners.get(type) ?? [];
+      handlers.push(handler);
+      documentListeners.set(type, handlers);
+    },
+    dispatch(type, event) { for (const handler of documentListeners.get(type) ?? []) handler(event); },
+    dispatchEvent(event) { for (const handler of documentListeners.get(event.type) ?? []) handler(event); return true; },
   };
+  globalThis.CustomEvent = class CustomEvent {
+    constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
+  };
+  globalThis.requestAnimationFrame = (callback) => callback();
   globalThis.window = { print() {} };
   const store = new Map();
   globalThis.localStorage = {
@@ -87,6 +157,7 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   };
 
   await import(`../src/app.js?smoke=${Date.now()}`);
+  const allKpis = () => elements.get("#kpiGrid").innerHTML + elements.get("#secondaryKpiGrid").innerHTML;
 
   assert.match(elements.get("#pageTitle").textContent, /Kafe \/ Restoran/);
   assert.match(html, /Gerçek Takip/);
@@ -94,8 +165,16 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(html, /İşletme ve proje karşılaştırması/);
   assert.match(elements.get("#projectSelect").innerHTML, /İlk işletmem/);
   assert.match(elements.get("#kpiGrid").innerHTML, /Aylık net k.r/);
+  assert.equal((elements.get("#kpiGrid").innerHTML.match(/class="kpi-card/g) ?? []).length, 4);
+  assert.match(elements.get("#decisionSummary").innerHTML, /Mevcut varsayımlara göre/);
+  assert.match(elements.get("#decisionSummary").innerHTML, /Kritik risk/);
+  assert.match(elements.get("#secondaryKpiGrid").innerHTML, /Kurulum maliyeti/);
+  assert.equal(elements.get("#secondaryKpiToggle").attributes.get("aria-expanded"), "false");
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş satış kanalı karmasını kullan/);
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
+  assert.match(elements.get("#formSections").innerHTML, /data-field-importance="advanced"/);
+  assert.match(elements.get("#formSections").innerHTML, /view-mode-hidden/);
+  assert.equal(elements.get("#viewModeNote").textContent, "Yalnız temel varsayımlar gösteriliyor.");
   assert.match(elements.get("#sectorSelect").innerHTML, /E-Ticaret \/ Pazaryeri/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Güzellik \/ Kuaför \/ Bakım/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Ajans \/ Freelancer \/ Danışmanlık/);
@@ -114,8 +193,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
   assert.match(elements.get("#formSections").innerHTML, /Reklam kanalları/);
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş stok yeterliliğini izle/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Ürün başı net kâr/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
+  assert.match(allKpis(), /Ürün başı net kâr/);
+  assert.match(allKpis(), /Kapasite kullanımı/);
   assert.match(elements.get("#breakdown").innerHTML, /Stok ve işletme sermayesi/);
 
   sectorSelect.value = "beauty_personal_care";
@@ -125,8 +204,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Hizmet \/ seans karması/);
   assert.match(elements.get("#formSections").innerHTML, /Personel rolleri/);
   assert.match(elements.get("#formSections").innerHTML, /Bakım \/ kozmetik ürün satışı ekle/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Seans başı net kâr/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
+  assert.match(allKpis(), /Seans başı net kâr/);
+  assert.match(allKpis(), /Kapasite kullanımı/);
   assert.match(elements.get("#breakdown").innerHTML, /Profil · Tekrar ziyaret ve no-show/);
 
   sectorSelect.value = "agency_freelance_consulting";
@@ -136,8 +215,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Kapsam taşması/);
   assert.match(elements.get("#formSections").innerHTML, /Taşeron kalemlerini tabloyla izle/);
   assert.match(elements.get("#formSections").innerHTML, /Sözleşme başlangıcında alınan peşinat payı/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Proje başı net kâr/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /İç ekip kapasite yükü/);
+  assert.match(allKpis(), /Proje başı net kâr/);
+  assert.match(allKpis(), /İç ekip kapasite yükü/);
   assert.match(elements.get("#breakdown").innerHTML, /Profil · Gelir sürücüsü ve sözleşme/);
 
   sectorSelect.value = "saas_subscription";
@@ -146,8 +225,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş paket \/ plan karmasını kullan/);
   assert.match(elements.get("#formSections").innerHTML, /Upgrade \/ expansion MRR oranı/);
   assert.match(elements.get("#formSections").innerHTML, /Destek \/ müşteri başarı personeli/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /LTV \/ CAC/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Net gelir tutma \(NRR\)/);
+  assert.match(allKpis(), /LTV \/ CAC/);
+  assert.match(allKpis(), /Net gelir tutma \(NRR\)/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Ay başı müşteri/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Yıllık peşin/);
   assert.match(elements.get("#breakdown").innerHTML, /Profil · İş modeli ve gelir sürücüsü/);
@@ -159,9 +238,9 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
   assert.match(elements.get("#formSections").innerHTML, /Tedarikçi karmasını tabloyla izle/);
   assert.match(elements.get("#formSections").innerHTML, /Stok kapsamı ve işletme sermayesini izle/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Mağaza kapasite yükü/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Stok işletme sermayesi açığı/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /stok devir hızı/i);
+  assert.match(allKpis(), /Mağaza kapasite yükü/);
+  assert.match(allKpis(), /Stok işletme sermayesi açığı/);
+  assert.match(allKpis(), /stok devir hızı/i);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Günlük işlem/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Ürün maliyeti/);
   assert.match(elements.get("#breakdown").innerHTML, /Profil · Tedarikçi ve işletme sermayesi/);
@@ -174,10 +253,10 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Personel rolleri/);
   assert.match(elements.get("#formSections").innerHTML, /Parça \/ sarf stok kapsamını izle/);
   assert.match(elements.get("#formSections").innerHTML, /Taşeron işler/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Araç başı net k.r/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Kapasite kullanımı/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Talep karşılama oranı/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Stok işletme sermayesi açığı/);
+  assert.match(allKpis(), /Araç başı net k.r/);
+  assert.match(allKpis(), /Kapasite kullanımı/);
+  assert.match(allKpis(), /Talep karşılama oranı/);
+  assert.match(allKpis(), /Stok işletme sermayesi açığı/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Tamamlanan iş/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Karşılanamayan iş/);
   assert.match(elements.get("#breakdown").innerHTML, /Profil · Talep, randevu ve kapasite/);
@@ -189,7 +268,33 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Aylık aktif kullanıcı/);
   assert.match(elements.get("#formSections").innerHTML, /DLC satın alma oranı/);
   assert.match(elements.get("#formSections").innerHTML, /Recoup ve oyun giderleri/);
-  assert.match(elements.get("#kpiGrid").innerHTML, /Yayıncı net kârı/);
+  assert.match(allKpis(), /Yayıncı net kârı/);
   assert.match(elements.get("#cashFlowTable").innerHTML, /Recoup bakiyesi/);
   assert.match(elements.get("#breakdown").innerHTML, /Geliştirici settlement/);
+
+  elements.get("#viewModeSwitcher").dispatch("click", { dataset: { viewMode: "advanced" } });
+  assert.equal(elements.get("#viewModeNote").textContent, "Bütün sektör ayrıntıları gösteriliyor.");
+  assert.equal(store.get("business-income-calculator:ui:view-mode:v0.24"), "advanced");
+  assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);
+
+  const recordMenuButton = elements.get("#recordMenuButton");
+  const recordMenu = elements.get("#recordMenu");
+  assert.equal(recordMenu.hidden, true);
+  recordMenuButton.click();
+  assert.equal(recordMenu.hidden, false);
+  assert.equal(recordMenuButton.attributes.get("aria-expanded"), "true");
+  globalThis.document.dispatch("keydown", { key: "Escape", preventDefault() {} });
+  assert.equal(recordMenu.hidden, true);
+  assert.equal(recordMenuButton.attributes.get("aria-expanded"), "false");
+  assert.equal(globalThis.document.activeElement, recordMenuButton);
+
+  elements.get("#scenarioSwitcher").dispatch("click", { dataset: { scenario: "pessimistic" } });
+  assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="pessimistic"/);
+  elements.get("#resetButton").click();
+  assert.equal(elements.get("#resetDialog").open, true);
+  assert.equal(elements.get("#resetSectorName").textContent, "Oyun / Dijital Yayıncılık");
+  assert.equal(elements.get("#resetScenarioName").textContent, "Kötümser");
+  elements.get("#resetConfirmButton").click();
+  assert.equal(elements.get("#resetDialog").open, false);
+  assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="expected"/);
 });

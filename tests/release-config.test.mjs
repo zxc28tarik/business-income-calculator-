@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const read = (file) => readFile(new URL(`../${file}`, import.meta.url), "utf8");
 
-test("v0.23 sürüm, production ve Pages sözleşmesi eşleşir", async () => {
+test("v0.24 sürüm, production ve Pages sözleşmesi eşleşir", async () => {
   const [packageText, lockText, indexHtml, standaloneBuilder, productionBuilder, testWorkflow, deployWorkflow] = await Promise.all([
     read("package.json"),
     read("package-lock.json"),
@@ -17,12 +17,13 @@ test("v0.23 sürüm, production ve Pages sözleşmesi eşleşir", async () => {
 
   const pkg = JSON.parse(packageText);
   const lock = JSON.parse(lockText);
-  assert.equal(pkg.version, "0.23.0");
-  assert.equal(lock.version, "0.23.0");
-  assert.equal(lock.packages[""].version, "0.23.0");
-  assert.match(indexHtml, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
-  assert.match(standaloneBuilder, /TEK DOSYA · v0\.23\.0/);
-  assert.match(productionBuilder, /version: "0\.23\.0"/);
+  assert.equal(pkg.version, "0.24.0");
+  assert.equal(lock.version, "0.24.0");
+  assert.equal(lock.packages[""].version, "0.24.0");
+  assert.match(indexHtml, /BUSINESS INCOME CALCULATOR · v0\.24\.0/);
+  assert.doesNotMatch(indexHtml, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
+  assert.match(standaloneBuilder, /const APP_VERSION = "0\.24\.0"/);
+  assert.match(productionBuilder, /version: "0\.24\.0"/);
 
   assert.equal(pkg.devDependencies["@playwright/test"], "1.61.1");
   assert.equal(pkg.devDependencies["@axe-core/playwright"], "4.12.1");

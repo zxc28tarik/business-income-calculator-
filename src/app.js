@@ -14,6 +14,15 @@ import {
   syncFormVisibility,
 } from "./ui/form-view.js";
 import {
+  DEFAULT_VIEW_MODE,
+  normalizeViewMode,
+  VIEW_MODE_STORAGE_KEY,
+} from "./ui/view-mode.js";
+import {
+  buildDecisionHierarchy,
+  renderDecisionSummary,
+} from "./ui/decision-summary.js";
+import {
   renderBreakdown,
   renderCashFlow,
   renderKeySplit,
@@ -45,13 +54,30 @@ const elements = {
   backupExportButton: document.querySelector("#backupExportButton"),
   backupImportButton: document.querySelector("#backupImportButton"),
   backupImportInput: document.querySelector("#backupImportInput"),
+  recordMenuButton: document.querySelector("#recordMenuButton"),
+  recordMenu: document.querySelector("#recordMenu"),
+  exportMenuButton: document.querySelector("#exportMenuButton"),
+  exportMenu: document.querySelector("#exportMenu"),
+  exportMenuReportButton: document.querySelector("#exportMenuReportButton"),
+  dataMenuButton: document.querySelector("#dataMenuButton"),
+  dataMenu: document.querySelector("#dataMenu"),
+  moreMenuButton: document.querySelector("#moreMenuButton"),
+  moreMenu: document.querySelector("#moreMenu"),
   sectorSelect: document.querySelector("#sectorSelect"),
   pageTitle: document.querySelector("#pageTitle"),
   pageSubtitle: document.querySelector("#pageSubtitle"),
   sectorSummary: document.querySelector("#sectorSummary"),
   scenarioSwitcher: document.querySelector("#scenarioSwitcher"),
+  viewModeSwitcher: document.querySelector("#viewModeSwitcher"),
+  viewModeNote: document.querySelector("#viewModeNote"),
+  autosaveStatus: document.querySelector("#autosaveStatus"),
   formSections: document.querySelector("#formSections"),
   resetButton: document.querySelector("#resetButton"),
+  resetDialog: document.querySelector("#resetDialog"),
+  resetSectorName: document.querySelector("#resetSectorName"),
+  resetScenarioName: document.querySelector("#resetScenarioName"),
+  resetCancelButton: document.querySelector("#resetCancelButton"),
+  resetConfirmButton: document.querySelector("#resetConfirmButton"),
   exportCsvButton: document.querySelector("#exportCsvButton"),
   reportButton: document.querySelector("#reportButton"),
   trackingButton: document.querySelector("#trackingButton"),
@@ -63,8 +89,11 @@ const elements = {
   trackingCsvButton: document.querySelector("#trackingCsvButton"),
   trackingReportButton: document.querySelector("#trackingReportButton"),
   printButton: document.querySelector("#printButton"),
+  decisionSummary: document.querySelector("#decisionSummary"),
   warnings: document.querySelector("#warnings"),
   kpiGrid: document.querySelector("#kpiGrid"),
+  secondaryKpiGrid: document.querySelector("#secondaryKpiGrid"),
+  secondaryKpiToggle: document.querySelector("#secondaryKpiToggle"),
   keySplit: document.querySelector("#keySplit"),
   waterfall: document.querySelector("#waterfall"),
   scenarioTable: document.querySelector("#scenarioTable"),
@@ -73,8 +102,12 @@ const elements = {
 };
 
 let state = loadState();
+let viewMode = loadViewMode();
 let lastRendered = null;
 let portfolioController = null;
+let autosaveTimer = null;
+let resetDialogTrigger = null;
+let secondaryKpisExpanded = false;
 portfolioController = createPortfolioController({
   elements: {
     projectSelect: elements.projectSelect,
@@ -186,13 +219,49 @@ function loadState() {
   return fresh;
 }
 
+function loadViewMode() {
+  try {
+    return normalizeViewMode(localStorage.getItem(VIEW_MODE_STORAGE_KEY));
+  } catch {
+    return DEFAULT_VIEW_MODE;
+  }
+}
+
+function saveViewMode() {
+  try {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+  } catch {
+    // Görünüm tercihi kaydedilemese de hesaplama çalışmaya devam eder.
+  }
+}
+
 function persistLegacyState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function setAutosaveStatus(status) {
+  const states = {
+    saving: ["Kaydediliyor…", "saving"],
+    saved: ["Kaydedildi", "saved"],
+    error: ["Kaydedilemedi", "error"],
+  };
+  const [label, stateName] = states[status] ?? states.saved;
+  elements.autosaveStatus.textContent = label;
+  elements.autosaveStatus.dataset.state = stateName;
+}
+
 function saveState() {
-  persistLegacyState();
-  portfolioController?.syncActiveWorkspace();
+  setAutosaveStatus("saving");
+  if (autosaveTimer) clearTimeout(autosaveTimer);
+  try {
+    persistLegacyState();
+    portfolioController?.syncActiveWorkspace();
+    autosaveTimer = setTimeout(() => setAutosaveStatus("saved"), 350);
+    return true;
+  } catch {
+    setAutosaveStatus("error");
+    return false;
+  }
 }
 
 function currentSector() {
@@ -237,6 +306,7 @@ function renderSectorShell() {
     <span>${escapeHtml(sector.version)} · ${sector.status === "simulation" ? "Simülasyon modu" : escapeHtml(sector.status)}</span>
   `;
   renderScenarioButtons();
+  renderViewModeControl();
   renderForm();
 }
 
@@ -249,7 +319,18 @@ function renderScenarioButtons() {
 }
 
 function renderForm() {
-  elements.formSections.innerHTML = renderFormHtml(currentSector(), currentInputs());
+  elements.formSections.innerHTML = renderFormHtml(currentSector(), currentInputs(), { viewMode });
+}
+
+function renderViewModeControl() {
+  elements.viewModeSwitcher.querySelectorAll?.("[data-view-mode]").forEach((button) => {
+    const active = button.dataset.viewMode === viewMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  elements.viewModeNote.textContent = viewMode === "advanced"
+    ? "Bütün sektör ayrıntıları gösteriliyor."
+    : "Yalnız temel varsayımlar gösteriliyor.";
 }
 
 function updateCurrentInputs(patch) {
@@ -324,6 +405,64 @@ function handleTableAction(event) {
   render();
 }
 
+function actionMenus() {
+  return [
+    { trigger: elements.recordMenuButton, panel: elements.recordMenu },
+    { trigger: elements.exportMenuButton, panel: elements.exportMenu },
+    { trigger: elements.dataMenuButton, panel: elements.dataMenu },
+    { trigger: elements.moreMenuButton, panel: elements.moreMenu },
+  ];
+}
+
+function closeActionMenus({ returnFocus = false } = {}) {
+  for (const { trigger, panel } of actionMenus()) {
+    const wasOpen = !panel.hidden;
+    panel.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    if (returnFocus && wasOpen) trigger.focus?.();
+  }
+}
+
+function toggleActionMenu(selected) {
+  const shouldOpen = selected.panel.hidden;
+  closeActionMenus();
+  if (!shouldOpen) return;
+  selected.panel.hidden = false;
+  selected.trigger.setAttribute("aria-expanded", "true");
+  queueMicrotask(() => selected.panel.querySelector?.('[role="menuitem"]')?.focus?.());
+}
+
+function resetCurrentSector() {
+  const sector = currentSector();
+  state.sectors[sector.id] = {
+    activeScenario: "expected",
+    scenarioInputs: initializeScenarioInputs(sector),
+  };
+  saveState();
+  renderSectorShell();
+  render();
+}
+
+function openResetDialog() {
+  const sector = currentSector();
+  const scenarioId = currentSectorState().activeScenario;
+  elements.resetSectorName.textContent = sector.name;
+  elements.resetScenarioName.textContent = sector.scenarios[scenarioId]?.label ?? scenarioId;
+  resetDialogTrigger = elements.resetButton;
+  if (typeof elements.resetDialog.showModal === "function") {
+    elements.resetDialog.showModal();
+    queueMicrotask(() => elements.resetCancelButton.focus?.());
+    return;
+  }
+  if (confirm(`${sector.name} sektörünün tüm senaryo verileri varsayılan değerlere döndürülsün mü?`)) {
+    resetCurrentSector();
+  }
+}
+
+function closeResetDialog() {
+  if (typeof elements.resetDialog.close === "function") elements.resetDialog.close();
+}
+
 function attachEvents() {
   elements.sectorSelect.addEventListener("change", (event) => {
     state.activeSectorId = event.target.value;
@@ -345,19 +484,62 @@ function attachEvents() {
     render();
   });
 
-  elements.resetButton.addEventListener("click", () => {
-    const sector = currentSector();
-    state.sectors[sector.id] = {
-      activeScenario: "expected",
-      scenarioInputs: initializeScenarioInputs(sector),
-    };
-    saveState();
-    renderSectorShell();
+  elements.viewModeSwitcher.addEventListener("click", (event) => {
+    const nextMode = event.target.dataset.viewMode;
+    if (!nextMode || normalizeViewMode(nextMode) === viewMode) return;
+    viewMode = normalizeViewMode(nextMode);
+    saveViewMode();
+    renderViewModeControl();
+    renderForm();
     render();
+  });
+
+  elements.secondaryKpiToggle.addEventListener("click", () => {
+    secondaryKpisExpanded = !secondaryKpisExpanded;
+    renderSecondaryKpiDisclosure();
+  });
+
+  for (const menu of actionMenus()) {
+    menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
+  }
+  for (const item of document.querySelectorAll("[data-menu-action]")) {
+    item.addEventListener("click", () => closeActionMenus());
+  }
+  document.addEventListener?.("click", (event) => {
+    if (!event.target.closest?.(".action-menu")) closeActionMenus();
+  });
+  document.addEventListener?.("keydown", (event) => {
+    if (event.key === "Escape" && actionMenus().some(({ panel }) => !panel.hidden)) {
+      event.preventDefault();
+      closeActionMenus({ returnFocus: true });
+    }
+  });
+
+  elements.resetButton.addEventListener("click", openResetDialog);
+  elements.resetCancelButton.addEventListener("click", closeResetDialog);
+  elements.resetConfirmButton.addEventListener("click", () => {
+    closeResetDialog();
+    resetCurrentSector();
+  });
+  elements.resetDialog.addEventListener("close", () => resetDialogTrigger?.focus?.());
+  elements.resetDialog.addEventListener("keydown", (event) => {
+    if (event.key !== "Tab") return;
+    const focusable = [...elements.resetDialog.querySelectorAll?.("button:not([disabled])") ?? []];
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 
   elements.exportCsvButton.addEventListener("click", exportCsv);
   elements.reportButton.addEventListener("click", exportReport);
+  elements.exportMenuReportButton.addEventListener("click", exportReport);
   elements.printButton.addEventListener("click", () => window.print());
 }
 
@@ -367,12 +549,16 @@ function render() {
   const inputs = currentInputs();
   const result = sector.calculateModel(inputs);
   const presentation = sector.buildPresentation(result);
+  const hierarchy = buildDecisionHierarchy({ sector, result, presentation });
   const scenarios = sector.calculateScenarioComparison(sectorState.scenarioInputs);
 
   syncFormInputs(elements.formSections, inputs);
-  syncFormVisibility(elements.formSections, sector, inputs);
+  syncFormVisibility(elements.formSections, sector, inputs, viewMode);
+  renderDecisionSummary(elements.decisionSummary, hierarchy.decision);
+  renderKPIs(elements.kpiGrid, hierarchy.primaryKpis);
   renderWarnings(elements.warnings, result.warnings);
-  renderKPIs(elements.kpiGrid, presentation.kpis);
+  renderKPIs(elements.secondaryKpiGrid, hierarchy.secondaryKpis);
+  renderSecondaryKpiDisclosure(hierarchy.secondaryKpis.length);
   renderKeySplit(elements.keySplit, presentation.keySplit);
   renderWaterfall(elements.waterfall, result.waterfall);
   renderScenarioTable(elements.scenarioTable, sector, scenarios);
@@ -380,6 +566,15 @@ function render() {
   renderBreakdown(elements.breakdown, presentation.breakdown);
   lastRendered = { sector, scenarioId: sectorState.activeScenario, inputs, result, presentation, scenarios };
   trackingController.render();
+}
+
+function renderSecondaryKpiDisclosure(count = elements.secondaryKpiGrid.children?.length ?? 0) {
+  const canExpand = count > 6;
+  if (!canExpand) secondaryKpisExpanded = false;
+  elements.secondaryKpiGrid.dataset.expanded = String(secondaryKpisExpanded);
+  elements.secondaryKpiToggle.hidden = !canExpand;
+  elements.secondaryKpiToggle.setAttribute("aria-expanded", String(secondaryKpisExpanded));
+  elements.secondaryKpiToggle.textContent = secondaryKpisExpanded ? "Daha az göster" : "Tüm göstergeleri göster";
 }
 
 function exportReport() {
