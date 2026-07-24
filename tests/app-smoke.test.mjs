@@ -14,14 +14,56 @@ class MockElement {
     this.hidden = false;
     this.attributes = new Map();
     this.listeners = new Map();
-    this.classList = { toggle() {} };
+    this.childrenById = new Map();
+    this.classes = new Set();
+    this.classList = {
+      add: (...names) => names.forEach((name) => this.classes.add(name)),
+      remove: (...names) => names.forEach((name) => this.classes.delete(name)),
+      contains: (name) => this.classes.has(name),
+      toggle: (name, force) => {
+        const enabled = force == null ? !this.classes.has(name) : Boolean(force);
+        if (enabled) this.classes.add(name); else this.classes.delete(name);
+        return enabled;
+      },
+    };
     this.open = false;
+    this.previousElementSibling = null;
   }
 
-  addEventListener(type, handler) { this.listeners.set(type, handler); }
+  addEventListener(type, handler) {
+    const handlers = this.listeners.get(type) ?? [];
+    handlers.push(handler);
+    this.listeners.set(type, handlers);
+  }
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
-  dispatch(type, target = this, detail = {}) { this.listeners.get(type)?.({ target, ...detail }); }
+  getAttribute(name) { return this.attributes.get(name) ?? null; }
+  removeAttribute(name) { this.attributes.delete(name); }
+  dispatch(type, target = this, detail = {}) {
+    const event = { target, currentTarget: this, preventDefault() {}, ...detail };
+    for (const handler of this.listeners.get(type) ?? []) handler(event);
+  }
+  querySelector(selector) {
+    if (!selector?.startsWith("#")) return null;
+    const id = selector.slice(1);
+    if (this.childrenById.has(id)) return this.childrenById.get(id);
+    if (!this.innerHTML.includes(`id="${id}"`)) return null;
+    const child = new MockElement(id.toLowerCase().includes("button") || id.toLowerCase().includes("toggle") ? "BUTTON" : "DIV");
+    child.id = id;
+    this.childrenById.set(id, child);
+    return child;
+  }
   querySelectorAll() { return []; }
+  closest() { return null; }
+  insertBefore(child) {
+    if (child?.id) this.childrenById.set(child.id, child);
+    return child;
+  }
+  append(child) {
+    if (child?.id) this.childrenById.set(child.id, child);
+    return child;
+  }
+  appendChild(child) { return this.append(child); }
+  contains() { return false; }
   click() { this.dispatch("click"); }
   focus() { if (globalThis.document) globalThis.document.activeElement = this; }
   showModal() { this.open = true; }
@@ -33,6 +75,7 @@ function extractElementsFromHtml(html) {
   const pattern = /<([a-z][a-z0-9-]*)\b[^>]*\bid="([^"]+)"[^>]*>/gi;
   for (const match of html.matchAll(pattern)) {
     const element = new MockElement(match[1].toUpperCase());
+    element.id = match[2];
     element.hidden = /\shidden(?:\s|\/?>)/i.test(match[0]);
     elements.set(`#${match[2]}`, element);
   }
@@ -79,15 +122,29 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   for (const selector of requiredSelectors) assert.ok(elements.has(selector), `${selector} gerçek index.html içinde bulunamadı`);
 
   const documentListeners = new Map();
+  const head = new MockElement("HEAD");
+  const body = new MockElement("BODY");
   globalThis.document = {
     title: "",
     activeElement: null,
+    head,
+    body,
     querySelector(selector) { return elements.get(selector) ?? null; },
     querySelectorAll() { return []; },
+    getElementById(id) { return elements.get(`#${id}`) ?? head.childrenById.get(id) ?? null; },
     createElement(tagName) { return new MockElement(String(tagName).toUpperCase()); },
-    addEventListener(type, handler) { documentListeners.set(type, handler); },
-    dispatch(type, event) { documentListeners.get(type)?.(event); },
+    addEventListener(type, handler) {
+      const handlers = documentListeners.get(type) ?? [];
+      handlers.push(handler);
+      documentListeners.set(type, handlers);
+    },
+    dispatch(type, event) { for (const handler of documentListeners.get(type) ?? []) handler(event); },
+    dispatchEvent(event) { for (const handler of documentListeners.get(event.type) ?? []) handler(event); return true; },
   };
+  globalThis.CustomEvent = class CustomEvent {
+    constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
+  };
+  globalThis.requestAnimationFrame = (callback) => callback();
   globalThis.window = { print() {} };
   const store = new Map();
   globalThis.localStorage = {
