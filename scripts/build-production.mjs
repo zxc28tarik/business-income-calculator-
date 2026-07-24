@@ -33,7 +33,7 @@ export async function buildProduction(outputDir = DIST) {
   await writeFile(path.join(outputDir, ".nojekyll"), "", "utf8");
   await writeFile(path.join(outputDir, "build-info.json"), `${JSON.stringify({
     application: "business-income-calculator",
-    version: "0.23.0",
+    version: "0.24.0",
     format: "static-es-modules",
     standaloneCalculators: 8,
   }, null, 2)}\n`, "utf8");
