@@ -61,21 +61,21 @@
 - [x] Çalışma panelleri `role="dialog"` ve `aria-modal="true"` kullanıyor.
 - [x] Negatif nakit yalnız renkle anlatılmıyor.
 - [x] Kritik/ciddi axe ihlali yok.
-- [ ] 1440 px ekranın %200 yakınlaştırma eşdeğeri olan 720 px görünüm doğrulansın.
-- [ ] 320 px dar ekran doğrulansın.
-- [ ] `prefers-reduced-motion` doğrulansın.
+- [x] 1440 px ekranın %200 yakınlaştırma eşdeğeri olan 720 px görünüm doğrulandı.
+- [x] 320 px dar ekran doğrulandı.
+- [x] `prefers-reduced-motion` doğrulandı.
 
 ## 7. Son teknik kapı
 
-- [ ] Paket ve arayüz sürümü `0.24.0` olsun.
-- [ ] Bütün birim ve entegrasyon testleri geçsin.
-- [ ] JavaScript modül denetimi geçsin.
-- [ ] Production build geçsin.
-- [ ] Masaüstü/mobil Chromium akışları geçsin.
-- [ ] Production site artefaktı oluşsun.
-- [ ] PR açıklamasındaki test sayıları son koşuyla güncellensin.
-- [ ] PR açık ve taslak durumda kalsın.
-- [ ] `main` dalına birleştirme yapılmasın.
+- [x] Paket ve arayüz sürümü `0.24.0`.
+- [x] Bütün birim ve entegrasyon testleri geçti: 242/242.
+- [x] JavaScript modül denetimi geçti.
+- [x] Production build geçti.
+- [x] Masaüstü/mobil Chromium akışları geçti: 35 geçti, 5 kasıtlı atlandı.
+- [x] Production site artefaktı oluştu.
+- [x] PR açıklamasındaki test sayıları son koşuyla güncellendi.
+- [x] PR açık ve taslak durumda kaldı.
+- [x] `main` dalına birleştirme yapılmadı.
 
 ## 8. Kullanıcı kabulü
 
@@ -93,7 +93,7 @@ Kullanıcı onayından önce kontrol edilecek ekranlar:
 
 ## Onay kaydı
 
-- Teknik kalite kapısı: **Bekliyor**
+- Teknik kalite kapısı: **Geçti — GitHub Actions Release quality gate #690**
 - Kullanıcı kabulü: **Bekliyor**
 - `main` birleştirme izni: **Verilmedi**
 - Canlı yayın izni: **Verilmedi**
