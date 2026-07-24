@@ -53,6 +53,10 @@ jobs:
               ('<div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>', '<div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>'),
           ])
 
+          edit('src/ui/view-mode.js', [
+              ('Bütün sektör ayrıntıları gösteriliyor.', 'Tüm hesaplama alanları gösteriliyor.'),
+          ])
+
           edit('tests/app-smoke.test.mjs', [
               ('/BUSINESS INCOME CALCULATOR · v0\\.24\\.0/', '/BUSINESS INCOME CALCULATOR · v0\\.24\\.1/'),
               ('assert.match(elements.get("#formSections").innerHTML, /view-mode-hidden/);', 'assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);'),
