@@ -82,25 +82,48 @@ body.workspace-dialog-open::before {
 }
 `;
 
+function nextFrame(callback) {
+  if (typeof globalThis.requestAnimationFrame === "function") globalThis.requestAnimationFrame(callback);
+  else callback();
+}
+
+function createPanelEvent(id) {
+  if (typeof globalThis.CustomEvent === "function") {
+    return new globalThis.CustomEvent(OPEN_EVENT, { detail: { id } });
+  }
+  return { type: OPEN_EVENT, detail: { id } };
+}
+
+function dispatchPanelEvent(id) {
+  const event = createPanelEvent(id);
+  if (typeof document?.dispatchEvent === "function") document.dispatchEvent(event);
+  else if (typeof document?.dispatch === "function") document.dispatch(OPEN_EVENT, event);
+}
+
 function ensureWorkspacePanelStyles() {
-  if (document.getElementById(STYLE_ID)) return;
+  if (typeof document === "undefined") return;
+  if (typeof document.getElementById === "function" && document.getElementById(STYLE_ID)) return;
+  if (typeof document.createElement !== "function") return;
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = WORKSPACE_PANEL_STYLES;
-  document.head.append(style);
+  if (typeof document.head?.append === "function") document.head.append(style);
+  else if (typeof document.head?.appendChild === "function") document.head.appendChild(style);
 }
 
 function visibleFocusableElements(panel) {
+  if (typeof panel?.querySelectorAll !== "function") return [];
   return [...panel.querySelectorAll(FOCUSABLE_SELECTOR)].filter((element) => {
-    if (element.hidden || element.getAttribute("aria-hidden") === "true") return false;
+    if (element.hidden || element.getAttribute?.("aria-hidden") === "true") return false;
     const style = globalThis.getComputedStyle?.(element);
     return style?.display !== "none" && style?.visibility !== "hidden";
   });
 }
 
 function syncBodyLock() {
+  if (typeof document === "undefined" || typeof document.querySelector !== "function") return;
   const hasOpenPanel = Boolean(document.querySelector(".workspace-dialog:not([hidden])"));
-  document.body.classList.toggle("workspace-dialog-open", hasOpenPanel);
+  document.body?.classList?.toggle?.("workspace-dialog-open", hasOpenPanel);
 }
 
 export function createWorkspacePanel({
@@ -116,33 +139,33 @@ export function createWorkspacePanel({
   let restoreFocusOnClose = true;
 
   ensureWorkspacePanelStyles();
-  panel.classList.add("workspace-dialog");
-  panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-modal", "true");
-  const heading = panel.querySelector("h2");
+  panel?.classList?.add?.("workspace-dialog");
+  panel?.setAttribute?.("role", "dialog");
+  panel?.setAttribute?.("aria-modal", "true");
+  const heading = panel?.querySelector?.("h2");
   if (heading) {
     if (!heading.id) heading.id = `${id}WorkspacePanelTitle`;
-    panel.setAttribute("aria-labelledby", heading.id);
+    panel.setAttribute?.("aria-labelledby", heading.id);
   }
-  panel.hidden = true;
-  toggleButton.setAttribute("aria-expanded", "false");
+  if (panel) panel.hidden = true;
+  toggleButton?.setAttribute?.("aria-expanded", "false");
 
   function syncState() {
-    panel.hidden = !visible;
-    panel.setAttribute("aria-hidden", String(!visible));
-    toggleButton.setAttribute("aria-expanded", String(visible));
+    if (panel) panel.hidden = !visible;
+    panel?.setAttribute?.("aria-hidden", String(!visible));
+    toggleButton?.setAttribute?.("aria-expanded", String(visible));
     syncBodyLock();
   }
 
   function open() {
     if (visible) return;
-    restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : toggleButton;
-    document.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: { id } }));
+    restoreTarget = document?.activeElement?.focus ? document.activeElement : toggleButton;
+    dispatchPanelEvent(id);
     visible = true;
     restoreFocusOnClose = true;
     syncState();
     onOpen();
-    requestAnimationFrame(() => closeButton?.focus());
+    nextFrame(() => closeButton?.focus?.());
   }
 
   function close({ restoreFocus = true } = {}) {
@@ -151,7 +174,7 @@ export function createWorkspacePanel({
     restoreFocusOnClose = restoreFocus;
     syncState();
     onClose();
-    if (restoreFocusOnClose) requestAnimationFrame(() => restoreTarget?.focus?.());
+    if (restoreFocusOnClose) nextFrame(() => restoreTarget?.focus?.());
   }
 
   function toggle() {
@@ -159,38 +182,40 @@ export function createWorkspacePanel({
     else open();
   }
 
-  toggleButton.addEventListener("click", toggle);
-  closeButton.addEventListener("click", () => close());
-  panel.addEventListener("keydown", (event) => {
+  toggleButton?.addEventListener?.("click", toggle);
+  closeButton?.addEventListener?.("click", () => close());
+  panel?.addEventListener?.("keydown", (event) => {
     if (!visible) return;
     if (event.key === "Escape") {
-      event.preventDefault();
+      event.preventDefault?.();
       close();
       return;
     }
     if (event.key !== "Tab") return;
     const focusable = visibleFocusableElements(panel);
     if (!focusable.length) {
-      event.preventDefault();
-      closeButton?.focus();
+      event.preventDefault?.();
+      closeButton?.focus?.();
       return;
     }
     const first = focusable[0];
     const last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
+      event.preventDefault?.();
+      last.focus?.();
     } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
+      event.preventDefault?.();
+      first.focus?.();
     }
   });
 
-  document.addEventListener(OPEN_EVENT, (event) => {
+  document?.addEventListener?.(OPEN_EVENT, (event) => {
     if (event.detail?.id !== id && visible) close({ restoreFocus: false });
   });
-  document.addEventListener("pointerdown", (event) => {
-    if (!visible || panel.contains(event.target) || toggleButton.contains(event.target)) return;
+  document?.addEventListener?.("pointerdown", (event) => {
+    const insidePanel = panel?.contains?.(event.target) ?? false;
+    const insideToggle = toggleButton?.contains?.(event.target) ?? false;
+    if (!visible || insidePanel || insideToggle) return;
     close();
   });
 
