@@ -4,8 +4,7 @@ async function openAndFill(page, selector, value) {
   const field = page.locator(selector);
   const section = field.locator("xpath=ancestor::details[1]");
   if (await section.count()) {
-    const open = await section.getAttribute("open");
-    if (open == null) await section.locator("summary").click();
+    await section.evaluate((element) => { element.open = true; });
   }
   await expect(field).toBeVisible();
   await field.fill(value);
