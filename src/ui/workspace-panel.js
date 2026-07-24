@@ -79,6 +79,8 @@ body.workspace-dialog-open::before {
 }
 @media print {
   .workspace-dialog { display: none !important; }
+  #secondaryKpiToggle, .warning-disclosure, .breakdown-toolbar { display: none !important; }
+  #secondaryKpiGrid .kpi-card { display: block !important; }
 }
 `;
 
