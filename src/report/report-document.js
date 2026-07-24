@@ -56,6 +56,7 @@ function renderWarnings(report) {
 }
 
 function renderScenarioTable(report) {
+  if ((report.scenarios?.scenarios?.length ?? 0) <= 1) return "";
   return `<section><div class="section-title"><div><p class="section-kicker">Karşılaştırma</p><h2>Senaryo karşılaştırması</h2></div></div><div class="table-scroll"><table>
     <thead><tr><th>Gösterge</th>${report.scenarios.scenarios.map((item) => `<th class="${item.id === "expected" ? "expected" : ""}">${escapeHtml(item.label)}</th>`).join("")}</tr></thead>
     <tbody>${report.scenarios.metrics.map((metric) => `<tr><td>${escapeHtml(metric.label)}</td>${report.scenarios.scenarios.map((item) => `<td class="${item.id === "expected" ? "expected" : ""}">${formatCell(metric.values[item.id], metric.format, metric)}</td>`).join("")}</tr>`).join("")}</tbody>
@@ -109,7 +110,7 @@ const REPORT_CSS = `
 `;
 
 export function buildFinancialReportHtml(report) {
-  const subtitle = [report.businessType, report.scenario.label].filter(Boolean).join(" · ");
+  const subtitle = [report.businessType, "Kullanıcı girdileri"].filter(Boolean).join(" · ");
   const decisionMessage = report.decision.message ?? report.executiveSummary?.[1] ?? "Mevcut hesap sonucu özetlenmiştir.";
   return `<!doctype html><html lang="tr" data-report-sector="${escapeHtml(report.sector.id)}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="description" content="${escapeHtml(report.sector.name)} finansal fizibilite raporu"/><title>${escapeHtml(report.sector.name)} · Finansal Fizibilite Raporu</title><style>${REPORT_CSS}</style></head><body>
   <div class="toolbar"><button type="button" onclick="window.print()">Yazdır / PDF</button></div>
@@ -129,7 +130,7 @@ export function downloadFinancialReport(report) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${safeFilename(report.sector.id)}-${safeFilename(report.scenario.id)}-rapor.html`;
+  anchor.download = `${safeFilename(report.sector.id)}-rapor.html`;
   anchor.click();
   URL.revokeObjectURL(url);
   return html;

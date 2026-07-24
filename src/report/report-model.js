@@ -131,7 +131,7 @@ function buildExecutiveSummary(sector, scenarioLabel, decision, presentation) {
   const cash = decision.primaryKpis?.find((card) => card.id === "ending_cash")
     ?? findKpi(presentation, ["ending_cash", "12 ay sonu nakit", "nakit"]);
   const sentences = [
-    `${sector.name} için ${scenarioLabel} senaryosu ${decision.label.toLocaleLowerCase("tr-TR")} üretiyor.`,
+    `${sector.name} için kullanıcı girdileri ${decision.label.toLocaleLowerCase("tr-TR")} sonucu üretiyor.`,
     decision.message,
   ];
   if (primary) sentences.push(`${primary.label}: ${formatValue(primary.value, primary.format, primary)}.`);
@@ -204,7 +204,7 @@ export function buildFinancialReportModel({
     generatedAt: generatedAt instanceof Date ? generatedAt.toISOString() : String(generatedAt),
     sector: { id: sector.id, name: sector.name, family: sector.family, version: sector.version },
     businessType: resolveBusinessType(sector, inputs),
-    scenario: { id: scenarioId, label: scenarioLabel },
+    scenario: { id: "user-input", label: "Kullanıcı girdileri" },
     decision,
     executiveSummary: buildExecutiveSummary(sector, scenarioLabel, decision, presentation),
     primaryKpis: decision.primaryKpis,

@@ -73,7 +73,7 @@ export function buildTrackingReportHtml({ sector, scenarioLabel, model, generate
 <body>
 <main>
   <header class="toolbar">
-    <div><p class="eyebrow">BUSINESS INCOME CALCULATOR · GERÇEK TAKİP RAPORU</p><h1>${escapeHtml(sector.name)}</h1><p class="muted">${escapeHtml(scenarioLabel)} bütçesi · ${escapeHtml(generated.toLocaleString("tr-TR"))}</p></div>
+    <div><p class="eyebrow">BUSINESS INCOME CALCULATOR · GERÇEK TAKİP RAPORU</p><h1>${escapeHtml(sector.name)}</h1><p class="muted">Kullanıcı girdilerine göre bütçe · ${escapeHtml(generated.toLocaleString("tr-TR"))}</p></div>
     <button type="button" onclick="window.print()">Yazdır / PDF</button>
   </header>
   <section class="panel"><h2>Genel görünüm</h2><span class="status ${escapeHtml(model.overallStatus)}">${escapeHtml(status)}</span><p>${model.completedMonths} dönem kaydedildi; ${model.completeFinancialMonths} dönemde tahsilat ve ana giderler karşılaştırılabilir durumda.</p></section>
@@ -103,7 +103,7 @@ export function downloadTrackingReport(context) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${context.sector.id}-${context.model.scenarioId}-gercek-takip.html`;
+  anchor.download = `${context.sector.id}-gercek-takip.html`;
   anchor.click();
   URL.revokeObjectURL(url);
   return html;

@@ -126,7 +126,7 @@ portfolioController = createPortfolioController({
   storageKey: PORTFOLIO_STORAGE_KEY,
   trackingPrefix: TRACKING_STORAGE_PREFIX,
   backupScope: "platform",
-  appVersion: "0.23.0",
+  appVersion: "0.24.1",
   initialWorkspace: state,
   createWorkspace: createDefaultState,
   normalizeWorkspace: normalizeState,
@@ -454,7 +454,7 @@ function openResetDialog() {
     queueMicrotask(() => elements.resetCancelButton.focus?.());
     return;
   }
-  if (confirm(`${sector.name} sektörünün tüm senaryo verileri varsayılan değerlere döndürülsün mü?`)) {
+  if (confirm(`${sector.name} sektörünün kayıtlı girdileri varsayılan değerlere döndürülsün mü?`)) {
     resetCurrentSector();
   }
 }
@@ -587,7 +587,7 @@ function exportCsv() {
   const { sector, result, presentation } = lastRendered;
   const rows = [
     ["Business Income Calculator", sector.name],
-    ["Senaryo", sector.scenarios[currentSectorState().activeScenario].label],
+    ["Girdi modeli", "Kullanıcı tarafından girilen değerler"],
     ["Oluşturma tarihi", new Date().toLocaleString("tr-TR")],
     [],
   ];
@@ -612,7 +612,7 @@ function exportCsv() {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${sector.id}-${currentSectorState().activeScenario}.csv`;
+  anchor.download = `${sector.id}-hesap.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
 }

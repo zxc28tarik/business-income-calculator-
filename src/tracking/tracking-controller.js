@@ -48,7 +48,7 @@ function trendText(trend) {
 }
 
 function renderContext(ctx, model, projectName) {
-  const scenarioLabel = ctx.sector.scenarios?.[ctx.scenarioId]?.label ?? ctx.scenarioId;
+  const scenarioLabel = "Kullanıcı girdileri";
   return `
     <div class="tracking-context-item"><span>İşletme kaydı</span><strong>${escapeHtml(projectName)}</strong></div>
     <div class="tracking-context-item"><span>Plan kapsamı</span><strong>${escapeHtml(ctx.sector.name)} · ${escapeHtml(scenarioLabel)}</strong></div>
@@ -264,7 +264,7 @@ export function createTrackingController({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${ctx.sector.id}-${ctx.scenarioId}-gercek-takip.csv`;
+    anchor.download = `${ctx.sector.id}-gercek-takip.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -274,7 +274,7 @@ export function createTrackingController({
     if (!ctx || !currentModel) return;
     downloadTrackingReport({
       sector: ctx.sector,
-      scenarioLabel: ctx.sector.scenarios?.[ctx.scenarioId]?.label ?? ctx.scenarioId,
+      scenarioLabel: "Kullanıcı girdileri",
       model: currentModel,
     });
   }
