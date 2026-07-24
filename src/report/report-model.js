@@ -1,8 +1,12 @@
 import { evaluateVisibility } from "../core/sector-schema.js";
+import { buildDecisionHierarchy } from "../ui/decision-summary.js";
 import { formatValue } from "../ui/formatters.js";
-import { resolveCashFlowColumns } from "../ui/results-view.js";
+import {
+  buildWarningViewModel,
+  resolveCashFlowColumns,
+} from "../ui/results-view.js";
 
-const SEVERITY_ORDER = { hard: 0, soft: 1, info: 2 };
+const SEVERITY_ORDER = { hard: 0, soft: 1, info: 2, positive: 3 };
 
 function fieldFormat(type) {
   if (type === "rate") return "percent";
@@ -68,43 +72,67 @@ function findKpi(presentation, patterns) {
   ));
 }
 
+function finite(...values) {
+  for (const value of values) {
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return null;
+}
+
 function cashMetrics(result) {
   const rows = result.cashFlow?.rows ?? [];
   const cashValues = rows.map((row) => Number(row.cashEnd)).filter(Number.isFinite);
-  const endingCash = Number.isFinite(Number(result.cashFlow?.endingCash))
-    ? Number(result.cashFlow.endingCash)
-    : cashValues.at(-1) ?? null;
-  const minimumCash = Number.isFinite(Number(result.cashFlow?.minimumCash))
-    ? Number(result.cashFlow.minimumCash)
-    : cashValues.length ? Math.min(...cashValues) : null;
+  const endingCash = finite(
+    result.cashFlow?.endingCash,
+    result.cashFlow?.endingCashTry,
+    cashValues.at(-1),
+  );
+  const minimumCash = finite(
+    result.cashFlow?.minimumCash,
+    result.cashFlow?.minimumCashTry,
+    cashValues.length ? Math.min(...cashValues) : null,
+  );
   const firstNegativeMonth = rows.find((row) => Number(row.cashEnd) < 0)?.month ?? null;
-  return { endingCash, minimumCash, firstNegativeMonth };
+  return {
+    endingCash,
+    minimumCash,
+    firstNegativeMonth,
+    additionalFundingNeed: minimumCash == null ? null : Math.max(0, -minimumCash),
+  };
 }
 
-function buildDecision({ result, presentation }) {
+function buildReportDecision({ sector, result, presentation }) {
+  const hierarchy = buildDecisionHierarchy({ sector, result, presentation });
   const warnings = result.warnings ?? [];
-  const hardCount = warnings.filter((warning) => warning.severity === "hard").length;
   const softCount = warnings.filter((warning) => warning.severity === "soft").length;
-  const netCard = findKpi(presentation, ["net_profit", "net kâr", "net sonuç"]);
-  const netProfit = Number.isFinite(Number(result.netProfit))
-    ? Number(result.netProfit)
-    : Number.isFinite(Number(netCard?.value)) ? Number(netCard.value) : null;
   const cash = cashMetrics(result);
-
-  if ((cash.endingCash != null && cash.endingCash < 0) || hardCount >= 2 || (netProfit != null && netProfit < 0 && hardCount > 0)) {
-    return { id: "riskli", label: "Riskli görünüm", tone: "hard", hardCount, softCount, netProfit, ...cash };
-  }
-  if ((netProfit != null && netProfit < 0) || hardCount === 1 || softCount >= 3) {
-    return { id: "kosullu", label: "Koşullu görünüm", tone: "soft", hardCount, softCount, netProfit, ...cash };
-  }
-  return { id: "dengeli", label: "Dengeli görünüm", tone: "positive", hardCount, softCount, netProfit, ...cash };
+  const status = hierarchy.decision.status;
+  return {
+    id: status,
+    status,
+    label: hierarchy.decision.statusLabel,
+    tone: status === "riskli" ? "hard" : status === "dikkat" ? "soft" : "positive",
+    message: hierarchy.decision.message,
+    breakevenStatus: hierarchy.decision.breakevenStatus,
+    hardCount: hierarchy.decision.hardCount,
+    softCount,
+    netProfit: hierarchy.decision.netProfit,
+    ...cash,
+    primaryKpis: hierarchy.primaryKpis,
+    secondaryKpis: hierarchy.secondaryKpis,
+  };
 }
 
 function buildExecutiveSummary(sector, scenarioLabel, decision, presentation) {
-  const primary = findKpi(presentation, ["net_profit", "net kâr", "net sonuç"]) ?? presentation.kpis[0];
-  const cash = findKpi(presentation, ["ending_cash", "12 ay sonu nakit", "nakit"]);
+  const primary = decision.primaryKpis?.[0]
+    ?? findKpi(presentation, ["net_profit", "net kâr", "net sonuç"])
+    ?? presentation.kpis[0];
+  const cash = decision.primaryKpis?.find((card) => card.id === "ending_cash")
+    ?? findKpi(presentation, ["ending_cash", "12 ay sonu nakit", "nakit"]);
   const sentences = [
     `${sector.name} için ${scenarioLabel} senaryosu ${decision.label.toLocaleLowerCase("tr-TR")} üretiyor.`,
+    decision.message,
   ];
   if (primary) sentences.push(`${primary.label}: ${formatValue(primary.value, primary.format, primary)}.`);
   if (cash && cash !== primary) sentences.push(`${cash.label}: ${formatValue(cash.value, cash.format, cash)}.`);
@@ -116,8 +144,7 @@ function buildExecutiveSummary(sector, scenarioLabel, decision, presentation) {
 
 function buildScenarioComparison(sector, scenarios) {
   const rows = scenarios.map((scenario) => ({
-    id: scenario.id,
-    label: scenario.label,
+    ...scenario,
     metrics: sector.buildPresentation(scenario.result).scenarioMetrics,
   }));
   const metricIds = [];
@@ -159,23 +186,33 @@ export function buildFinancialReportModel({
   generatedAt = new Date(),
 }) {
   const scenarioLabel = sector.scenarios[scenarioId]?.label ?? scenarioId;
-  const decision = buildDecision({ result, presentation });
+  const decision = buildReportDecision({ sector, result, presentation });
   const warnings = [...(result.warnings ?? [])].sort((a, b) =>
     (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9),
   );
+  const warningCards = buildWarningViewModel(warnings, { expanded: true }).allItems.map((warning) => ({
+    id: warning.id,
+    severity: warning.severity,
+    levelLabel: warning.levelLabel,
+    title: warning.title,
+    message: warning.message,
+  }));
   const cashColumns = resolveCashFlowColumns(sector, result.cashFlow?.rows ?? []);
 
   return {
-    reportVersion: "1.0",
+    reportVersion: "1.1",
     generatedAt: generatedAt instanceof Date ? generatedAt.toISOString() : String(generatedAt),
     sector: { id: sector.id, name: sector.name, family: sector.family, version: sector.version },
     businessType: resolveBusinessType(sector, inputs),
     scenario: { id: scenarioId, label: scenarioLabel },
     decision,
     executiveSummary: buildExecutiveSummary(sector, scenarioLabel, decision, presentation),
+    primaryKpis: decision.primaryKpis,
+    secondaryKpis: decision.secondaryKpis,
     kpis: presentation.kpis,
     keySplit: presentation.keySplit,
     warnings,
+    warningCards,
     scenarios: buildScenarioComparison(sector, scenarios),
     assumptions: buildAssumptions(sector, inputs),
     cashFlow: {
