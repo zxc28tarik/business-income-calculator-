@@ -1,4 +1,5 @@
 const OPEN_EVENT = "business-income-calculator:workspace-panel-open";
+const STYLE_ID = "business-income-calculator-workspace-panel-styles";
 const FOCUSABLE_SELECTOR = [
   "a[href]",
   "button:not([disabled])",
@@ -7,6 +8,87 @@ const FOCUSABLE_SELECTOR = [
   "textarea:not([disabled])",
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
+
+const WORKSPACE_PANEL_STYLES = `
+body.workspace-dialog-open { overflow: hidden; }
+body.workspace-dialog-open::before {
+  content: ""; position: fixed; inset: 0; z-index: 110;
+  background: rgb(16 31 23 / 48%); backdrop-filter: blur(2px);
+}
+.workspace-dialog {
+  position: fixed !important; inset: 24px 24px 24px auto; z-index: 120;
+  width: min(1180px, calc(100vw - 48px)); max-width: none !important; max-height: none !important;
+  margin: 0 !important; padding: 20px; overflow: auto; overscroll-behavior: contain;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px;
+  box-shadow: 0 22px 70px rgb(12 29 20 / 28%);
+}
+.workspace-dialog[hidden] { display: none !important; }
+.workspace-dialog > .section-heading {
+  position: sticky; top: -20px; z-index: 10; margin: -20px -20px 14px; padding: 18px 20px 14px;
+  background: rgb(255 255 255 / 96%); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px);
+}
+.portfolio-summary, .tracking-context {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0;
+}
+.portfolio-summary-card, .tracking-context-item {
+  min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface-soft);
+}
+.portfolio-summary-card span, .portfolio-summary-card small, .tracking-context-item span {
+  display: block; color: var(--ink-soft); font-size: 11px;
+}
+.portfolio-summary-card strong, .tracking-context-item strong {
+  display: block; margin: 6px 0; color: var(--ink); font-size: 17px; line-height: 1.3; font-variant-numeric: tabular-nums;
+}
+.portfolio-summary-primary { background: var(--brand-soft); border-color: #b9cdc1; }
+.portfolio-summary-card.negative { background: var(--danger-soft); border-color: #e8b3af; }
+.portfolio-summary-card.negative strong { color: var(--danger); }
+.portfolio-summary-card.positive strong { color: var(--positive); }
+.portfolio-table { min-width: 900px; }
+.portfolio-table tr[data-portfolio-project] { cursor: pointer; }
+.portfolio-table tr[data-portfolio-project]:hover td { background: #f7faf8; }
+.portfolio-table tr.active-project td { background: var(--brand-soft); }
+.portfolio-table tr.active-project td:first-child { background: var(--brand-soft); }
+.portfolio-table tr.active-project strong { color: var(--brand); }
+.portfolio-table button:disabled { opacity: 1; color: var(--positive); border-color: #b9cdc1; background: white; }
+.tracking-context { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tracking-summary-primary { grid-column: span 2; background: var(--brand-soft); border-color: #b9cdc1; }
+.tracking-summary-primary .tracking-status { font-size: 20px !important; }
+.tracking-table-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0 10px;
+}
+.tracking-table-toolbar p { margin: 0; color: var(--ink-soft); font-size: 12px; }
+.tracking-table-toolbar button { flex: 0 0 auto; }
+.tracking-table tbody tr:nth-child(even) td { background: #fbfcfb; }
+@media (max-width: 900px) {
+  .workspace-dialog { inset: 16px; width: calc(100vw - 32px); }
+  .portfolio-summary { grid-template-columns: 1fr 1fr; }
+  .tracking-context { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 680px) {
+  .workspace-dialog {
+    inset: 0; width: 100vw; height: 100dvh; padding: 16px; border: 0; border-radius: 0;
+  }
+  .workspace-dialog > .section-heading { top: -16px; margin: -16px -16px 12px; padding: 14px 16px 12px; }
+  .workspace-dialog .section-heading { align-items: flex-start; }
+  .workspace-dialog .portfolio-actions, .workspace-dialog .tracking-actions { width: 100%; }
+  .workspace-dialog .tracking-actions button, .workspace-dialog .portfolio-actions button { flex: 1 1 auto; }
+  .portfolio-summary, .tracking-context, .tracking-summary, .tracking-trends { grid-template-columns: 1fr; }
+  .tracking-summary-primary { grid-column: auto; }
+  .tracking-table-toolbar { align-items: stretch; flex-direction: column; }
+  .tracking-table-toolbar button { width: 100%; }
+}
+@media print {
+  .workspace-dialog { display: none !important; }
+}
+`;
+
+function ensureWorkspacePanelStyles() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = WORKSPACE_PANEL_STYLES;
+  document.head.append(style);
+}
 
 function visibleFocusableElements(panel) {
   return [...panel.querySelectorAll(FOCUSABLE_SELECTOR)].filter((element) => {
@@ -33,9 +115,15 @@ export function createWorkspacePanel({
   let restoreTarget = toggleButton;
   let restoreFocusOnClose = true;
 
+  ensureWorkspacePanelStyles();
   panel.classList.add("workspace-dialog");
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-modal", "true");
+  const heading = panel.querySelector("h2");
+  if (heading) {
+    if (!heading.id) heading.id = `${id}WorkspacePanelTitle`;
+    panel.setAttribute("aria-labelledby", heading.id);
+  }
   panel.hidden = true;
   toggleButton.setAttribute("aria-expanded", "false");
 
