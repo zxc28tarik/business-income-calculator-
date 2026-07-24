@@ -1,0 +1,97 @@
+name: Fix single input contract
+on:
+  push:
+    branches: [change/single-user-inputs]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: change/single-user-inputs
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Apply compatibility updates
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def edit(path, replacements):
+              file = Path(path)
+              text = file.read_text()
+              for old, new in replacements:
+                  if old not in text:
+                      raise SystemExit(f"{path}: expected text not found: {old[:100]}")
+                  text = text.replace(old, new)
+              file.write_text(text)
+
+          edit('index.html', [
+              ('<div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>', '<div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi" hidden aria-hidden="true"></div>'),
+              ('<div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü">', '<div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü" hidden aria-hidden="true">'),
+              ('data-view-mode="simple" aria-pressed="true"', 'data-view-mode="simple" aria-pressed="false"'),
+              ('data-view-mode="advanced" aria-pressed="false"', 'data-view-mode="advanced" aria-pressed="true"'),
+              ('<section class="panel-card">\n      <div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>', '<section class="panel-card" hidden aria-hidden="true">\n      <div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>'),
+              ('<div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>', '<div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>'),
+          ])
+
+          edit('scripts/build-standalone.mjs', [
+              ('<div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div><div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü">', '<div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi" hidden aria-hidden="true"></div><div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü" hidden aria-hidden="true">'),
+              ('data-view-mode="simple" aria-pressed="true"', 'data-view-mode="simple" aria-pressed="false"'),
+              ('data-view-mode="advanced" aria-pressed="false"', 'data-view-mode="advanced" aria-pressed="true"'),
+              ('<section class="panel-card"><div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>', '<section class="panel-card" hidden aria-hidden="true"><div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>'),
+              ('<div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>', '<div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>'),
+          ])
+
+          edit('tests/app-smoke.test.mjs', [
+              ('/BUSINESS INCOME CALCULATOR · v0\\.24\\.0/', '/BUSINESS INCOME CALCULATOR · v0\\.24\\.1/'),
+              ('assert.match(elements.get("#formSections").innerHTML, /view-mode-hidden/);', 'assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);'),
+              ('assert.equal(elements.get("#viewModeNote").textContent, "Yalnız temel varsayımlar gösteriliyor.");', 'assert.equal(elements.get("#viewModeNote").textContent, "Tüm hesaplama alanları gösteriliyor.");'),
+          ])
+
+          edit('tests/production-build.test.mjs', [
+              ('"0.24.0"', '"0.24.1"'),
+              ('/BUSINESS INCOME CALCULATOR · v0\\.24\\.0/', '/BUSINESS INCOME CALCULATOR · v0\\.24\\.1/'),
+          ])
+
+          edit('tests/release-config.test.mjs', [
+              ('"0.24.0"', '"0.24.1"'),
+              ('0\\.24\\.0', '0\\.24\\.1'),
+          ])
+
+          edit('tests/report-layer.test.mjs', [
+              ('assert.equal(report.scenarios.scenarios.length, 3);', 'assert.equal(report.scenarios.scenarios.length, 1);'),
+              ('assert.match(html, /Senaryo karşılaştırması/);', 'assert.doesNotMatch(html, /Senaryo karşılaştırması/);'),
+          ])
+
+          edit('tests/standalone-build.test.mjs', [
+              ('/BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\\.24\\.0/', '/BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\\.24\\.1/'),
+              ('assert.match(html, /id="viewModeSwitcher"[^>]+aria-label="Form görünümü"/);', 'assert.match(html, /id="viewModeSwitcher"[^>]+hidden/);'),
+              ('assert.match(html, /data-view-mode="simple"[^>]+aria-pressed="true"/);', 'assert.match(html, /data-view-mode="simple"[^>]+aria-pressed="false"/);'),
+              ('assert.match(html, /data-view-mode="advanced"[^>]+aria-pressed="false"/);', 'assert.match(html, /data-view-mode="advanced"[^>]+aria-pressed="true"/);'),
+              ('assert.match(html, /id="viewModeNote"/);', 'assert.match(html, /id="scenarioSwitcher"[^>]+hidden/);\n      assert.match(html, /id="viewModeNote"/);'),
+          ])
+          PY
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify unit and integration tests
+        run: npm test
+      - name: Verify JavaScript modules
+        run: npm run check
+      - name: Build production and standalone calculators
+        run: npm run build:production
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Tek kullanıcı girdisi sözleşmesini tamamla"
+          git push origin HEAD:change/single-user-inputs
