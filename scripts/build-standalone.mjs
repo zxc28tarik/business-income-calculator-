@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_OUTPUT_DIR = path.join(ROOT, "standalone");
+const APP_VERSION = "0.24.0";
 
 export const STANDALONE_SECTORS = [
   { id: "cafe_restaurant", name: "Kafe / Restoran", file: "cafe-restaurant-calculator.html", module: "src/sectors/cafe-restaurant.js", exportName: "CAFE_SECTOR" },
@@ -114,7 +115,7 @@ function buildHtml({ sector, css, bootstrap, moduleCount }) {
 <header class="topbar">
   <div class="topbar-inner">
     <div class="topbar-brand">
-      <p class="eyebrow">BUSINESS INCOME CALCULATOR · TEK DOSYA · v0.23.0</p>
+      <p class="eyebrow">BUSINESS INCOME CALCULATOR · TEK DOSYA · v${APP_VERSION}</p>
       <h1 id="pageTitle">${sector.name} Finansal Fizibilite</h1>
       <p id="pageSubtitle" class="subtitle">Çevrimdışı tek dosyalık sektör hesaplayıcısı.</p>
     </div>
