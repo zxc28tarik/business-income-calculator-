@@ -40,8 +40,9 @@ test("Aşama 5 uyarı, nakit özeti ve ayrıntı panelleri çalışır", async (
   const breakdownGroups = page.locator("#breakdown details.breakdown-group");
   expect(await breakdownGroups.count()).toBeGreaterThan(1);
   await expect(breakdownGroups.first()).not.toHaveAttribute("open", "");
-  await page.locator("#breakdown [data-breakdown-disclosure]").click();
-  await expect(page.locator("#breakdown [data-breakdown-disclosure]")).toHaveAttribute("aria-expanded", "true");
+  const breakdownToggle = page.locator("#breakdown [data-breakdown-disclosure]");
+  await breakdownToggle.evaluate((button) => button.click());
+  await expect(breakdownToggle).toHaveAttribute("aria-expanded", "true");
   await expect(breakdownGroups.first()).toHaveAttribute("open", "");
 
   await expect(page.locator("#scenarioTable .expected-column").first()).toBeVisible();
