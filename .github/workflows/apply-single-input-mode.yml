@@ -22,6 +22,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Fix transformation script quoting
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/apply-single-input-mode.mjs')
+          text = path.read_text()
+          text = text.replace(
+              'assert.equal(simpleAlias, visible, `${sector.id}: Basit adı tam görünümden farklı sonuç üretmemelidir`);',
+              'assert.equal(simpleAlias, visible, sector.id + ": Basit adı tam görünümden farklı sonuç üretmemelidir");'
+          )
+          path.write_text(text)
+          PY
       - name: Apply requested product change
         run: node scripts/apply-single-input-mode.mjs 2>&1 | tee transform.log
       - name: Upload transformation log
