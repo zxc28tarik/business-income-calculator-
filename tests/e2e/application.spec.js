@@ -104,6 +104,8 @@ test("çoklu kayıt ve proje bazlı gerçek takip tarayıcıda ayrışır", asyn
   await page.locator("#projectSelect").selectOption(secondId);
   await expect(page.locator('[data-tracking-key="collections"]').first()).toHaveValue("123456");
 
+  await page.locator("#trackingCloseButton").click();
+  await expect(page.locator("#trackingPanel")).toBeHidden();
   await page.locator("#recordMenuButton").click();
   await page.locator("#projectDuplicateButton").click();
   await expect(page.locator("#projectSelect option")).toHaveCount(3);
