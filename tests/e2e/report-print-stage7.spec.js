@@ -16,7 +16,8 @@ function expectV024Report(html, sectorId = "cafe_restaurant") {
   expect(html).toContain("FİNANSAL FİZİBİLİTE RAPORU");
   expect(html).toContain("Dört ana gösterge");
   expect(html).toContain("Dikkat edilmesi gerekenler");
-  expect(html).toContain("Senaryo karşılaştırması");
+  expect(html).toContain("Kullanıcı girdileri");
+  expect(html).not.toContain("Senaryo karşılaştırması");
   expect(html).toContain("Ek finansman ihtiyacı");
   expect(html).toContain("Varsayımlar ve girdiler");
   expect(html).toContain("Yazdır / PDF");
