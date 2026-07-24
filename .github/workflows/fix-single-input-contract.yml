@@ -57,6 +57,7 @@ jobs:
               ('/BUSINESS INCOME CALCULATOR · v0\\.24\\.0/', '/BUSINESS INCOME CALCULATOR · v0\\.24\\.1/'),
               ('assert.match(elements.get("#formSections").innerHTML, /view-mode-hidden/);', 'assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);'),
               ('assert.equal(elements.get("#viewModeNote").textContent, "Yalnız temel varsayımlar gösteriliyor.");', 'assert.equal(elements.get("#viewModeNote").textContent, "Tüm hesaplama alanları gösteriliyor.");'),
+              ('  elements.get("#viewModeSwitcher").dispatch("click", { dataset: { viewMode: "advanced" } });\n  assert.equal(elements.get("#viewModeNote").textContent, "Bütün sektör ayrıntıları gösteriliyor.");\n  assert.equal(store.get("business-income-calculator:ui:view-mode:v0.24"), "advanced");', '  assert.equal(elements.get("#viewModeSwitcher").hidden, true);\n  assert.equal(elements.get("#viewModeNote").textContent, "Tüm hesaplama alanları gösteriliyor.");\n  assert.equal(store.has("business-income-calculator:ui:view-mode:v0.24"), false);'),
           ])
 
           edit('tests/production-build.test.mjs', [
@@ -70,6 +71,7 @@ jobs:
           ])
 
           edit('tests/report-layer.test.mjs', [
+              ('assert.equal(report.scenario.id, "expected");', 'assert.equal(report.scenario.id, "user-input");'),
               ('assert.equal(report.scenarios.scenarios.length, 3);', 'assert.equal(report.scenarios.scenarios.length, 1);'),
               ('assert.match(html, /Senaryo karşılaştırması/);', 'assert.doesNotMatch(html, /Senaryo karşılaştırması/);'),
           ])
