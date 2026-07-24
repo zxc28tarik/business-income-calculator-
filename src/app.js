@@ -329,7 +329,7 @@ function renderViewModeControl() {
     button.setAttribute("aria-pressed", String(active));
   });
   elements.viewModeNote.textContent = viewMode === "advanced"
-    ? "Bütün sektör ayrıntıları gösteriliyor."
+    ? "Tüm hesaplama alanları gösteriliyor."
     : "Yalnız temel varsayımlar gösteriliyor.";
 }
 

@@ -28,12 +28,12 @@ test("sekiz sektör ortak rapor sözleşmesi üretir", () => {
   for (const sector of SECTORS) {
     const report = reportFor(sector);
     assert.equal(report.sector.id, sector.id);
-    assert.equal(report.scenario.id, "expected");
+    assert.equal(report.scenario.id, "user-input");
     assert.ok(["riskli", "kosullu", "dengeli"].includes(report.decision.id));
     assert.ok(report.executiveSummary.length >= 2);
     assert.ok(report.kpis.length >= 4);
     assert.ok(report.assumptions.length >= 3);
-    assert.equal(report.scenarios.scenarios.length, 3);
+    assert.equal(report.scenarios.scenarios.length, 1);
     assert.ok(report.scenarios.metrics.length >= 3);
     assert.ok(report.cashFlow.rows.length >= 12);
     assert.ok(report.cashFlow.columns.length >= 4);
@@ -90,7 +90,7 @@ test("paylaşılabilir rapor HTML dosyası harici kaynağa ihtiyaç duymaz", () 
     assert.match(html, new RegExp(`data-report-sector="${sector.id}"`));
     assert.match(html, /FİNANSAL FİZİBİLİTE RAPORU/);
     assert.match(html, /Yazdır \/ PDF/);
-    assert.match(html, /Senaryo karşılaştırması/);
+    assert.doesNotMatch(html, /Senaryo karşılaştırması/);
     assert.match(html, /Varsayımlar ve girdiler/);
     assert.doesNotMatch(html, /<script[^>]+src=/i);
     assert.doesNotMatch(html, /<link[^>]+stylesheet/i);

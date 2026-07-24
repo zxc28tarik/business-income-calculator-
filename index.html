@@ -83,10 +83,10 @@
     <section class="sector-summary" id="sectorSummary"></section>
     <div class="scenario-toolbar">
       <div class="scenario-control-row">
-        <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
-        <div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü">
-          <button type="button" data-view-mode="simple" aria-pressed="true">Basit</button>
-          <button type="button" data-view-mode="advanced" aria-pressed="false">Gelişmiş</button>
+        <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi" hidden aria-hidden="true"></div>
+        <div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü" hidden aria-hidden="true">
+          <button type="button" data-view-mode="simple" aria-pressed="false">Basit</button>
+          <button type="button" data-view-mode="advanced" aria-pressed="true">Gelişmiş</button>
         </div>
       </div>
       <div class="toolbar-status">
@@ -151,7 +151,7 @@
       <div id="waterfall" class="waterfall"></div>
     </section>
 
-    <section class="panel-card">
+    <section class="panel-card" hidden aria-hidden="true">
       <div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>
       <div class="table-scroll" role="region" aria-label="Senaryo karşılaştırma tablosu" tabindex="0"><table id="scenarioTable"></table></div>
     </section>
@@ -180,7 +180,7 @@
     <p id="resetDialogDescription">Bu sektöre ait kayıtlı girdiler varsayılan değerlere döndürülecek.</p>
     <dl class="reset-summary">
       <div><dt>Sektör</dt><dd id="resetSectorName">—</dd></div>
-      <div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>
+      <div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>
     </dl>
     <div class="dialog-actions">
       <button id="resetCancelButton" class="secondary-button" type="button" autofocus>İptal</button>

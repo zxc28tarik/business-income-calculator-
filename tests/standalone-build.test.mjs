@@ -19,7 +19,7 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.ok(fileInfo.size < 2_000_000, `${result.file} 2 MB sınırını aşmamalıdır`);
       assert.match(html, /<!doctype html>/i);
       assert.match(html, new RegExp(`data-sector-id="${result.id}"`));
-      assert.match(html, /BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\.24\.0/);
+      assert.match(html, /BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\.24\.1/);
       assert.doesNotMatch(html, /BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\.23\.0/);
       assert.match(html, /class="skip-link"/);
       assert.match(html, /id="mainContent"/);
@@ -34,9 +34,10 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.match(html, /id="exportMenuButton"[^>]+aria-expanded="false"/);
       assert.match(html, /id="dataMenuButton"[^>]+aria-expanded="false"/);
       assert.match(html, /id="moreMenuButton"[^>]+aria-expanded="false"/);
-      assert.match(html, /id="viewModeSwitcher"[^>]+aria-label="Form görünümü"/);
-      assert.match(html, /data-view-mode="simple"[^>]+aria-pressed="true"/);
-      assert.match(html, /data-view-mode="advanced"[^>]+aria-pressed="false"/);
+      assert.match(html, /id="viewModeSwitcher"[^>]+hidden/);
+      assert.match(html, /data-view-mode="simple"[^>]+aria-pressed="false"/);
+      assert.match(html, /data-view-mode="advanced"[^>]+aria-pressed="true"/);
+      assert.match(html, /id="scenarioSwitcher"[^>]+hidden/);
       assert.match(html, /id="viewModeNote"/);
       assert.match(html, /id="autosaveStatus"[^>]+aria-live="polite"/);
       assert.match(html, /id="decisionSummary"/);

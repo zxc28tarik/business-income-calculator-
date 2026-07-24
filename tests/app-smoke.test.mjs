@@ -89,7 +89,7 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.0/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.1/);
   assert.doesNotMatch(html, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
@@ -173,8 +173,8 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#formSections").innerHTML, /Gelişmiş satış kanalı karmasını kullan/);
   assert.match(elements.get("#formSections").innerHTML, /Ürün \/ kategori karması/);
   assert.match(elements.get("#formSections").innerHTML, /data-field-importance="advanced"/);
-  assert.match(elements.get("#formSections").innerHTML, /view-mode-hidden/);
-  assert.equal(elements.get("#viewModeNote").textContent, "Yalnız temel varsayımlar gösteriliyor.");
+  assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);
+  assert.equal(elements.get("#viewModeNote").textContent, "Tüm hesaplama alanları gösteriliyor.");
   assert.match(elements.get("#sectorSelect").innerHTML, /E-Ticaret \/ Pazaryeri/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Güzellik \/ Kuaför \/ Bakım/);
   assert.match(elements.get("#sectorSelect").innerHTML, /Ajans \/ Freelancer \/ Danışmanlık/);
@@ -272,9 +272,9 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.match(elements.get("#cashFlowTable").innerHTML, /Recoup bakiyesi/);
   assert.match(elements.get("#breakdown").innerHTML, /Geliştirici settlement/);
 
-  elements.get("#viewModeSwitcher").dispatch("click", { dataset: { viewMode: "advanced" } });
-  assert.equal(elements.get("#viewModeNote").textContent, "Bütün sektör ayrıntıları gösteriliyor.");
-  assert.equal(store.get("business-income-calculator:ui:view-mode:v0.24"), "advanced");
+  assert.equal(elements.get("#viewModeSwitcher").hidden, true);
+  assert.equal(elements.get("#viewModeNote").textContent, "Tüm hesaplama alanları gösteriliyor.");
+  assert.equal(store.has("business-income-calculator:ui:view-mode:v0.24"), false);
   assert.doesNotMatch(elements.get("#formSections").innerHTML, /view-mode-hidden/);
 
   const recordMenuButton = elements.get("#recordMenuButton");
@@ -288,12 +288,12 @@ test("gerçek uygulama kabuğu açılır ve tüm sektörler render olur", async 
   assert.equal(recordMenuButton.attributes.get("aria-expanded"), "false");
   assert.equal(globalThis.document.activeElement, recordMenuButton);
 
-  elements.get("#scenarioSwitcher").dispatch("click", { dataset: { scenario: "pessimistic" } });
-  assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="pessimistic"/);
+  assert.equal(elements.get("#scenarioSwitcher").hidden, true);
+  assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="expected">Kullanıcı girdileri/);
   elements.get("#resetButton").click();
   assert.equal(elements.get("#resetDialog").open, true);
   assert.equal(elements.get("#resetSectorName").textContent, "Oyun / Dijital Yayıncılık");
-  assert.equal(elements.get("#resetScenarioName").textContent, "Kötümser");
+  assert.equal(elements.get("#resetScenarioName").textContent, "Kullanıcı girdileri");
   elements.get("#resetConfirmButton").click();
   assert.equal(elements.get("#resetDialog").open, false);
   assert.match(elements.get("#scenarioSwitcher").innerHTML, /active" data-scenario="expected"/);
