@@ -53,7 +53,7 @@ jobs:
               ('<div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>', '<div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>'),
           ])
 
-          edit('src/ui/view-mode.js', [
+          edit('src/app.js', [
               ('Bütün sektör ayrıntıları gösteriliyor.', 'Tüm hesaplama alanları gösteriliyor.'),
           ])
 
