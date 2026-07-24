@@ -29,15 +29,27 @@ function renderKpis(report) {
   </section>`;
 }
 
+function legacyWarningCard(warning) {
+  const severity = warning.severity === "hard" ? "critical" : warning.severity === "soft" ? "warning" : warning.severity === "positive" ? "positive" : "info";
+  return {
+    severity,
+    levelLabel: severity === "critical" ? "Kritik" : severity === "warning" ? "Dikkat" : severity === "positive" ? "Olumlu" : "Bilgi",
+    title: severity === "critical" ? "Kritik finansal risk" : severity === "warning" ? "Kontrol edilmesi gereken varsayım" : severity === "positive" ? "Kontrol sonucu" : "Finansal kontrol notu",
+    message: String(warning.message ?? ""),
+  };
+}
+
+function reportWarningCards(report) {
+  const sourceWarnings = Array.isArray(report.warnings) ? report.warnings : [];
+  const cards = Array.isArray(report.warningCards) ? report.warningCards : [];
+  const cardsMatchSource = cards.length === sourceWarnings.length
+    && cards.every((card, index) => String(card.message ?? "") === String(sourceWarnings[index]?.message ?? ""));
+  if (cardsMatchSource) return cards;
+  return sourceWarnings.map(legacyWarningCard);
+}
+
 function renderWarnings(report) {
-  const rows = report.warningCards?.length
-    ? report.warningCards
-    : report.warnings.map((warning) => ({
-      severity: warning.severity === "hard" ? "critical" : warning.severity === "soft" ? "warning" : "info",
-      levelLabel: warning.severity === "hard" ? "Kritik" : warning.severity === "soft" ? "Dikkat" : "Bilgi",
-      title: "Finansal kontrol notu",
-      message: warning.message,
-    }));
+  const rows = reportWarningCards(report);
   const safeRows = rows.length ? rows : [{ severity: "positive", levelLabel: "Olumlu", title: "Kontrol sonucu", message: "Raporlanan eşiklerde uyarı bulunmuyor." }];
   return `<section><div class="section-title"><div><p class="section-kicker">Risk kontrolü</p><h2>Dikkat edilmesi gerekenler</h2></div><span>${safeRows.length} kayıt</span></div><div class="warnings">${safeRows.map((warning) => `
     <article class="warning ${escapeHtml(warning.severity)}"><div><b>${escapeHtml(warning.levelLabel)}</b><strong>${escapeHtml(warning.title)}</strong></div><p>${escapeHtml(warning.message)}</p></article>`).join("")}</div></section>`;
