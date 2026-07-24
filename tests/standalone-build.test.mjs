@@ -19,7 +19,8 @@ test("sekiz sektör için çevrimdışı tek HTML dosyası üretilir", async () 
       assert.ok(fileInfo.size < 2_000_000, `${result.file} 2 MB sınırını aşmamalıdır`);
       assert.match(html, /<!doctype html>/i);
       assert.match(html, new RegExp(`data-sector-id="${result.id}"`));
-      assert.match(html, /BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\.23\.0/);
+      assert.match(html, /BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\.24\.0/);
+      assert.doesNotMatch(html, /BUSINESS INCOME CALCULATOR · TEK DOSYA · v0\.23\.0/);
       assert.match(html, /class="skip-link"/);
       assert.match(html, /id="mainContent"/);
       assert.match(html, /const moduleSources =/);
