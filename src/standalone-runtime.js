@@ -35,8 +35,10 @@ import { exportFinancialReport } from "./report/report-controller.js";
 import { createTrackingController } from "./tracking/tracking-controller.js";
 import { createPortfolioController } from "./portfolio/portfolio-controller.js";
 import { buildProjectFinancialSummary } from "./portfolio/portfolio-summary.js";
+import { asSingleInputSector } from "./core/single-input-sector.js";
 
-export function mountStandaloneCalculator(sector) {
+export function mountStandaloneCalculator(sourceSector) {
+  const sector = asSingleInputSector(sourceSector);
   const storageKey = `business-income-calculator:standalone:${sector.id}:${sector.version}`;
   const portfolioStorageKey = `business-income-calculator:standalone-portfolio:${sector.id}:v0.1`;
   const trackingStoragePrefix = "business-income-calculator:tracking:v0.1";
@@ -125,7 +127,7 @@ export function mountStandaloneCalculator(sector) {
     storageKey: portfolioStorageKey,
     trackingPrefix: trackingStoragePrefix,
     backupScope: `standalone:${sector.id}`,
-    appVersion: "0.23.0",
+    appVersion: "0.24.1",
     initialWorkspace: state,
     createWorkspace: createDefaultState,
     normalizeWorkspace: normalizeState,
@@ -404,7 +406,7 @@ export function mountStandaloneCalculator(sector) {
       queueMicrotask(() => elements.resetCancelButton.focus?.());
       return;
     }
-    if (confirm(`${sector.name} sektörünün tüm senaryo verileri varsayılan değerlere döndürülsün mü?`)) {
+    if (confirm(`${sector.name} sektörünün kayıtlı girdileri varsayılan değerlere döndürülsün mü?`)) {
       resetCurrentSector();
     }
   }
@@ -523,7 +525,7 @@ export function mountStandaloneCalculator(sector) {
     const { result, presentation } = lastRendered;
     const rows = [
       ["Business Income Calculator", sector.name],
-      ["Senaryo", sector.scenarios[state.activeScenario].label],
+      ["Girdi modeli", "Kullanıcı tarafından girilen değerler"],
       ["Oluşturma tarihi", new Date().toLocaleString("tr-TR")],
       [],
     ];
@@ -541,7 +543,7 @@ export function mountStandaloneCalculator(sector) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${sector.id}-${state.activeScenario}.csv`;
+    anchor.download = `${sector.id}-hesap.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   }

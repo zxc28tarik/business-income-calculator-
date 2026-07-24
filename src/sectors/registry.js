@@ -1,3 +1,4 @@
+import { asSingleInputSector } from "../core/single-input-sector.js";
 import { STEAM_PUBLISHER_SECTOR } from "./steam-publisher.js";
 import { CAFE_SECTOR } from "./cafe-restaurant.js";
 import { ECOMMERCE_SECTOR } from "./ecommerce.js";
@@ -16,7 +17,7 @@ export const SECTORS = [
   RETAIL_SECTOR,
   AUTO_SERVICE_SECTOR,
   STEAM_PUBLISHER_SECTOR,
-];
+].map(asSingleInputSector);
 export const SECTOR_MAP = new Map(SECTORS.map((sector) => [sector.id, sector]));
 
 export function getSector(sectorId) {

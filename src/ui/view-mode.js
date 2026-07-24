@@ -2,7 +2,7 @@ import { evaluateVisibility } from "../core/sector-schema.js";
 import { round } from "./formatters.js";
 
 export const VIEW_MODE_STORAGE_KEY = "business-income-calculator:ui:view-mode:v0.24";
-export const DEFAULT_VIEW_MODE = "simple";
+export const DEFAULT_VIEW_MODE = "advanced";
 
 const BASIC_FIELDS = {
   cafe_restaurant: [
@@ -124,8 +124,8 @@ function basicFieldSet(sectorId) {
   return new Set(BASIC_FIELDS[sectorId] ?? []);
 }
 
-export function normalizeViewMode(value) {
-  return value === "advanced" ? "advanced" : DEFAULT_VIEW_MODE;
+export function normalizeViewMode() {
+  return "advanced";
 }
 
 export function getFieldImportance(sector, field) {
@@ -185,3 +185,29 @@ export function countVisibleFields(sector, inputs, viewMode = DEFAULT_VIEW_MODE)
   return sector.formSections.reduce((total, section) => total + section.fields
     .filter((field) => isFieldVisible(sector, field, inputs, viewMode)).length, 0);
 }
+
+
+function applySingleInputInterface() {
+  const scenarioSwitcher = document.querySelector("#scenarioSwitcher");
+  if (scenarioSwitcher) {
+    scenarioSwitcher.hidden = true;
+    scenarioSwitcher.setAttribute("aria-hidden", "true");
+  }
+  const viewModeSwitcher = document.querySelector("#viewModeSwitcher");
+  if (viewModeSwitcher) {
+    viewModeSwitcher.hidden = true;
+    viewModeSwitcher.setAttribute("aria-hidden", "true");
+  }
+  const note = document.querySelector("#viewModeNote");
+  if (note) note.textContent = "Tüm hesaplama alanları gösteriliyor.";
+  const scenarioPanel = document.querySelector("#scenarioTable")?.closest(".panel-card");
+  if (scenarioPanel) scenarioPanel.hidden = true;
+  const resetDescription = document.querySelector("#resetDialogDescription");
+  if (resetDescription) resetDescription.textContent = "Bu sektöre ait kayıtlı girdiler varsayılan değerlere döndürülecek.";
+  const resetScenarioRow = document.querySelector("#resetScenarioName")?.closest("div");
+  if (resetScenarioRow) resetScenarioRow.hidden = true;
+  const portfolioDescription = document.querySelector("#portfolioPanel .section-description, #portfolioPanel .subtitle");
+  if (portfolioDescription) portfolioDescription.textContent = "Her kayıt kendi sektör, kullanıcı girdileri ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.";
+}
+
+if (typeof document !== "undefined") queueMicrotask(applySingleInputInterface);

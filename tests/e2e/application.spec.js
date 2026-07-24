@@ -28,26 +28,16 @@ test("ana uygulama gerçek Chromium içinde hesaplama yapar", async ({ page }) =
   expect(errors).toEqual([]);
 });
 
-test("Basit ve Gelişmiş görünüm aynı finans sonucunu kullanır", async ({ page }) => {
+test("form doğrudan tam görünümde açılır ve senaryo kontrolleri gösterilmez", async ({ page }) => {
   const errors = watchRuntimeErrors(page);
   await page.goto("/");
-
-  await expect(page.locator("#viewModeNote")).toHaveText("Yalnız temel varsayımlar gösteriliyor.");
-  await expect(page.locator(".table-field").first()).toHaveClass(/view-mode-hidden/);
-  const simpleKpis = await page.locator("#kpiGrid").textContent();
-  const simpleVisibleFields = await page.locator(".field:not(.view-mode-hidden):not(.conditional-hidden)").count();
-  expect(simpleVisibleFields).toBeGreaterThanOrEqual(8);
-  expect(simpleVisibleFields).toBeLessThanOrEqual(16);
-
-  await page.locator('[data-view-mode="advanced"]').click();
-  await expect(page.locator("#viewModeNote")).toHaveText("Bütün sektör ayrıntıları gösteriliyor.");
+  await expect(page.locator("#viewModeNote")).toHaveText(/Bütün sektör ayrıntıları|Tüm hesaplama alanları/);
+  await expect(page.locator("#viewModeSwitcher")).toBeHidden();
+  await expect(page.locator("#scenarioSwitcher")).toBeHidden();
+  await expect(page.locator("#scenarioTable").locator("xpath=ancestor::section[1]")).toBeHidden();
   await expect(page.locator(".table-field").first()).not.toHaveClass(/view-mode-hidden/);
-  const advancedKpis = await page.locator("#kpiGrid").textContent();
-  const advancedVisibleFields = await page.locator(".field:not(.view-mode-hidden):not(.conditional-hidden)").count();
-
-  expect(advancedVisibleFields).toBeGreaterThan(simpleVisibleFields);
-  expect(advancedKpis).toBe(simpleKpis);
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("business-income-calculator:ui:view-mode:v0.24"))).toBe("advanced");
+  await expect(page.locator("#scenarioSwitcher .scenario-button")).toHaveCount(1);
+  await expect(page.locator("#scenarioSwitcher")).toContainText("Kullanıcı girdileri");
   expect(errors).toEqual([]);
 });
 
@@ -160,7 +150,8 @@ test("sektör sıfırlama ancak açıklamalı onaydan sonra uygulanır", async (
   await page.locator("#resetButton").click();
   await expect(page.locator("#resetDialog")).toBeVisible();
   await expect(page.locator("#resetSectorName")).toHaveText("E-Ticaret / Pazaryeri");
-  await expect(page.locator("#resetScenarioName")).toHaveText("Beklenen");
+  await expect(page.locator("#resetScenarioName").locator("xpath=ancestor::div[1]")).toBeHidden();
+  await expect(page.locator("#resetDialogDescription")).toContainText("kayıtlı girdiler");
   await expect(page.locator("#resetCancelButton")).toBeFocused();
 
   await page.locator("#resetCancelButton").click();

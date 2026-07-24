@@ -17,13 +17,13 @@ test("v0.24 sürüm, production ve Pages sözleşmesi eşleşir", async () => {
 
   const pkg = JSON.parse(packageText);
   const lock = JSON.parse(lockText);
-  assert.equal(pkg.version, "0.24.0");
-  assert.equal(lock.version, "0.24.0");
-  assert.equal(lock.packages[""].version, "0.24.0");
-  assert.match(indexHtml, /BUSINESS INCOME CALCULATOR · v0\.24\.0/);
+  assert.equal(pkg.version, "0.24.1");
+  assert.equal(lock.version, "0.24.1");
+  assert.equal(lock.packages[""].version, "0.24.1");
+  assert.match(indexHtml, /BUSINESS INCOME CALCULATOR · v0\.24\.1/);
   assert.doesNotMatch(indexHtml, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
-  assert.match(standaloneBuilder, /const APP_VERSION = "0\.24\.0"/);
-  assert.match(productionBuilder, /version: "0\.24\.0"/);
+  assert.match(standaloneBuilder, /const APP_VERSION = "0\.24\.1"/);
+  assert.match(productionBuilder, /version: "0\.24\.1"/);
 
   assert.equal(pkg.devDependencies["@playwright/test"], "1.61.1");
   assert.equal(pkg.devDependencies["@axe-core/playwright"], "4.12.1");

@@ -74,7 +74,6 @@ export function buildPortfolioViewModel(portfolio, summarizeWorkspace) {
       active: project.id === portfolio.activeProjectId,
       summary: {
         sectorName: summary?.sectorName ?? "Hesaplanamadı",
-        scenarioLabel: summary?.scenarioLabel ?? "—",
         netProfit: Number(summary?.netProfit) || 0,
         endingCash: Number(summary?.endingCash) || 0,
         status,
@@ -118,14 +117,13 @@ function renderPortfolioTable(view) {
     return `<tr class="${record.active ? "active-project" : ""}" data-portfolio-project="${escapeHtml(record.id)}" tabindex="${record.active ? "-1" : "0"}" ${record.active ? 'aria-current="true"' : ""}>
       <td><strong>${escapeHtml(record.name)}</strong><small>${escapeHtml(dateText(record.updatedAt))}</small></td>
       <td>${escapeHtml(record.summary.sectorName)}</td>
-      <td>${escapeHtml(record.summary.scenarioLabel)}</td>
       <td>${money(record.summary.netProfit)}</td>
       <td>${money(record.summary.endingCash)}</td>
       <td><span class="portfolio-status ${escapeHtml(status)}">${escapeHtml(STATUS_LABELS[status] ?? status)}</span></td>
       <td><button type="button" class="secondary-button" data-portfolio-open="${escapeHtml(record.id)}" ${record.active ? "disabled" : ""}>${record.active ? "Aktif" : "Bu kayda geç"}</button></td>
     </tr>`;
   }).join("");
-  return `<thead><tr><th>Kayıt</th><th>Sektör</th><th>Senaryo</th><th>Net sonuç</th><th>12 ay sonu nakit</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+  return `<thead><tr><th>Kayıt</th><th>Sektör</th><th>Net sonuç</th><th>12 ay sonu nakit</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody>`;
 }
 
 function ensureSummaryElement(elements) {

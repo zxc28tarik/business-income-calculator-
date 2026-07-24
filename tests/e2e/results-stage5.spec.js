@@ -18,7 +18,8 @@ test("Aşama 5 uyarı, nakit özeti ve ayrıntı panelleri çalışır", async (
   });
 
   await page.goto("/");
-  await page.locator('[data-view-mode="advanced"]').click();
+  await expect(page.locator("#viewModeSwitcher")).toBeHidden();
+  await expect(page.locator("#scenarioSwitcher")).toBeHidden();
   await openAndFill(page, "#rent", "2000000");
   await openAndFill(page, "#materialCostRate", "60");
   await openAndFill(page, "#startingCash", "0");
@@ -45,12 +46,14 @@ test("Aşama 5 uyarı, nakit özeti ve ayrıntı panelleri çalışır", async (
   await expect(breakdownToggle).toHaveAttribute("aria-expanded", "true");
   await expect(breakdownGroups.first()).toHaveAttribute("open", "");
 
-  await expect(page.locator("#scenarioTable .expected-column").first()).toBeVisible();
+  await expect(page.locator("#scenarioTable").locator("xpath=ancestor::section[1]")).toBeHidden();
   expect(errors).toEqual([]);
 });
 
 test("Aşama 5 ortak sonuç sözleşmesi bağımsız HTML içinde de çalışır", async ({ page }) => {
   await page.goto("/standalone/cafe-restaurant-calculator.html");
+  await expect(page.locator("#viewModeSwitcher")).toBeHidden();
+  await expect(page.locator("#scenarioSwitcher")).toBeHidden();
   await expect(page.locator("#cashFlowTable .cash-summary-card")).toHaveCount(4);
   await expect(page.locator("#breakdown details.breakdown-group").first()).toBeVisible();
   await expect(page.locator("#warnings .warning-heading").first()).toBeVisible();

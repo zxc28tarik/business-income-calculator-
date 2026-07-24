@@ -14,7 +14,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <div class="topbar-brand">
-      <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.24.0</p>
+      <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.24.1</p>
       <h1 id="pageTitle">Sektör Bazlı Finansal Fizibilite</h1>
       <p id="pageSubtitle" class="subtitle">Cirodan net kâra, başabaştan 12 aylık nakit akışına kadar düzenlenebilir ön fizibilite.</p>
     </div>
@@ -83,14 +83,14 @@
     <section class="sector-summary" id="sectorSummary"></section>
     <div class="scenario-toolbar">
       <div class="scenario-control-row">
-        <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi"></div>
-        <div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü">
-          <button type="button" data-view-mode="simple" aria-pressed="true">Basit</button>
-          <button type="button" data-view-mode="advanced" aria-pressed="false">Gelişmiş</button>
+        <div class="scenario-switcher" id="scenarioSwitcher" aria-label="Senaryo seçimi" hidden aria-hidden="true"></div>
+        <div id="viewModeSwitcher" class="view-mode-switcher" role="group" aria-label="Form görünümü" hidden aria-hidden="true">
+          <button type="button" data-view-mode="simple" aria-pressed="false">Basit</button>
+          <button type="button" data-view-mode="advanced" aria-pressed="true">Gelişmiş</button>
         </div>
       </div>
       <div class="toolbar-status">
-        <p id="viewModeNote" class="view-mode-note">Yalnız temel varsayımlar gösteriliyor.</p>
+        <p id="viewModeNote" class="view-mode-note">Tüm hesaplama alanları gösteriliyor.</p>
         <p id="autosaveStatus" class="autosave-status" data-state="saved" aria-live="polite"><span aria-hidden="true">●</span> Kaydedildi</p>
       </div>
     </div>
@@ -103,7 +103,7 @@
         <div><p class="eyebrow">KAYITLAR · PORTFÖY</p><h2>İşletme ve proje karşılaştırması</h2></div>
         <div class="portfolio-actions"><button id="portfolioCloseButton" class="secondary-button" type="button">Kapat</button></div>
       </div>
-      <p class="section-description">Her kayıt kendi sektör, senaryo, varsayım ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p>
+      <p class="section-description">Her kayıt kendi sektör, kullanıcı girdileri ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p>
       <div class="table-scroll" role="region" aria-label="Portföy karşılaştırma tablosu" tabindex="0"><table id="portfolioTable" class="portfolio-table"></table></div>
     </section>
 
@@ -151,7 +151,7 @@
       <div id="waterfall" class="waterfall"></div>
     </section>
 
-    <section class="panel-card">
+    <section class="panel-card" hidden aria-hidden="true">
       <div class="section-heading"><div><p class="eyebrow">KARŞILAŞTIRMA</p><h2>Üç senaryo</h2></div></div>
       <div class="table-scroll" role="region" aria-label="Senaryo karşılaştırma tablosu" tabindex="0"><table id="scenarioTable"></table></div>
     </section>
@@ -177,10 +177,10 @@
       <p class="eyebrow">GERİ ALINAMAZ İŞLEM</p>
       <h2 id="resetDialogTitle">Sektör verisini sıfırla</h2>
     </div>
-    <p id="resetDialogDescription">Bu sektöre ait tüm senaryoların kayıtlı varsayımları varsayılan değerlere döndürülecek.</p>
+    <p id="resetDialogDescription">Bu sektöre ait kayıtlı girdiler varsayılan değerlere döndürülecek.</p>
     <dl class="reset-summary">
       <div><dt>Sektör</dt><dd id="resetSectorName">—</dd></div>
-      <div><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>
+      <div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>
     </dl>
     <div class="dialog-actions">
       <button id="resetCancelButton" class="secondary-button" type="button" autofocus>İptal</button>
