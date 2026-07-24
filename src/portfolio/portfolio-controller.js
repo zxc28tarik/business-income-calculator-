@@ -1,4 +1,5 @@
 import { escapeHtml, formatValue } from "../ui/formatters.js";
+import { createWorkspacePanel } from "../ui/workspace-panel.js";
 import { migrateLegacyTrackingEntries } from "../migrations/storage-migrations.js";
 import {
   addProject,
@@ -61,23 +62,81 @@ function money(value) {
   return formatValue(Number(value) || 0, "money");
 }
 
-function renderPortfolioTable(portfolio, summarizeWorkspace) {
-  const rows = portfolio.projects.map((project) => {
+export function buildPortfolioViewModel(portfolio, summarizeWorkspace) {
+  const records = portfolio.projects.map((project) => {
     let summary;
     try { summary = summarizeWorkspace(project.workspace); } catch { summary = null; }
     const status = summary?.status ?? "riskli";
-    return `<tr data-portfolio-project="${escapeHtml(project.id)}">
-      <td><strong>${escapeHtml(project.name)}</strong><small>${escapeHtml(dateText(project.updatedAt))}</small></td>
-      <td>${escapeHtml(summary?.sectorName ?? "Hesaplanamadı")}</td>
-      <td>${escapeHtml(summary?.scenarioLabel ?? "—")}</td>
-      <td>${money(summary?.grossRevenue)}</td>
-      <td>${money(summary?.netProfit)}</td>
-      <td>${money(summary?.endingCash)}</td>
+    return {
+      id: project.id,
+      name: project.name,
+      updatedAt: project.updatedAt,
+      active: project.id === portfolio.activeProjectId,
+      summary: {
+        sectorName: summary?.sectorName ?? "Hesaplanamadı",
+        scenarioLabel: summary?.scenarioLabel ?? "—",
+        netProfit: Number(summary?.netProfit) || 0,
+        endingCash: Number(summary?.endingCash) || 0,
+        status,
+      },
+    };
+  });
+  const statusCounts = records.reduce((counts, record) => {
+    counts[record.summary.status] = (counts[record.summary.status] ?? 0) + 1;
+    return counts;
+  }, { dengeli: 0, dikkat: 0, riskli: 0 });
+  return {
+    records,
+    totalRecords: records.length,
+    activeRecord: records.find((record) => record.active) ?? records[0] ?? null,
+    statusCounts,
+    totalNetProfit: records.reduce((sum, record) => sum + record.summary.netProfit, 0),
+    totalEndingCash: records.reduce((sum, record) => sum + record.summary.endingCash, 0),
+  };
+}
+
+function renderPortfolioSummary(view) {
+  const statusText = `${view.statusCounts.dengeli} dengeli · ${view.statusCounts.dikkat} dikkat · ${view.statusCounts.riskli} riskli`;
+  return `
+    <article class="portfolio-summary-card portfolio-summary-primary">
+      <span>Kayıt sayısı</span><strong>${view.totalRecords}</strong><small>${escapeHtml(statusText)}</small>
+    </article>
+    <article class="portfolio-summary-card">
+      <span>Aktif kayıt</span><strong>${escapeHtml(view.activeRecord?.name ?? "—")}</strong><small>${escapeHtml(view.activeRecord?.summary.sectorName ?? "")}</small>
+    </article>
+    <article class="portfolio-summary-card ${view.statusCounts.riskli ? "negative" : "positive"}">
+      <span>Riskli kayıt</span><strong>${view.statusCounts.riskli}</strong><small>${view.statusCounts.riskli ? "Öncelikli kontrol gerekir" : "Kritik kayıt yok"}</small>
+    </article>
+    <article class="portfolio-summary-card ${view.totalNetProfit < 0 ? "negative" : "positive"}">
+      <span>Toplam net sonuç</span><strong>${money(view.totalNetProfit)}</strong><small>Seçili kayıtların hesap sonucu</small>
+    </article>`;
+}
+
+function renderPortfolioTable(view) {
+  const rows = view.records.map((record) => {
+    const status = record.summary.status;
+    return `<tr class="${record.active ? "active-project" : ""}" data-portfolio-project="${escapeHtml(record.id)}" tabindex="${record.active ? "-1" : "0"}" ${record.active ? 'aria-current="true"' : ""}>
+      <td><strong>${escapeHtml(record.name)}</strong><small>${escapeHtml(dateText(record.updatedAt))}</small></td>
+      <td>${escapeHtml(record.summary.sectorName)}</td>
+      <td>${escapeHtml(record.summary.scenarioLabel)}</td>
+      <td>${money(record.summary.netProfit)}</td>
+      <td>${money(record.summary.endingCash)}</td>
       <td><span class="portfolio-status ${escapeHtml(status)}">${escapeHtml(STATUS_LABELS[status] ?? status)}</span></td>
-      <td><button type="button" class="secondary-button" data-portfolio-open="${escapeHtml(project.id)}">Aç</button></td>
+      <td><button type="button" class="secondary-button" data-portfolio-open="${escapeHtml(record.id)}" ${record.active ? "disabled" : ""}>${record.active ? "Aktif" : "Bu kayda geç"}</button></td>
     </tr>`;
   }).join("");
-  return `<thead><tr><th>Kayıt</th><th>Sektör</th><th>Senaryo</th><th>Brüt gelir</th><th>Net sonuç</th><th>12 ay sonu nakit</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+  return `<thead><tr><th>Kayıt</th><th>Sektör</th><th>Senaryo</th><th>Net sonuç</th><th>12 ay sonu nakit</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function ensureSummaryElement(elements) {
+  const existing = elements.panel.querySelector("#portfolioSummary");
+  if (existing) return existing;
+  const summary = document.createElement("div");
+  summary.id = "portfolioSummary";
+  summary.className = "portfolio-summary";
+  const tableRegion = elements.table.closest(".table-scroll");
+  elements.panel.insertBefore(summary, tableRegion ?? null);
+  return summary;
 }
 
 export function createPortfolioController({
@@ -102,8 +161,9 @@ export function createPortfolioController({
     trackingPrefix,
     backupScope,
   };
-  let visible = false;
   let portfolio = loadPortfolio();
+  let panelControl = null;
+  const summaryElement = ensureSummaryElement(elements);
   const standaloneSectorId = String(backupScope).startsWith("standalone:")
     ? String(backupScope).slice("standalone:".length)
     : null;
@@ -193,20 +253,26 @@ export function createPortfolioController({
     elements.projectSelect.value = portfolio.activeProjectId;
   }
 
-  function render() {
-    renderSelect();
-    elements.panel.hidden = !visible;
-    elements.toggleButton.setAttribute("aria-expanded", String(visible));
-    if (visible) elements.table.innerHTML = renderPortfolioTable(portfolio, summarizeWorkspace);
+  function renderPanel() {
+    const view = buildPortfolioViewModel(portfolio, summarizeWorkspace);
+    summaryElement.innerHTML = renderPortfolioSummary(view);
+    elements.table.innerHTML = renderPortfolioTable(view);
   }
 
-  function activate(projectId) {
+  function render() {
+    renderSelect();
+    if (panelControl?.isOpen()) renderPanel();
+  }
+
+  function activate(projectId, { closePanel = false } = {}) {
+    if (!projectId || projectId === portfolio.activeProjectId) return;
     syncActiveWorkspace();
     portfolio = selectProject(portfolio, projectId);
     savePortfolio();
     const active = activeProject();
     if (active) setWorkspace(clone(active.workspace));
     render();
+    if (closePanel) panelControl?.close();
   }
 
   function createNew() {
@@ -294,30 +360,46 @@ export function createPortfolioController({
     elements.renameButton.addEventListener("click", renameActive);
     elements.duplicateButton.addEventListener("click", duplicateActive);
     elements.deleteButton.addEventListener("click", deleteActive);
-    elements.toggleButton.addEventListener("click", () => {
-      visible = !visible;
-      if (visible) syncActiveWorkspace();
-      render();
-    });
-    elements.closeButton.addEventListener("click", () => { visible = false; render(); });
     elements.exportButton.addEventListener("click", exportBackup);
     elements.importButton.addEventListener("click", () => elements.importInput.click());
     elements.importInput.addEventListener("change", importBackup);
     elements.table.addEventListener("click", (event) => {
-      const projectId = event.target.dataset.portfolioOpen;
-      if (projectId) activate(projectId);
+      const trigger = event.target.closest?.("[data-portfolio-open]");
+      const row = event.target.closest?.("[data-portfolio-project]");
+      const projectId = trigger?.dataset.portfolioOpen ?? row?.dataset.portfolioProject;
+      if (projectId && projectId !== portfolio.activeProjectId) activate(projectId, { closePanel: true });
+    });
+    elements.table.addEventListener("keydown", (event) => {
+      if (!['Enter', ' '].includes(event.key) || event.target.closest?.("button")) return;
+      const row = event.target.closest?.("[data-portfolio-project]");
+      if (!row || row.dataset.portfolioProject === portfolio.activeProjectId) return;
+      event.preventDefault();
+      activate(row.dataset.portfolioProject, { closePanel: true });
     });
   }
 
   migrateLegacyTracking();
   savePortfolio();
   attach();
+  panelControl = createWorkspacePanel({
+    id: "portfolio",
+    panel: elements.panel,
+    toggleButton: elements.toggleButton,
+    closeButton: elements.closeButton,
+    onOpen: () => {
+      syncActiveWorkspace();
+      renderPanel();
+    },
+  });
   render();
   return {
     render,
     syncActiveWorkspace,
     getActiveProjectId: () => portfolio.activeProjectId,
+    getActiveProjectName: () => activeProject()?.name ?? initialName,
     getActiveWorkspace: () => clone(activeProject()?.workspace ?? createWorkspace()),
     getPortfolio: () => clone(portfolio),
+    open: panelControl.open,
+    close: panelControl.close,
   };
 }
