@@ -1,0 +1,68 @@
+name: Apply single user input mode
+on:
+  push:
+    branches: [change/single-user-inputs]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: change/single-user-inputs
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Prepare transformation script
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/apply-single-input-mode.mjs')
+          text = path.read_text()
+          text = text.replace(
+              'assert.equal(simpleAlias, visible, `${sector.id}: Basit adı tam görünümden farklı sonuç üretmemelidir`);',
+              'assert.equal(simpleAlias, visible, sector.id + ": Basit adı tam görünümden farklı sonuç üretmemelidir");'
+          )
+          text = text.replace('await rm("scripts/apply-single-input-mode.mjs", { force: true });\n', '')
+          text = text.replace('await rm(".github/workflows/apply-single-input-mode.yml", { force: true });\n', '')
+          path.write_text(text)
+          PY
+      - name: Apply requested product change
+        run: node scripts/apply-single-input-mode.mjs 2>&1 | tee transform.log
+      - name: Upload transformation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-input-transform-log
+          path: transform.log
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify unit and integration tests
+        run: npm test 2>&1 | tee unit-test.log
+      - name: Upload unit test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-input-unit-test-log
+          path: unit-test.log
+      - name: Verify JavaScript modules
+        run: npm run check
+      - name: Build production and standalone calculators
+        run: npm run build:production
+      - name: Commit transformed source
+        run: |
+          rm -f transform.log unit-test.log
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Basit ve senaryolu yaklaşımı tek kullanıcı girdisine çevir"
+          git push origin HEAD:change/single-user-inputs
