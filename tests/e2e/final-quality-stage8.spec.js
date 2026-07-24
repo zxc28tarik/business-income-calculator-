@@ -13,6 +13,11 @@ async function assertCoreWorkspace(page) {
   expect(await pageOverflow(page)).toBeLessThanOrEqual(1);
 }
 
+function durationSeconds(value) {
+  const seconds = Number.parseFloat(String(value).replace("ms", ""));
+  return String(value).includes("ms") ? seconds / 1000 : seconds;
+}
+
 test("%200 yakınlaştırma eşdeğerinde ana platform ve tek HTML taşma üretmez", async ({ page }) => {
   await page.setViewportSize({ width: 720, height: 900 });
   await page.goto("/");
@@ -59,7 +64,7 @@ test("azaltılmış hareket tercihi animasyonları etkisizleştirir", async ({ p
       scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
     };
   });
-  expect(["0s", "0.00001s"]).toContain(motion.transitionDuration);
-  expect(["0s", "0.00001s"]).toContain(motion.animationDuration);
+  expect(durationSeconds(motion.transitionDuration)).toBeLessThanOrEqual(0.00001);
+  expect(durationSeconds(motion.animationDuration)).toBeLessThanOrEqual(0.00001);
   expect(motion.scrollBehavior).toBe("auto");
 });
