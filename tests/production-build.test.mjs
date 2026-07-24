@@ -31,10 +31,11 @@ test("production paketi yalnız yayınlanabilir statik dosyaları içerir", asyn
       assert.equal(await exists(path.join(output, excluded)), false, `${excluded} yayın paketine girmemelidir`);
     }
     const info = JSON.parse(await readFile(path.join(output, "build-info.json"), "utf8"));
-    assert.equal(info.version, "0.23.0");
+    assert.equal(info.version, "0.24.0");
     assert.equal(info.standaloneCalculators, 8);
     const html = await readFile(path.join(output, "index.html"), "utf8");
-    assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
+    assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.0/);
+    assert.doesNotMatch(html, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
     assert.match(html, /class="skip-link"/);
   } finally {
     await rm(output, { recursive: true, force: true });
