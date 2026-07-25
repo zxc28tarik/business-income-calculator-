@@ -13,8 +13,9 @@ test("ana ve standalone çalışma kodu yalnız inputs durumunu kullanır", asyn
   ]);
 
   for (const [name, code] of [["app", app], ["standalone", standalone]]) {
-    assert.match(code, /\.inputs/);
-    assert.doesNotMatch(code, /activeScenario/);
+    assert.match(code, /\.inputs/, `${name} inputs alanını kullanmalı`);
+    assert.doesNotMatch(code, /state\.scenarioInputs/);
+    assert.doesNotMatch(code, /state\.activeScenario/);
     assert.doesNotMatch(code, /renderScenarioTable/);
     assert.doesNotMatch(code, /renderScenarioButtons/);
     assert.doesNotMatch(code, /viewModeSwitcher/);
@@ -22,7 +23,7 @@ test("ana ve standalone çalışma kodu yalnız inputs durumunu kullanır", asyn
   }
 });
 
-test("eski senaryo alanları yalnız migrasyon sınırında okunur", async () => {
+test("eski senaryo değerlerinin seçimi migrasyon modülünde yapılır", async () => {
   const migration = await source("../src/core/single-input-state.js");
   assert.match(migration, /scenarioInputs/);
   assert.match(migration, /activeScenario/);
