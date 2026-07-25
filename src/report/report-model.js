@@ -124,7 +124,7 @@ function buildReportDecision({ sector, result, presentation }) {
   };
 }
 
-function buildExecutiveSummary(sector, scenarioLabel, decision, presentation) {
+function buildExecutiveSummary(sector, decision, presentation) {
   const primary = decision.primaryKpis?.[0]
     ?? findKpi(presentation, ["net_profit", "net kâr", "net sonuç"])
     ?? presentation.kpis[0];
@@ -142,24 +142,31 @@ function buildExecutiveSummary(sector, scenarioLabel, decision, presentation) {
   return sentences;
 }
 
-function buildScenarioComparison(sector, scenarios) {
-  const rows = scenarios.map((scenario) => ({
-    ...scenario,
-    metrics: sector.buildPresentation(scenario.result).scenarioMetrics,
+function buildSingleInputComparison(sector, result, presentation, scenarios) {
+  const source = Array.isArray(scenarios) && scenarios.length
+    ? scenarios.slice(0, 1)
+    : [{ id: "user-input", label: "Kullanıcı girdileri", result }];
+  const rows = source.map((item) => ({
+    ...item,
+    id: "user-input",
+    label: "Kullanıcı girdileri",
+    metrics: item.result === result
+      ? presentation.scenarioMetrics
+      : sector.buildPresentation(item.result).scenarioMetrics,
   }));
   const metricIds = [];
   for (const row of rows) {
-    for (const metric of row.metrics) if (!metricIds.includes(metric.id)) metricIds.push(metric.id);
+    for (const metric of row.metrics ?? []) if (!metricIds.includes(metric.id)) metricIds.push(metric.id);
   }
   return {
-    scenarios: rows.map(({ id, label }) => ({ id, label })),
+    scenarios: [{ id: "user-input", label: "Kullanıcı girdileri" }],
     metrics: metricIds.map((id) => {
-      const template = rows.flatMap((row) => row.metrics).find((metric) => metric.id === id);
+      const metric = rows[0]?.metrics?.find((candidate) => candidate.id === id);
       return {
         id,
-        label: template?.label ?? id,
-        format: template?.format ?? "number",
-        values: Object.fromEntries(rows.map((row) => [row.id, row.metrics.find((metric) => metric.id === id)?.value ?? null])),
+        label: metric?.label ?? id,
+        format: metric?.format ?? "number",
+        values: { "user-input": metric?.value ?? null },
       };
     }),
   };
@@ -178,14 +185,12 @@ function resolveBusinessType(sector, inputs) {
 
 export function buildFinancialReportModel({
   sector,
-  scenarioId,
   inputs,
   result,
   presentation,
   scenarios,
   generatedAt = new Date(),
 }) {
-  const scenarioLabel = sector.scenarios[scenarioId]?.label ?? scenarioId;
   const decision = buildReportDecision({ sector, result, presentation });
   const warnings = [...(result.warnings ?? [])].sort((a, b) =>
     (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9),
@@ -200,20 +205,20 @@ export function buildFinancialReportModel({
   const cashColumns = resolveCashFlowColumns(sector, result.cashFlow?.rows ?? []);
 
   return {
-    reportVersion: "1.1",
+    reportVersion: "1.2",
     generatedAt: generatedAt instanceof Date ? generatedAt.toISOString() : String(generatedAt),
     sector: { id: sector.id, name: sector.name, family: sector.family, version: sector.version },
     businessType: resolveBusinessType(sector, inputs),
     scenario: { id: "user-input", label: "Kullanıcı girdileri" },
     decision,
-    executiveSummary: buildExecutiveSummary(sector, scenarioLabel, decision, presentation),
+    executiveSummary: buildExecutiveSummary(sector, decision, presentation),
     primaryKpis: decision.primaryKpis,
     secondaryKpis: decision.secondaryKpis,
     kpis: presentation.kpis,
     keySplit: presentation.keySplit,
     warnings,
     warningCards,
-    scenarios: buildScenarioComparison(sector, scenarios),
+    scenarios: buildSingleInputComparison(sector, result, presentation, scenarios),
     assumptions: buildAssumptions(sector, inputs),
     cashFlow: {
       summary: cashMetrics(result),
