@@ -6,7 +6,7 @@ function finite(...values) {
   return 0;
 }
 
-export function buildProjectFinancialSummary({ sector, scenarioId = "expected", inputs }) {
+export function buildProjectFinancialSummary({ sector, inputs }) {
   const normalizedInputs = sector.normalizeInputs(inputs);
   const result = sector.calculateModel(normalizedInputs);
   const presentation = sector.buildPresentation(result);
@@ -40,7 +40,8 @@ export function buildProjectFinancialSummary({ sector, scenarioId = "expected", 
   return {
     sectorId: sector.id,
     sectorName: sector.name,
-    scenarioId,
+    inputMode: "user-input",
+    scenarioId: "user-input",
     scenarioLabel: "Kullanıcı girdileri",
     businessType: normalizedInputs.businessType ?? normalizedInputs.profileType ?? normalizedInputs.businessProfile ?? "",
     grossRevenue,

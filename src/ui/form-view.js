@@ -4,8 +4,6 @@ import {
   getFieldImportance,
   getFieldMicrocopy,
   getSectionSummary,
-  isFieldAvailableInMode,
-  isSectionAvailableInMode,
 } from "./view-mode.js";
 
 export function findFieldDefinition(sector, key) {
@@ -16,11 +14,10 @@ export function findFieldDefinition(sector, key) {
   return null;
 }
 
-function fieldWrapper(sector, field, inputs, viewMode, content, extraClass = "") {
+function fieldWrapper(sector, field, inputs, content, extraClass = "") {
   const hidden = evaluateVisibility(field.visibleWhen, inputs) ? "" : "conditional-hidden";
   const importance = getFieldImportance(sector, field);
-  const modeHidden = isFieldAvailableInMode(sector, field, viewMode) ? "" : "view-mode-hidden";
-  return `<div class="field ${field.full ? "full" : ""} ${extraClass} ${hidden} ${modeHidden}"
+  return `<div class="field ${field.full ? "full" : ""} ${extraClass} ${hidden}"
     data-field-wrapper="${field.key}" data-field-importance="${importance}">
     ${content}
   </div>`;
@@ -32,20 +29,16 @@ function tableControlLabel(column, rowIndex) {
 
 function renderTableCell(field, column, row, rowIndex) {
   const attrs = `data-table-key="${field.key}" data-row-index="${rowIndex}" data-column-key="${column.key}" data-cell-type="${column.type}" aria-label="${escapeHtml(tableControlLabel(column, rowIndex))}"`;
-  if (column.type === "boolean") {
-    return `<input ${attrs} type="checkbox" />`;
-  }
+  if (column.type === "boolean") return `<input ${attrs} type="checkbox" />`;
   if (column.type === "select") {
     return `<select ${attrs}>${column.options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}</select>`;
   }
-  if (column.type === "text") {
-    return `<input ${attrs} type="text" value="${escapeHtml(row?.[column.key] ?? "")}" />`;
-  }
+  if (column.type === "text") return `<input ${attrs} type="text" value="${escapeHtml(row?.[column.key] ?? "")}" />`;
   const isRate = column.type === "rate";
   return `<input ${attrs} data-rate="${isRate}" data-negative="${Boolean(column.allowNegative)}" type="number" step="${column.step ?? (isRate ? 0.1 : 1)}" />`;
 }
 
-function renderTableField(sector, field, inputs, viewMode) {
+function renderTableField(sector, field, inputs) {
   const rows = Array.isArray(inputs[field.key]) ? inputs[field.key] : [];
   const maxReached = Number.isInteger(field.maxRows) && rows.length >= field.maxRows;
   const table = `
@@ -65,15 +58,15 @@ function renderTableField(sector, field, inputs, viewMode) {
       </table>
     </div>
   `;
-  return fieldWrapper(sector, field, inputs, viewMode, table, "table-field");
+  return fieldWrapper(sector, field, inputs, table, "table-field");
 }
 
-function renderField(sector, field, inputs, viewMode) {
-  if (field.type === "table") return renderTableField(sector, field, inputs, viewMode);
+function renderField(sector, field, inputs) {
+  if (field.type === "table") return renderTableField(sector, field, inputs);
   const hint = getFieldMicrocopy(field);
 
   if (field.type === "boolean") {
-    return fieldWrapper(sector, field, inputs, viewMode, `
+    return fieldWrapper(sector, field, inputs, `
       <label class="checkbox-control" for="${field.key}">
         <input id="${field.key}" data-key="${field.key}" data-field-type="boolean" type="checkbox" />
         <span><strong>${escapeHtml(field.label)}</strong>${hint ? `<small>${escapeHtml(hint)}</small>` : ""}</span>
@@ -82,7 +75,7 @@ function renderField(sector, field, inputs, viewMode) {
   }
 
   if (field.type === "select") {
-    return fieldWrapper(sector, field, inputs, viewMode, `
+    return fieldWrapper(sector, field, inputs, `
       <label for="${field.key}">${escapeHtml(field.label)}</label>
       <select id="${field.key}" data-key="${field.key}" data-field-type="select">
         ${field.options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}
@@ -92,7 +85,7 @@ function renderField(sector, field, inputs, viewMode) {
   }
 
   if (field.type === "text") {
-    return fieldWrapper(sector, field, inputs, viewMode, `
+    return fieldWrapper(sector, field, inputs, `
       <label for="${field.key}">${escapeHtml(field.label)}</label>
       <input id="${field.key}" data-key="${field.key}" data-field-type="text" type="text" />
       ${hint ? `<span class="field-hint">${escapeHtml(hint)}</span>` : ""}
@@ -100,7 +93,7 @@ function renderField(sector, field, inputs, viewMode) {
   }
 
   const isRate = field.type === "rate";
-  return fieldWrapper(sector, field, inputs, viewMode, `
+  return fieldWrapper(sector, field, inputs, `
     <label for="${field.key}">${escapeHtml(field.label)}</label>
     <input id="${field.key}" data-key="${field.key}" data-field-type="${field.type}" data-rate="${isRate}"
       data-negative="${Boolean(field.allowNegative)}" type="number" step="${field.step ?? 1}" />
@@ -108,16 +101,16 @@ function renderField(sector, field, inputs, viewMode) {
   `);
 }
 
-export function renderFormHtml(sector, inputs, { viewMode = "simple" } = {}) {
+export function renderFormHtml(sector, inputs) {
   return sector.formSections.map((section, sectionIndex) => `
-    <details class="form-section ${evaluateVisibility(section.visibleWhen, inputs) ? "" : "conditional-hidden"} ${isSectionAvailableInMode(sector, section, viewMode) ? "" : "view-mode-hidden"}"
-      data-section-index="${sectionIndex}" ${section.open || (viewMode === "simple" && sectionIndex === 0) ? "open" : ""}>
+    <details class="form-section ${evaluateVisibility(section.visibleWhen, inputs) ? "" : "conditional-hidden"}"
+      data-section-index="${sectionIndex}" ${section.open || sectionIndex === 0 ? "open" : ""}>
       <summary>
         <span class="section-title">${escapeHtml(section.title)}</span>
-        <span class="section-summary" data-section-summary>${escapeHtml(getSectionSummary(sector, section, inputs, viewMode))}</span>
+        <span class="section-summary" data-section-summary>${escapeHtml(getSectionSummary(sector, section, inputs, "advanced"))}</span>
       </summary>
       ${section.note ? `<p class="section-note">${escapeHtml(section.note)}</p>` : ""}
-      <div class="form-fields">${section.fields.map((field) => renderField(sector, field, inputs, viewMode)).join("")}</div>
+      <div class="form-fields">${section.fields.map((field) => renderField(sector, field, inputs)).join("")}</div>
     </details>
   `).join("");
 }
@@ -126,13 +119,9 @@ export function syncFormInputs(root, inputs) {
   root.querySelectorAll("[data-key]").forEach((element) => {
     const key = element.dataset.key;
     if (!(key in inputs)) return;
-    if (element.type === "checkbox") {
-      element.checked = Boolean(inputs[key]);
-    } else if (element.tagName === "SELECT" || element.type === "text") {
-      element.value = inputs[key] ?? "";
-    } else {
-      element.value = element.dataset.rate === "true" ? round(inputs[key] * 100, 2) : round(inputs[key], 2);
-    }
+    if (element.type === "checkbox") element.checked = Boolean(inputs[key]);
+    else if (element.tagName === "SELECT" || element.type === "text") element.value = inputs[key] ?? "";
+    else element.value = element.dataset.rate === "true" ? round(inputs[key] * 100, 2) : round(inputs[key], 2);
   });
 
   root.querySelectorAll("[data-table-key]").forEach((element) => {
@@ -146,17 +135,15 @@ export function syncFormInputs(root, inputs) {
   });
 }
 
-export function syncFormVisibility(root, sector, inputs, viewMode = "simple") {
+export function syncFormVisibility(root, sector, inputs) {
   root.querySelectorAll("[data-section-index]").forEach((element) => {
     const section = sector.formSections[Number(element.dataset.sectionIndex)];
     element.classList.toggle("conditional-hidden", !evaluateVisibility(section?.visibleWhen, inputs));
-    element.classList.toggle("view-mode-hidden", !isSectionAvailableInMode(sector, section, viewMode));
     const summary = element.querySelector?.("[data-section-summary]");
-    if (summary) summary.textContent = getSectionSummary(sector, section, inputs, viewMode);
+    if (summary) summary.textContent = getSectionSummary(sector, section, inputs, "advanced");
   });
   root.querySelectorAll("[data-field-wrapper]").forEach((element) => {
     const field = findFieldDefinition(sector, element.dataset.fieldWrapper);
     element.classList.toggle("conditional-hidden", !evaluateVisibility(field?.visibleWhen, inputs));
-    element.classList.toggle("view-mode-hidden", !isFieldAvailableInMode(sector, field, viewMode));
   });
 }

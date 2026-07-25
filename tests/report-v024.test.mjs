@@ -23,7 +23,7 @@ function presentationFor(netProfit, endingCash) {
   };
 }
 
-function scenarioResult(netProfit, endingCash) {
+function modelResult(netProfit, endingCash) {
   return {
     netProfit,
     grossRevenue: 450_000,
@@ -49,11 +49,6 @@ const sector = {
   name: "Kafe / Restoran",
   family: "Yeme İçme",
   version: "2.3",
-  scenarios: {
-    pessimistic: { label: "Kötümser" },
-    expected: { label: "Beklenen" },
-    optimistic: { label: "İyimser" },
-  },
   formSections: [
     {
       title: "İş modeli",
@@ -67,25 +62,20 @@ const sector = {
 };
 
 function buildReport() {
-  const result = scenarioResult(-40_000, -20_000);
+  const result = modelResult(-40_000, -20_000);
   return buildFinancialReportModel({
     sector,
-    scenarioId: "expected",
     inputs: { businessType: "cafe", monthlyCustomers: 2_400 },
     result,
     presentation: result.presentation,
-    scenarios: [
-      { id: "pessimistic", label: "Kötümser", result: scenarioResult(-90_000, -150_000) },
-      { id: "expected", label: "Beklenen", result },
-      { id: "optimistic", label: "İyimser", result: scenarioResult(80_000, 650_000) },
-    ],
     generatedAt: new Date("2026-07-24T12:00:00Z"),
   });
 }
 
-test("v0.24 rapor modeli ana ekran hiyerarşisini ekler ve eski sayıları korur", () => {
+test("v0.24 rapor modeli tek kullanıcı girdisi hiyerarşisini ve sayıları korur", () => {
   const report = buildReport();
-  assert.equal(report.reportVersion, "1.1");
+  assert.equal(report.reportVersion, "1.2");
+  assert.equal(report.scenario.id, "user-input");
   assert.equal(report.decision.status, "riskli");
   assert.match(report.decision.message, /aylık zarar/i);
   assert.equal(report.primaryKpis.length, 4);
@@ -98,7 +88,8 @@ test("v0.24 rapor modeli ana ekran hiyerarşisini ekler ve eski sayıları korur
   assert.equal(report.cashFlow.summary.minimumCash, -75_000);
   assert.equal(report.cashFlow.summary.firstNegativeMonth, 2);
   assert.equal(report.cashFlow.summary.additionalFundingNeed, 75_000);
-  assert.equal(report.scenarios.metrics.find((metric) => metric.id === "net_profit").values.expected, -40_000);
+  assert.equal(report.scenarios.scenarios.length, 1);
+  assert.equal(report.scenarios.metrics.find((metric) => metric.id === "net_profit").values["user-input"], -40_000);
 });
 
 test("rapor HTML'i karar, ana göstergeler, uyarı, nakit ve yazdırma sözleşmesini taşır", () => {
@@ -109,7 +100,8 @@ test("rapor HTML'i karar, ana göstergeler, uyarı, nakit ve yazdırma sözleşm
   assert.match(html, /Aylık net/);
   assert.match(html, /Dikkat edilmesi gerekenler/);
   assert.match(html, /class="warning critical"/);
-  assert.match(html, /class="expected"/);
+  assert.doesNotMatch(html, /Senaryo karşılaştırması/);
+  assert.doesNotMatch(html, /class="expected"/);
   assert.match(html, /Ek finansman ihtiyacı/);
   assert.match(html, /class="negative-cash"/);
   assert.match(html, /Ayrıntılı göstergeler/);

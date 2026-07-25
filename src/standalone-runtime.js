@@ -2,9 +2,12 @@ import {
   cloneInputValue,
   coerceFieldValue,
   createTableRow,
-  initializeScenarioInputs,
   updateTableCell,
 } from "./core/sector-schema.js";
+import {
+  createSingleInputSectorState,
+  normalizeSingleInputSectorState,
+} from "./core/single-input-state.js";
 import { csvCell, escapeHtml, exportValue } from "./ui/formatters.js";
 import {
   findFieldDefinition,
@@ -12,11 +15,6 @@ import {
   syncFormInputs,
   syncFormVisibility,
 } from "./ui/form-view.js";
-import {
-  DEFAULT_VIEW_MODE,
-  normalizeViewMode,
-  VIEW_MODE_STORAGE_KEY,
-} from "./ui/view-mode.js";
 import {
   buildDecisionHierarchy,
   renderDecisionSummary,
@@ -26,7 +24,6 @@ import {
   renderCashFlow,
   renderKeySplit,
   renderKPIs,
-  renderScenarioTable,
   renderWarnings,
   renderWaterfall,
   resolveCashFlowColumns,
@@ -64,19 +61,14 @@ export function mountStandaloneCalculator(sourceSector) {
     dataMenu: document.querySelector("#dataMenu"),
     moreMenuButton: document.querySelector("#moreMenuButton"),
     moreMenu: document.querySelector("#moreMenu"),
-
     pageTitle: document.querySelector("#pageTitle"),
     pageSubtitle: document.querySelector("#pageSubtitle"),
     sectorSummary: document.querySelector("#sectorSummary"),
-    scenarioSwitcher: document.querySelector("#scenarioSwitcher"),
-    viewModeSwitcher: document.querySelector("#viewModeSwitcher"),
-    viewModeNote: document.querySelector("#viewModeNote"),
     autosaveStatus: document.querySelector("#autosaveStatus"),
     formSections: document.querySelector("#formSections"),
     resetButton: document.querySelector("#resetButton"),
     resetDialog: document.querySelector("#resetDialog"),
     resetSectorName: document.querySelector("#resetSectorName"),
-    resetScenarioName: document.querySelector("#resetScenarioName"),
     resetCancelButton: document.querySelector("#resetCancelButton"),
     resetConfirmButton: document.querySelector("#resetConfirmButton"),
     exportCsvButton: document.querySelector("#exportCsvButton"),
@@ -97,18 +89,17 @@ export function mountStandaloneCalculator(sourceSector) {
     secondaryKpiToggle: document.querySelector("#secondaryKpiToggle"),
     keySplit: document.querySelector("#keySplit"),
     waterfall: document.querySelector("#waterfall"),
-    scenarioTable: document.querySelector("#scenarioTable"),
     cashFlowTable: document.querySelector("#cashFlowTable"),
     breakdown: document.querySelector("#breakdown"),
   };
 
   let state = loadState();
-  let viewMode = loadViewMode();
   let lastRendered = null;
   let portfolioController = null;
   let autosaveTimer = null;
   let resetDialogTrigger = null;
   let secondaryKpisExpanded = false;
+
   portfolioController = createPortfolioController({
     elements: {
       projectSelect: elements.projectSelect,
@@ -127,14 +118,14 @@ export function mountStandaloneCalculator(sourceSector) {
     storageKey: portfolioStorageKey,
     trackingPrefix: trackingStoragePrefix,
     backupScope: `standalone:${sector.id}`,
-    appVersion: "0.24.1",
+    appVersion: "0.24.2",
     initialWorkspace: state,
     createWorkspace: createDefaultState,
     normalizeWorkspace: normalizeState,
     getWorkspace: () => state,
     setWorkspace: (workspace) => {
       state = normalizeState(workspace);
-      persistLegacyState();
+      persistState();
       renderShell();
       render();
     },
@@ -142,7 +133,8 @@ export function mountStandaloneCalculator(sourceSector) {
     initialName: sector.name,
   });
   state = portfolioController.getActiveWorkspace();
-  persistLegacyState();
+  persistState();
+
   const trackingController = createTrackingController({
     elements: {
       toggleButton: elements.trackingButton,
@@ -156,6 +148,7 @@ export function mountStandaloneCalculator(sourceSector) {
     },
     getContext: () => lastRendered,
     getProjectId: () => portfolioController.getActiveProjectId(),
+    getProjectName: () => portfolioController.getActiveProjectName?.() ?? sector.name,
     storagePrefix: trackingStoragePrefix,
   });
 
@@ -164,55 +157,28 @@ export function mountStandaloneCalculator(sourceSector) {
   render();
 
   function createDefaultState(baseInputs) {
-    return {
-      activeScenario: "expected",
-      scenarioInputs: initializeScenarioInputs(sector, baseInputs),
-    };
+    return createSingleInputSectorState(sector, baseInputs ?? sector.defaultInputs);
   }
 
   function normalizeState(raw) {
-    const next = createDefaultState();
-    next.activeScenario = sector.scenarios[raw?.activeScenario] ? raw.activeScenario : "expected";
-    for (const scenarioId of Object.keys(sector.scenarios)) {
-      const source = raw?.scenarioInputs?.[scenarioId]
-        ?? sector.applyScenario(cloneInputValue(sector.defaultInputs), scenarioId);
-      next.scenarioInputs[scenarioId] = sector.normalizeInputs(cloneInputValue(source));
-    }
-    return next;
+    return normalizeSingleInputSectorState(raw, sector);
   }
 
   function loadState() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
-      if (saved?.scenarioInputs) return normalizeState(saved);
+      if (saved?.inputs || saved?.scenarioInputs || saved?.baseInputs) return normalizeState(saved);
     } catch {
       // Bozuk veya erişilemeyen yerel veri varsayılanlarla değiştirilir.
     }
     return createDefaultState();
   }
 
-  function loadViewMode() {
-    try {
-      return normalizeViewMode(localStorage.getItem(VIEW_MODE_STORAGE_KEY));
-    } catch {
-      return DEFAULT_VIEW_MODE;
-    }
-  }
-
-  function saveViewMode() {
-    try {
-      localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
-    } catch {
-      // Görünüm tercihi kaydedilemese de hesaplama çalışmaya devam eder.
-    }
-  }
-
-  function persistLegacyState() {
+  function persistState() {
     try {
       localStorage.setItem(storageKey, JSON.stringify(state));
       return true;
     } catch {
-      // file:// veya gizli mod yerel depolamayı engellerse hesap çalışmaya devam eder.
       return false;
     }
   }
@@ -232,7 +198,7 @@ export function mountStandaloneCalculator(sourceSector) {
     setAutosaveStatus("saving");
     if (autosaveTimer) clearTimeout(autosaveTimer);
     try {
-      const saved = persistLegacyState();
+      const saved = persistState();
       portfolioController?.syncActiveWorkspace();
       if (!saved) {
         setAutosaveStatus("error");
@@ -247,16 +213,12 @@ export function mountStandaloneCalculator(sourceSector) {
   }
 
   function currentInputs() {
-    return state.scenarioInputs[state.activeScenario];
+    return state.inputs;
   }
 
   function summarizeWorkspace(workspace) {
     const normalized = normalizeState(workspace);
-    return buildProjectFinancialSummary({
-      sector,
-      scenarioId: normalized.activeScenario,
-      inputs: normalized.scenarioInputs[normalized.activeScenario],
-    });
+    return buildProjectFinancialSummary({ sector, inputs: normalized.inputs });
   }
 
   function renderShell() {
@@ -269,35 +231,16 @@ export function mountStandaloneCalculator(sourceSector) {
       <strong>${escapeHtml(sector.name)}</strong>
       <span>${escapeHtml(sector.version)} · ${sector.status === "simulation" ? "Simülasyon modu" : escapeHtml(sector.status)}</span>
     `;
-    renderScenarioButtons();
-    renderViewModeControl();
     renderForm();
   }
 
-  function renderScenarioButtons() {
-    elements.scenarioSwitcher.innerHTML = Object.entries(sector.scenarios).map(([id, preset]) =>
-      `<button type="button" class="scenario-button ${state.activeScenario === id ? "active" : ""}" data-scenario="${id}">${escapeHtml(preset.label)}</button>`,
-    ).join("");
-  }
-
   function renderForm() {
-    elements.formSections.innerHTML = renderFormHtml(sector, currentInputs(), { viewMode });
-  }
-
-  function renderViewModeControl() {
-    elements.viewModeSwitcher.querySelectorAll?.("[data-view-mode]").forEach((button) => {
-      const active = button.dataset.viewMode === viewMode;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-    elements.viewModeNote.textContent = viewMode === "advanced"
-      ? "Bütün sektör ayrıntıları gösteriliyor."
-      : "Yalnız temel varsayımlar gösteriliyor.";
+    elements.formSections.innerHTML = renderFormHtml(sector, currentInputs());
   }
 
   function updateCurrentInputs(patch) {
-    state.scenarioInputs[state.activeScenario] = sector.normalizeInputs({
-      ...cloneInputValue(state.scenarioInputs[state.activeScenario]),
+    state.inputs = sector.normalizeInputs({
+      ...cloneInputValue(currentInputs()),
       ...cloneInputValue(patch),
     });
     saveState();
@@ -399,7 +342,6 @@ export function mountStandaloneCalculator(sourceSector) {
 
   function openResetDialog() {
     elements.resetSectorName.textContent = sector.name;
-    elements.resetScenarioName.textContent = sector.scenarios[state.activeScenario]?.label ?? state.activeScenario;
     resetDialogTrigger = elements.resetButton;
     if (typeof elements.resetDialog.showModal === "function") {
       elements.resetDialog.showModal();
@@ -418,32 +360,12 @@ export function mountStandaloneCalculator(sourceSector) {
   function attachEvents() {
     elements.formSections.addEventListener("input", handleFormInput);
     elements.formSections.addEventListener("click", handleTableAction);
-    elements.scenarioSwitcher.addEventListener("click", (event) => {
-      const scenarioId = event.target.dataset.scenario;
-      if (!scenarioId || !sector.scenarios[scenarioId]) return;
-      state.activeScenario = scenarioId;
-      saveState();
-      renderScenarioButtons();
-      renderForm();
-      render();
-    });
-    elements.viewModeSwitcher.addEventListener("click", (event) => {
-      const nextMode = event.target.dataset.viewMode;
-      if (!nextMode || normalizeViewMode(nextMode) === viewMode) return;
-      viewMode = normalizeViewMode(nextMode);
-      saveViewMode();
-      renderViewModeControl();
-      renderForm();
-      render();
-    });
     elements.secondaryKpiToggle.addEventListener("click", () => {
       secondaryKpisExpanded = !secondaryKpisExpanded;
       renderSecondaryKpiDisclosure();
     });
 
-    for (const menu of actionMenus()) {
-      menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
-    }
+    for (const menu of actionMenus()) menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
     for (const item of document.querySelectorAll("[data-menu-action]")) {
       item.addEventListener("click", () => closeActionMenus());
     }
@@ -489,9 +411,8 @@ export function mountStandaloneCalculator(sourceSector) {
     const result = sector.calculateModel(inputs);
     const presentation = sector.buildPresentation(result);
     const hierarchy = buildDecisionHierarchy({ sector, result, presentation });
-    const scenarios = sector.calculateScenarioComparison(state.scenarioInputs);
     syncFormInputs(elements.formSections, inputs);
-    syncFormVisibility(elements.formSections, sector, inputs, viewMode);
+    syncFormVisibility(elements.formSections, sector, inputs);
     renderDecisionSummary(elements.decisionSummary, hierarchy.decision);
     renderKPIs(elements.kpiGrid, hierarchy.primaryKpis);
     renderWarnings(elements.warnings, result.warnings);
@@ -499,10 +420,9 @@ export function mountStandaloneCalculator(sourceSector) {
     renderSecondaryKpiDisclosure(hierarchy.secondaryKpis.length);
     renderKeySplit(elements.keySplit, presentation.keySplit);
     renderWaterfall(elements.waterfall, result.waterfall);
-    renderScenarioTable(elements.scenarioTable, sector, scenarios);
     renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
     renderBreakdown(elements.breakdown, presentation.breakdown);
-    lastRendered = { sector, scenarioId: state.activeScenario, inputs, result, presentation, scenarios };
+    lastRendered = { sector, inputs, result, presentation };
     trackingController.render();
   }
 

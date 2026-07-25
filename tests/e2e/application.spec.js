@@ -36,8 +36,8 @@ test("form doğrudan tam görünümde açılır ve senaryo kontrolleri gösteril
   await expect(page.locator("#scenarioSwitcher")).toBeHidden();
   await expect(page.locator("#scenarioTable").locator("xpath=ancestor::section[1]")).toBeHidden();
   await expect(page.locator(".table-field").first()).not.toHaveClass(/view-mode-hidden/);
-  await expect(page.locator("#scenarioSwitcher .scenario-button")).toHaveCount(1);
-  await expect(page.locator("#scenarioSwitcher")).toContainText("Kullanıcı girdileri");
+  await expect(page.locator("#scenarioSwitcher .scenario-button")).toHaveCount(0);
+  await expect(page.locator("#scenarioSwitcher")).toBeEmpty();
   expect(errors).toEqual([]);
 });
 

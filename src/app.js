@@ -2,9 +2,12 @@ import {
   cloneInputValue,
   coerceFieldValue,
   createTableRow,
-  initializeScenarioInputs,
   updateTableCell,
 } from "./core/sector-schema.js";
+import {
+  createSingleInputSectorState,
+  normalizeSingleInputSectorState,
+} from "./core/single-input-state.js";
 import { SECTORS, getSector } from "./sectors/registry.js";
 import { csvCell, escapeHtml, exportValue } from "./ui/formatters.js";
 import {
@@ -14,11 +17,6 @@ import {
   syncFormVisibility,
 } from "./ui/form-view.js";
 import {
-  DEFAULT_VIEW_MODE,
-  normalizeViewMode,
-  VIEW_MODE_STORAGE_KEY,
-} from "./ui/view-mode.js";
-import {
   buildDecisionHierarchy,
   renderDecisionSummary,
 } from "./ui/decision-summary.js";
@@ -27,7 +25,6 @@ import {
   renderCashFlow,
   renderKeySplit,
   renderKPIs,
-  renderScenarioTable,
   renderWarnings,
   renderWaterfall,
   resolveCashFlowColumns,
@@ -41,6 +38,7 @@ const STORAGE_KEY = "business-income-calculator:platform:v0.2";
 const PORTFOLIO_STORAGE_KEY = "business-income-calculator:portfolio:v0.1";
 const TRACKING_STORAGE_PREFIX = "business-income-calculator:tracking:v0.1";
 const OLD_CAFE_KEY = "business-income-calculator:cafe:v0.1";
+
 const elements = {
   projectSelect: document.querySelector("#projectSelect"),
   projectNewButton: document.querySelector("#projectNewButton"),
@@ -67,15 +65,11 @@ const elements = {
   pageTitle: document.querySelector("#pageTitle"),
   pageSubtitle: document.querySelector("#pageSubtitle"),
   sectorSummary: document.querySelector("#sectorSummary"),
-  scenarioSwitcher: document.querySelector("#scenarioSwitcher"),
-  viewModeSwitcher: document.querySelector("#viewModeSwitcher"),
-  viewModeNote: document.querySelector("#viewModeNote"),
   autosaveStatus: document.querySelector("#autosaveStatus"),
   formSections: document.querySelector("#formSections"),
   resetButton: document.querySelector("#resetButton"),
   resetDialog: document.querySelector("#resetDialog"),
   resetSectorName: document.querySelector("#resetSectorName"),
-  resetScenarioName: document.querySelector("#resetScenarioName"),
   resetCancelButton: document.querySelector("#resetCancelButton"),
   resetConfirmButton: document.querySelector("#resetConfirmButton"),
   exportCsvButton: document.querySelector("#exportCsvButton"),
@@ -96,18 +90,17 @@ const elements = {
   secondaryKpiToggle: document.querySelector("#secondaryKpiToggle"),
   keySplit: document.querySelector("#keySplit"),
   waterfall: document.querySelector("#waterfall"),
-  scenarioTable: document.querySelector("#scenarioTable"),
   cashFlowTable: document.querySelector("#cashFlowTable"),
   breakdown: document.querySelector("#breakdown"),
 };
 
 let state = loadState();
-let viewMode = loadViewMode();
 let lastRendered = null;
 let portfolioController = null;
 let autosaveTimer = null;
 let resetDialogTrigger = null;
 let secondaryKpisExpanded = false;
+
 portfolioController = createPortfolioController({
   elements: {
     projectSelect: elements.projectSelect,
@@ -126,21 +119,22 @@ portfolioController = createPortfolioController({
   storageKey: PORTFOLIO_STORAGE_KEY,
   trackingPrefix: TRACKING_STORAGE_PREFIX,
   backupScope: "platform",
-  appVersion: "0.24.1",
+  appVersion: "0.24.2",
   initialWorkspace: state,
   createWorkspace: createDefaultState,
   normalizeWorkspace: normalizeState,
   getWorkspace: () => state,
   setWorkspace: (workspace) => {
     state = normalizeState(workspace);
-    persistLegacyState();
+    persistState();
     renderSectorShell();
     render();
   },
   summarizeWorkspace,
 });
 state = portfolioController.getActiveWorkspace();
-persistLegacyState();
+persistState();
+
 const trackingController = createTrackingController({
   elements: {
     toggleButton: elements.trackingButton,
@@ -154,6 +148,7 @@ const trackingController = createTrackingController({
   },
   getContext: () => lastRendered,
   getProjectId: () => portfolioController.getActiveProjectId(),
+  getProjectName: () => portfolioController.getActiveProjectName?.() ?? "Aktif kayıt",
   storagePrefix: TRACKING_STORAGE_PREFIX,
 });
 
@@ -165,32 +160,23 @@ render();
 function createDefaultState() {
   return {
     activeSectorId: SECTORS[0].id,
-    sectors: Object.fromEntries(SECTORS.map((sector) => [sector.id, {
-      activeScenario: "expected",
-      scenarioInputs: initializeScenarioInputs(sector),
-    }])),
+    sectors: Object.fromEntries(SECTORS.map((sector) => [
+      sector.id,
+      createSingleInputSectorState(sector),
+    ])),
   };
 }
 
-function normalizeState(raw) {
+function normalizeState(raw = {}) {
   const next = createDefaultState();
-  next.activeSectorId = SECTORS.some((sector) => sector.id === raw.activeSectorId)
+  next.activeSectorId = SECTORS.some((sector) => sector.id === raw?.activeSectorId)
     ? raw.activeSectorId
     : next.activeSectorId;
 
   for (const sector of SECTORS) {
-    const savedSector = raw.sectors?.[sector.id];
+    const savedSector = raw?.sectors?.[sector.id];
     if (!savedSector) continue;
-    const scenarioInputs = {};
-    for (const scenarioId of Object.keys(sector.scenarios)) {
-      const source = savedSector.scenarioInputs?.[scenarioId]
-        ?? sector.applyScenario(cloneInputValue(sector.defaultInputs), scenarioId);
-      scenarioInputs[scenarioId] = sector.normalizeInputs(cloneInputValue(source));
-    }
-    next.sectors[sector.id] = {
-      activeScenario: sector.scenarios[savedSector.activeScenario] ? savedSector.activeScenario : "expected",
-      scenarioInputs,
-    };
+    next.sectors[sector.id] = normalizeSingleInputSectorState(savedSector, sector);
   }
   return next;
 }
@@ -206,12 +192,9 @@ function loadState() {
   const fresh = createDefaultState();
   try {
     const oldCafe = JSON.parse(localStorage.getItem(OLD_CAFE_KEY));
-    if (oldCafe?.baseInputs) {
+    if (oldCafe?.baseInputs || oldCafe?.scenarioInputs) {
       const cafe = getSector("cafe_restaurant");
-      fresh.sectors.cafe_restaurant = {
-        activeScenario: oldCafe.activeScenario || "expected",
-        scenarioInputs: initializeScenarioInputs(cafe, oldCafe.baseInputs),
-      };
+      fresh.sectors.cafe_restaurant = normalizeSingleInputSectorState(oldCafe, cafe, oldCafe.baseInputs);
     }
   } catch {
     // Eski veri yoksa sessizce devam edilir.
@@ -219,23 +202,7 @@ function loadState() {
   return fresh;
 }
 
-function loadViewMode() {
-  try {
-    return normalizeViewMode(localStorage.getItem(VIEW_MODE_STORAGE_KEY));
-  } catch {
-    return DEFAULT_VIEW_MODE;
-  }
-}
-
-function saveViewMode() {
-  try {
-    localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
-  } catch {
-    // Görünüm tercihi kaydedilemese de hesaplama çalışmaya devam eder.
-  }
-}
-
-function persistLegacyState() {
+function persistState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -254,7 +221,7 @@ function saveState() {
   setAutosaveStatus("saving");
   if (autosaveTimer) clearTimeout(autosaveTimer);
   try {
-    persistLegacyState();
+    persistState();
     portfolioController?.syncActiveWorkspace();
     autosaveTimer = setTimeout(() => setAutosaveStatus("saved"), 350);
     return true;
@@ -273,18 +240,15 @@ function currentSectorState() {
 }
 
 function currentInputs() {
-  const sectorState = currentSectorState();
-  return sectorState.scenarioInputs[sectorState.activeScenario];
+  return currentSectorState().inputs;
 }
 
 function summarizeWorkspace(workspace) {
   const normalized = normalizeState(workspace);
   const sector = getSector(normalized.activeSectorId);
-  const sectorState = normalized.sectors[sector.id];
   return buildProjectFinancialSummary({
     sector,
-    scenarioId: sectorState.activeScenario,
-    inputs: sectorState.scenarioInputs[sectorState.activeScenario],
+    inputs: normalized.sectors[sector.id].inputs,
   });
 }
 
@@ -305,40 +269,17 @@ function renderSectorShell() {
     <strong>${escapeHtml(sector.name)}</strong>
     <span>${escapeHtml(sector.version)} · ${sector.status === "simulation" ? "Simülasyon modu" : escapeHtml(sector.status)}</span>
   `;
-  renderScenarioButtons();
-  renderViewModeControl();
   renderForm();
 }
 
-function renderScenarioButtons() {
-  const sector = currentSector();
-  const sectorState = currentSectorState();
-  elements.scenarioSwitcher.innerHTML = Object.entries(sector.scenarios).map(([id, preset]) =>
-    `<button type="button" class="scenario-button ${sectorState.activeScenario === id ? "active" : ""}" data-scenario="${id}">${escapeHtml(preset.label)}</button>`,
-  ).join("");
-}
-
 function renderForm() {
-  elements.formSections.innerHTML = renderFormHtml(currentSector(), currentInputs(), { viewMode });
-}
-
-function renderViewModeControl() {
-  elements.viewModeSwitcher.querySelectorAll?.("[data-view-mode]").forEach((button) => {
-    const active = button.dataset.viewMode === viewMode;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-  elements.viewModeNote.textContent = viewMode === "advanced"
-    ? "Tüm hesaplama alanları gösteriliyor."
-    : "Yalnız temel varsayımlar gösteriliyor.";
+  elements.formSections.innerHTML = renderFormHtml(currentSector(), currentInputs());
 }
 
 function updateCurrentInputs(patch) {
   const sector = currentSector();
-  const sectorState = currentSectorState();
-  const scenarioId = sectorState.activeScenario;
-  sectorState.scenarioInputs[scenarioId] = sector.normalizeInputs({
-    ...cloneInputValue(sectorState.scenarioInputs[scenarioId]),
+  currentSectorState().inputs = sector.normalizeInputs({
+    ...cloneInputValue(currentInputs()),
     ...cloneInputValue(patch),
   });
   saveState();
@@ -434,10 +375,7 @@ function toggleActionMenu(selected) {
 
 function resetCurrentSector() {
   const sector = currentSector();
-  state.sectors[sector.id] = {
-    activeScenario: "expected",
-    scenarioInputs: initializeScenarioInputs(sector),
-  };
+  state.sectors[sector.id] = createSingleInputSectorState(sector);
   saveState();
   renderSectorShell();
   render();
@@ -445,9 +383,7 @@ function resetCurrentSector() {
 
 function openResetDialog() {
   const sector = currentSector();
-  const scenarioId = currentSectorState().activeScenario;
   elements.resetSectorName.textContent = sector.name;
-  elements.resetScenarioName.textContent = sector.scenarios[scenarioId]?.label ?? scenarioId;
   resetDialogTrigger = elements.resetButton;
   if (typeof elements.resetDialog.showModal === "function") {
     elements.resetDialog.showModal();
@@ -474,34 +410,12 @@ function attachEvents() {
   elements.formSections.addEventListener("input", handleFormInput);
   elements.formSections.addEventListener("click", handleTableAction);
 
-  elements.scenarioSwitcher.addEventListener("click", (event) => {
-    const scenarioId = event.target.dataset.scenario;
-    if (!scenarioId || !currentSector().scenarios[scenarioId]) return;
-    currentSectorState().activeScenario = scenarioId;
-    saveState();
-    renderScenarioButtons();
-    renderForm();
-    render();
-  });
-
-  elements.viewModeSwitcher.addEventListener("click", (event) => {
-    const nextMode = event.target.dataset.viewMode;
-    if (!nextMode || normalizeViewMode(nextMode) === viewMode) return;
-    viewMode = normalizeViewMode(nextMode);
-    saveViewMode();
-    renderViewModeControl();
-    renderForm();
-    render();
-  });
-
   elements.secondaryKpiToggle.addEventListener("click", () => {
     secondaryKpisExpanded = !secondaryKpisExpanded;
     renderSecondaryKpiDisclosure();
   });
 
-  for (const menu of actionMenus()) {
-    menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
-  }
+  for (const menu of actionMenus()) menu.trigger.addEventListener("click", () => toggleActionMenu(menu));
   for (const item of document.querySelectorAll("[data-menu-action]")) {
     item.addEventListener("click", () => closeActionMenus());
   }
@@ -545,15 +459,13 @@ function attachEvents() {
 
 function render() {
   const sector = currentSector();
-  const sectorState = currentSectorState();
   const inputs = currentInputs();
   const result = sector.calculateModel(inputs);
   const presentation = sector.buildPresentation(result);
   const hierarchy = buildDecisionHierarchy({ sector, result, presentation });
-  const scenarios = sector.calculateScenarioComparison(sectorState.scenarioInputs);
 
   syncFormInputs(elements.formSections, inputs);
-  syncFormVisibility(elements.formSections, sector, inputs, viewMode);
+  syncFormVisibility(elements.formSections, sector, inputs);
   renderDecisionSummary(elements.decisionSummary, hierarchy.decision);
   renderKPIs(elements.kpiGrid, hierarchy.primaryKpis);
   renderWarnings(elements.warnings, result.warnings);
@@ -561,10 +473,9 @@ function render() {
   renderSecondaryKpiDisclosure(hierarchy.secondaryKpis.length);
   renderKeySplit(elements.keySplit, presentation.keySplit);
   renderWaterfall(elements.waterfall, result.waterfall);
-  renderScenarioTable(elements.scenarioTable, sector, scenarios);
   renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
   renderBreakdown(elements.breakdown, presentation.breakdown);
-  lastRendered = { sector, scenarioId: sectorState.activeScenario, inputs, result, presentation, scenarios };
+  lastRendered = { sector, inputs, result, presentation };
   trackingController.render();
 }
 
