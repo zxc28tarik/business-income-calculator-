@@ -9,6 +9,8 @@
 | Durum | Çalışan ilk ürün dilimi, taslak PR |
 | Son kalite kapısı | `Release quality gate #824 — başarılı` |
 
+> PR taslak durumundadır ve `main` dalına birleştirilmemiştir. Bu belge yalnız uygulanan kapsamı, doğrulamaları ve sıradaki teknik sınırı kayıt altına alır.
+
 ## Tamamlanan çekirdek
 
 - Kuruluş profili ve güvenli veri normalizasyonu.
