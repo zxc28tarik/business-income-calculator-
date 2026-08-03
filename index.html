@@ -8,13 +8,14 @@
 <title>Business Income Calculator</title>
 <link rel="stylesheet" href="./styles.css" />
 <link rel="stylesheet" href="./styles-advanced.css" />
+<link rel="stylesheet" href="./styles-setup.css" />
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Ana içeriğe geç</a>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="topbar-brand">
-      <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.24.1</p>
+      <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.24.2</p>
       <h1 id="pageTitle">Sektör Bazlı Finansal Fizibilite</h1>
       <p id="pageSubtitle" class="subtitle">Cirodan net kâra, başabaştan 12 aylık nakit akışına kadar düzenlenebilir ön fizibilite.</p>
     </div>
@@ -33,6 +34,7 @@
 
       <div class="primary-actions" aria-label="Ana işlemler">
         <button id="projectNewButton" class="primary-button" type="button">Yeni kayıt</button>
+        <button id="setupButton" class="secondary-button" type="button" aria-expanded="false" aria-controls="setupPanel">Kuruluş</button>
         <button id="trackingButton" class="secondary-button" type="button" aria-expanded="false">Gerçek Takip</button>
         <button id="portfolioButton" class="secondary-button" type="button" aria-expanded="false">Portföy</button>
         <button id="reportButton" class="secondary-button" type="button">Rapor al</button>
@@ -103,7 +105,7 @@
         <div><p class="eyebrow">KAYITLAR · PORTFÖY</p><h2>İşletme ve proje karşılaştırması</h2></div>
         <div class="portfolio-actions"><button id="portfolioCloseButton" class="secondary-button" type="button">Kapat</button></div>
       </div>
-      <p class="section-description">Her kayıt kendi sektör, kullanıcı girdileri ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p>
+      <p class="section-description">Her kayıt kendi sektör, kullanıcı girdileri, kuruluş planı ve gerçek takip verilerini taşır. Portföy tablosu mevcut finans motorlarının sonuçlarını karşılaştırır.</p>
       <div class="table-scroll" role="region" aria-label="Portföy karşılaştırma tablosu" tabindex="0"><table id="portfolioTable" class="portfolio-table"></table></div>
     </section>
 
@@ -116,6 +118,33 @@
       <div id="trackingSummary" class="tracking-summary"></div>
       <div class="table-scroll tracking-table-scroll" role="region" aria-label="Aylık gerçekleşen veri tablosu" tabindex="0"><table id="trackingTable" class="tracking-table"></table></div>
       <div id="trackingTrends" class="tracking-trends"></div>
+    </section>
+
+    <section id="setupPanel" class="panel-card setup-panel" aria-label="Kuruluş ve açılış çalışma alanı" hidden>
+      <div class="section-heading">
+        <div><p class="eyebrow">KURULUŞ · AÇILIŞ</p><h2>İşletmeyi açmak için gereken gerçek nakit</h2></div>
+        <div class="setup-panel-actions">
+          <button id="setupSyncButton" class="secondary-button" type="button">Koşulları yenile</button>
+          <button id="setupAddItemButton" class="secondary-button" type="button">Özel kalem ekle</button>
+          <button id="setupCloseButton" class="secondary-button" type="button">Kapat</button>
+        </div>
+      </div>
+      <p class="section-description">İşletme koşullarını seçin; sistem olası ihtiyaçları çıkarır. Fiyatı ve uygulanabilirliği kullanıcı, teklif veya uzman doğrulaması belirler. Bu alan resmî muhasebe ya da kesin ruhsat sonucu üretmez.</p>
+      <div id="setupProfile" class="setup-profile-card"></div>
+      <div class="setup-requirements-card">
+        <div class="section-heading"><div><p class="eyebrow">KONTROL LİSTESİ</p><h2>Koşullardan doğan gereksinimler</h2></div></div>
+        <div id="setupRequirements"></div>
+      </div>
+      <div class="setup-items-card">
+        <div class="section-heading"><div><p class="eyebrow">MALİYET PLANI</p><h2>Kuruluş ve açılış kalemleri</h2></div></div>
+        <p class="section-description">Yalnız “Hesaba dahil” durumundaki kalemler başlangıç nakdine girer. Teklif ve doğrulama bekleyen kalemler sıfır tutarla güvenli şekilde izlenir.</p>
+        <div class="setup-items-scroll" role="region" aria-label="Kuruluş ve açılış maliyet tablosu" tabindex="0"><table id="setupItemsTable" class="setup-items-table"></table></div>
+      </div>
+    </section>
+
+    <section class="result-section setup-cash-section" aria-labelledby="setupCashHeading">
+      <div class="section-heading"><div><p class="eyebrow">KURULUŞ NAKDİ</p><h2 id="setupCashHeading">Gerçek başlangıç nakdi</h2></div></div>
+      <div id="setupCashSummary"></div>
     </section>
 
     <section class="result-section decision-section" aria-labelledby="decisionHeading">
@@ -177,7 +206,7 @@
       <p class="eyebrow">GERİ ALINAMAZ İŞLEM</p>
       <h2 id="resetDialogTitle">Sektör verisini sıfırla</h2>
     </div>
-    <p id="resetDialogDescription">Bu sektöre ait kayıtlı girdiler varsayılan değerlere döndürülecek.</p>
+    <p id="resetDialogDescription">Bu sektöre ait kayıtlı girdiler ve kuruluş planı varsayılan değerlere döndürülecek.</p>
     <dl class="reset-summary">
       <div><dt>Sektör</dt><dd id="resetSectorName">—</dd></div>
       <div hidden><dt>Aktif senaryo</dt><dd id="resetScenarioName">—</dd></div>
