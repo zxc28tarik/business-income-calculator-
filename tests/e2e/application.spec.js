@@ -121,7 +121,8 @@ test("tam JSON yedeği tarayıcıdan indirilebilir", async ({ page }, testInfo) 
 
 test("üst eylem menüleri klavye ve dışarı tıklamayla güvenli kapanır", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".primary-actions > button")).toHaveCount(4);
+  await expect(page.locator(".primary-actions > button")).toHaveCount(5);
+  await expect(page.locator("#setupButton")).toBeVisible();
 
   await page.locator("#recordMenuButton").click();
   await expect(page.locator("#recordMenuButton")).toHaveAttribute("aria-expanded", "true");
