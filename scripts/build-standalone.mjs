@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_OUTPUT_DIR = path.join(ROOT, "standalone");
-const APP_VERSION = "0.24.1";
+const APP_VERSION = "0.24.2";
 
 export const STANDALONE_SECTORS = [
   { id: "cafe_restaurant", name: "Kafe / Restoran", file: "cafe-restaurant-calculator.html", module: "src/sectors/cafe-restaurant.js", exportName: "CAFE_SECTOR" },
