@@ -35,8 +35,8 @@ test("320 piksel dar görünümde ana kontroller kesilmez", async ({ page }) => 
   await assertCoreWorkspace(page);
 
   const primaryActions = page.locator(".primary-actions > button");
-  await expect(primaryActions).toHaveCount(4);
-  for (let index = 0; index < 4; index += 1) {
+  await expect(primaryActions).toHaveCount(5);
+  for (let index = 0; index < 5; index += 1) {
     const box = await primaryActions.nth(index).boundingBox();
     expect(box).toBeTruthy();
     expect(box.x).toBeGreaterThanOrEqual(0);
