@@ -34,7 +34,7 @@ test("kuruluş kalemi düzenlenir, başlangıç nakdine bağlanır ve kaydedilir
   await row().locator('[data-setup-item-field="status"]').selectOption("included");
 
   await expect(page.locator("#setupCashSummary")).toContainText("26.400");
-  await expect(page.locator("#setupCashSummary")).toContainText("24.000");
+  await expect(page.locator("#setupCashSummary")).toContainText("20.000");
   await expect(page.locator("#setupCashSummary")).toContainText("4.000");
 
   await page.reload();
