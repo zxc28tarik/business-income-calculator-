@@ -3,8 +3,8 @@ import {
   createDefaultSetupProfile,
   normalizeSetupCostItem,
   normalizeSetupCostItems,
-  normalizeSetupFunding,
   normalizeSetupProfile,
+  buildSetupPaymentSchedule,
   buildStartupCashBridge,
 } from "./setup-model.js";
 import {
@@ -14,6 +14,9 @@ import {
 import { SETUP_REQUIREMENT_RULES } from "./requirement-rules.js";
 
 export const SETUP_WORKSPACE_VERSION = 1;
+
+const FUNDING_TYPES = new Set(["equity", "loan", "grant", "support", "supplier_credit", "other"]);
+const FUNDING_STATUSES = new Set(["planned", "available", "used", "excluded"]);
 
 function text(value, fallback = "") {
   const normalized = String(value ?? "").replace(/\s+/g, " ").trim();
@@ -25,8 +28,16 @@ function nonNegative(value, fallback = 0) {
   return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
 }
 
+function nonNegativeInteger(value, fallback = 0) {
+  return Math.floor(nonNegative(value, fallback));
+}
+
 function boundedRate(value, fallback = 0.1) {
   return Math.min(1, nonNegative(value, fallback));
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }
 
 function safeId(value, fallback) {
@@ -34,6 +45,10 @@ function safeId(value, fallback) {
     .replace(/[^a-zA-Z0-9_-]/g, "_")
     .slice(0, 120);
   return normalized || fallback;
+}
+
+function enumValue(value, allowed, fallback) {
+  return allowed.has(value) ? value : fallback;
 }
 
 function uniqueStrings(value) {
@@ -83,13 +98,26 @@ function itemTemplateIdentity(item) {
   return requirementId && templateKey ? `${requirementId}::${templateKey}` : "";
 }
 
+export function normalizeWorkspaceFunding(raw = {}, index = 0) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  return {
+    id: safeId(source.id, `setup-funding-${index + 1}`),
+    label: text(source.label, `Finansman ${index + 1}`),
+    type: enumValue(source.type, FUNDING_TYPES, "other"),
+    status: enumValue(source.status, FUNDING_STATUSES, "planned"),
+    amount: roundMoney(nonNegative(source.amount)),
+    availableMonth: Math.min(120, nonNegativeInteger(source.availableMonth)),
+    note: text(source.note),
+  };
+}
+
 export function normalizeSetupWorkspace(raw = {}, context = {}) {
   const source = raw && typeof raw === "object" ? raw : {};
   return {
     version: SETUP_WORKSPACE_VERSION,
     profile: normalizeProfile(source.profile, context),
     items: normalizeSetupCostItems(source.items),
-    funding: Array.isArray(source.funding) ? source.funding.map(normalizeSetupFunding) : [],
+    funding: Array.isArray(source.funding) ? source.funding.map(normalizeWorkspaceFunding) : [],
     reserveRate: boundedRate(source.reserveRate, 0.1),
     openingMonth: Math.min(120, Math.floor(nonNegative(source.openingMonth))),
     dismissedTemplates: uniqueStrings(source.dismissedTemplates),
@@ -122,6 +150,36 @@ export function createDefaultSetupWorkspace(context = {}, options = {}) {
   }, context, options);
 }
 
+function fundingForCashBridge(workspace) {
+  return workspace.funding.map((item) => item.status === "used"
+    ? {
+      ...item,
+      status: "available",
+      availableMonth: Math.min(item.availableMonth, workspace.openingMonth),
+    }
+    : item);
+}
+
+function summarizeFunding(workspace, availableFunding) {
+  const totals = {
+    totalAmount: 0,
+    plannedAmount: 0,
+    availableAmount: 0,
+    usedAmount: 0,
+    excludedAmount: 0,
+    readyAmount: roundMoney(availableFunding),
+  };
+  for (const item of workspace.funding) {
+    totals.totalAmount += item.amount;
+    if (item.status === "planned") totals.plannedAmount += item.amount;
+    if (item.status === "available") totals.availableAmount += item.amount;
+    if (item.status === "used") totals.usedAmount += item.amount;
+    if (item.status === "excluded") totals.excludedAmount += item.amount;
+  }
+  for (const key of Object.keys(totals)) totals[key] = roundMoney(totals[key]);
+  return totals;
+}
+
 export function buildSetupWorkspaceResult(raw = {}, context = {}, options = {}) {
   const workspace = synchronizeSetupWorkspace(raw, context, options);
   const requirements = resolveSetupRequirements({
@@ -131,10 +189,13 @@ export function buildSetupWorkspaceResult(raw = {}, context = {}, options = {}) 
   });
   const cashBridge = buildStartupCashBridge({
     items: workspace.items,
-    funding: workspace.funding,
+    funding: fundingForCashBridge(workspace),
     reserveRate: workspace.reserveRate,
     openingMonth: workspace.openingMonth,
   });
+  cashBridge.funding = workspace.funding;
+  const paymentSchedule = buildSetupPaymentSchedule(workspace.items, options.scheduleMonths ?? 12);
+  const fundingSummary = summarizeFunding(workspace, cashBridge.availableFunding);
   const quoteCount = workspace.items.filter((item) => item.status === SETUP_ITEM_STATUSES.QUOTE).length;
   const verifyCount = workspace.items.filter((item) => item.status === SETUP_ITEM_STATUSES.VERIFY).length;
 
@@ -142,6 +203,8 @@ export function buildSetupWorkspaceResult(raw = {}, context = {}, options = {}) 
     workspace,
     requirements,
     cashBridge,
+    paymentSchedule,
+    fundingSummary,
     quoteCount,
     verifyCount,
     unresolvedCount: quoteCount + verifyCount,
@@ -202,5 +265,41 @@ export function removeSetupItem(raw, itemId, context = {}, options = {}) {
     ...workspace,
     items: workspace.items.filter((item) => item.id !== id),
     dismissedTemplates,
+  }, context, options);
+}
+
+export function addSetupFunding(raw, seed = {}, context = {}, options = {}) {
+  const workspace = normalizeSetupWorkspace(raw, context);
+  const existingIds = new Set(workspace.funding.map((item) => item.id));
+  const requestedId = safeId(seed.id, `funding-${Date.now().toString(36)}`);
+  let id = requestedId;
+  let suffix = 2;
+  while (existingIds.has(id)) id = `${requestedId}-${suffix++}`;
+  const funding = normalizeWorkspaceFunding({
+    label: "Yeni finansman kaynağı",
+    type: "equity",
+    status: "planned",
+    ...seed,
+    id,
+  }, workspace.funding.length);
+  return synchronizeSetupWorkspace({ ...workspace, funding: [...workspace.funding, funding] }, context, options);
+}
+
+export function updateSetupFunding(raw, fundingId, patch, context = {}, options = {}) {
+  const workspace = normalizeSetupWorkspace(raw, context);
+  const id = safeId(fundingId, "");
+  if (!id) return synchronizeSetupWorkspace(workspace, context, options);
+  const funding = workspace.funding.map((item, index) => item.id === id
+    ? normalizeWorkspaceFunding({ ...item, ...(patch && typeof patch === "object" ? patch : {}), id }, index)
+    : item);
+  return synchronizeSetupWorkspace({ ...workspace, funding }, context, options);
+}
+
+export function removeSetupFunding(raw, fundingId, context = {}, options = {}) {
+  const workspace = normalizeSetupWorkspace(raw, context);
+  const id = safeId(fundingId, "");
+  return synchronizeSetupWorkspace({
+    ...workspace,
+    funding: workspace.funding.filter((item) => item.id !== id),
   }, context, options);
 }
