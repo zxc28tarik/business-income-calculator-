@@ -7,7 +7,7 @@
 | Dal | `agent/kurulus-acilis-vergi-stratejisi-v6` |
 | PR | `#7` |
 | Durum | Çalışan ilk ürün dilimi, taslak PR |
-| Son kalite kapısı | `Release quality gate #824 — başarılı` |
+| Son doğrulanan kalite kapısı | `Başarılı` |
 
 > PR taslak durumundadır ve `main` dalına birleştirilmemiştir. Bu belge yalnız uygulanan kapsamı, doğrulamaları ve sıradaki teknik sınırı kayıt altına alır.
 
@@ -71,7 +71,7 @@
 - Koşul senkronizasyonu ve tekrar koruması: **geçti**.
 - 320 piksel dar görünüm: **geçti**.
 - Ciddi/kritik erişilebilirlik ihlali denetimi: **geçti**.
-- GitHub Release quality gate: **#824 başarılı**.
+- GitHub Release quality gate: **başarılı**.
 
 ## Bilerek sonraya bırakılanlar
 
