@@ -60,3 +60,53 @@ test("profil koşulu yeni gereksinimi üretir ve yinelenen kalem oluşturmaz", a
   await page.locator("#setupSyncButton").click();
   await expect(page.locator("#setupItemsTable tbody tr")).toHaveCount(afterFirstSync);
 });
+
+test("planlanan finansman özkaynağı azaltmaz, hazır finansman azaltır ve taksit planı korunur", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.locator("#setupButton").click();
+
+  const capexRowId = await page.locator("#setupItemsTable tbody tr").evaluateAll((rows) => {
+    const row = rows.find((item) => item.querySelector('[data-setup-item-field="costType"]')?.value === "CAPEX");
+    return row?.dataset.setupRow ?? "";
+  });
+  const itemRow = page.locator(`[data-setup-row="${capexRowId}"]`);
+  await itemRow.locator('[data-setup-item-field="unitCost"]').fill("12000");
+  await itemRow.locator('[data-setup-item-field="unitCost"]').dispatchEvent("change");
+  await itemRow.locator('[data-setup-item-field="paymentMonth"]').fill("2");
+  await itemRow.locator('[data-setup-item-field="paymentMonth"]').dispatchEvent("change");
+  await itemRow.locator('[data-setup-item-field="installmentCount"]').fill("3");
+  await itemRow.locator('[data-setup-item-field="installmentCount"]').dispatchEvent("change");
+  await itemRow.locator('[data-setup-item-field="status"]').selectOption("included");
+
+  const month2 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" });
+  const month3 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 3" });
+  const month4 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 4" });
+  await expect(month2).toContainText("4.000");
+  await expect(month3).toContainText("4.000");
+  await expect(month4).toContainText("4.000");
+
+  await page.locator("#setupAddFundingButton").click();
+  const fundingRow = page.locator("#setupFundingTable tbody tr").first();
+  await fundingRow.locator('[data-setup-funding-field="label"]').fill("Banka kredisi");
+  await fundingRow.locator('[data-setup-funding-field="label"]').dispatchEvent("change");
+  await fundingRow.locator('[data-setup-funding-field="type"]').selectOption("loan");
+  await fundingRow.locator('[data-setup-funding-field="amount"]').fill("5000");
+  await fundingRow.locator('[data-setup-funding-field="amount"]').dispatchEvent("change");
+
+  const ownCashCard = page.locator("#setupCashSummary .setup-summary-card").filter({ hasText: "Gerekli özkaynak" });
+  const plannedCard = page.locator("#setupCashSummary .setup-summary-card").filter({ hasText: "Planlanan finansman" });
+  await expect(plannedCard).toContainText("5.000");
+  await expect(ownCashCard).toContainText("13.200");
+
+  await fundingRow.locator('[data-setup-funding-field="status"]').selectOption("available");
+  await expect(ownCashCard).toContainText("8.200");
+
+  await page.reload();
+  await page.locator("#setupButton").click();
+  await expect(page.locator("#setupFundingTable tbody tr").first()).toContainText("Banka kredisi");
+  await expect(page.locator('#setupFundingTable [data-setup-funding-field="status"]')).toHaveValue("available");
+  await expect(page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" })).toContainText("4.000");
+  await expect(page.locator("#setupCashSummary .setup-summary-card").filter({ hasText: "Gerekli özkaynak" })).toContainText("8.200");
+  expect(pageErrors).toEqual([]);
+});
