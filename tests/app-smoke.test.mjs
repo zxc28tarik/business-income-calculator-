@@ -11,7 +11,7 @@ async function readApplicationHtml() {
 test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", async () => {
   const html = await readApplicationHtml();
   assert.match(html, /<meta charset="UTF-8"\s*\/>/);
-  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.1/);
+  assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.2/);
   assert.match(html, /Sektör Bazlı Finansal Fizibilite/);
   assert.match(html, /Brüt cirodan net kâra/);
   assert.match(html, /mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir/);
@@ -31,7 +31,9 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
     "autosaveStatus", "formSections", "resetButton", "resetDialog", "resetSectorName",
     "resetCancelButton", "resetConfirmButton", "exportCsvButton", "reportButton", "trackingButton",
     "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton",
-    "trackingCsvButton", "trackingReportButton", "printButton", "decisionSummary", "warnings",
+    "trackingCsvButton", "trackingReportButton", "setupButton", "setupPanel", "setupCloseButton",
+    "setupSyncButton", "setupAddItemButton", "setupProfile", "setupRequirements", "setupItemsTable",
+    "setupCashHeading", "setupCashSummary", "printButton", "decisionSummary", "warnings",
     "kpiGrid", "secondaryKpiGrid", "secondaryKpiToggle", "keySplit", "waterfall", "cashFlowTable", "breakdown",
   ];
   for (const id of requiredIds) {
@@ -57,11 +59,13 @@ test("sekiz sektör tek kullanıcı girdisiyle form ve finans sonucu üretir", (
   }
 });
 
-test("ana uygulama kaynak kodu gerçek tek girdi durumunu kullanır", async () => {
+test("ana uygulama kaynak kodu gerçek tek girdi ve kuruluş durumunu kullanır", async () => {
   const source = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
   assert.match(source, /createSingleInputSectorState/);
   assert.match(source, /normalizeSingleInputSectorState/);
   assert.match(source, /currentSectorState\(\)\.inputs/);
+  assert.match(source, /currentSectorState\(\)\.setup/);
+  assert.match(source, /createSetupController/);
   assert.doesNotMatch(source, /state\.activeScenario/);
   assert.doesNotMatch(source, /state\.scenarioInputs/);
   assert.doesNotMatch(source, /renderScenarioTable/);
