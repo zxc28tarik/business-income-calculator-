@@ -7,9 +7,12 @@ import {
 } from "./setup-model.js";
 import {
   addCustomSetupItem,
+  addSetupFunding,
   buildSetupWorkspaceResult,
+  removeSetupFunding,
   removeSetupItem,
   synchronizeSetupWorkspace,
+  updateSetupFunding,
   updateSetupItem,
   updateSetupProfile,
   updateSetupReserveRate,
@@ -41,6 +44,22 @@ const VAT_LABELS = {
   [VAT_RECOVERABILITY.RECOVERABLE]: "İndirilebilir",
   [VAT_RECOVERABILITY.NON_RECOVERABLE]: "İndirilemez",
   [VAT_RECOVERABILITY.UNKNOWN]: "Doğrulanacak",
+};
+
+const FUNDING_TYPE_LABELS = {
+  equity: "Özkaynak / ortak sermayesi",
+  loan: "Kredi",
+  grant: "Hibe",
+  support: "Destek / teşvik",
+  supplier_credit: "Tedarikçi kredisi",
+  other: "Diğer",
+};
+
+const FUNDING_STATUS_LABELS = {
+  planned: "Planlandı",
+  available: "Kullanılabilir",
+  used: "Kullanıldı",
+  excluded: "Hariç",
 };
 
 const REQUIREMENT_LEVEL_LABELS = {
@@ -156,6 +175,31 @@ function renderItemsTable(workspace) {
     </tr>`).join("")}</tbody>`;
 }
 
+function renderFundingTable(result) {
+  const funding = result.workspace.funding;
+  if (!funding.length) return '<tbody><tr><td colspan="6" class="setup-empty">Henüz finansman kaynağı eklenmedi. Planlanan kaynaklar özkaynak ihtiyacından düşülmez.</td></tr></tbody>';
+  return `<thead><tr>
+    <th>Durum</th><th>Kaynak</th><th>Tür</th><th>Tutar</th><th>Hazır olduğu ay</th><th></th>
+  </tr></thead><tbody>${funding.map((item) => `
+    <tr data-setup-funding-row="${escapeHtml(item.id)}">
+      <td><select data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="status">${optionList(FUNDING_STATUS_LABELS, item.status)}</select></td>
+      <td><input class="setup-label-input" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="label" value="${escapeHtml(item.label)}"></td>
+      <td><select data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="type">${optionList(FUNDING_TYPE_LABELS, item.type)}</select></td>
+      <td><input type="number" min="0" step="1000" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="amount" value="${escapeHtml(item.amount)}"></td>
+      <td><input type="number" min="0" max="120" step="1" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="availableMonth" value="${escapeHtml(item.availableMonth)}"></td>
+      <td><button type="button" class="setup-remove-button" data-setup-funding-remove="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)} finansmanını kaldır">Kaldır</button></td>
+    </tr>`).join("")}</tbody>`;
+}
+
+function renderPaymentSchedule(result) {
+  const rows = result.paymentSchedule.rows;
+  const total = rows.reduce((sum, row) => sum + row.cashOutflow, 0);
+  return `<thead><tr><th>Dönem</th><th>Kuruluş ödemesi</th></tr></thead>
+    <tbody>${rows.map((row) => `<tr><td>${row.month === 0 ? "Açılış / Ay 0" : `Ay ${row.month}`}</td><td>${formatValue(row.cashOutflow, "money")}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><th>İlk 12 ay toplamı</th><th>${formatValue(total, "money")}</th></tr>
+    <tr><th>12 ay sonrasına kalan</th><th>${formatValue(result.paymentSchedule.afterHorizon, "money")}</th></tr></tfoot>`;
+}
+
 function summaryCard(label, value, note, tone = "") {
   return `<article class="setup-summary-card ${tone}"><span>${escapeHtml(label)}</span><strong>${formatValue(value, "money")}</strong><small>${escapeHtml(note)}</small></article>`;
 }
@@ -167,10 +211,11 @@ function renderCashSummary(result) {
     ? `${totals.includedCount} dahil kalem üzerinden hesaplandı. Teklif veya doğrulama bekleyen ${result.unresolvedCount} kalem ayrıca izleniyor.`
     : `Henüz hesaba dahil edilen tutarlı kalem yok. ${result.unresolvedCount} kalem teklif veya doğrulama bekliyor.`;
   return `
-    <div class="setup-cash-intro"><strong>${escapeHtml(intro)}</strong><span>İndirilebilir KDV, tahsil edilene veya mahsup edilene kadar başlangıç nakdinden düşülmez.</span></div>
+    <div class="setup-cash-intro"><strong>${escapeHtml(intro)}</strong><span>Yalnız açılışta kullanılabilir veya kullanılmış finansman özkaynak ihtiyacını azaltır. Planlanan kaynaklar düşülmez.</span></div>
     <div class="setup-summary-grid">
       ${summaryCard("Güvenli başlangıç nakdi", bridge.grossStartupCashNeed, `Rezerv: ${formatValue(bridge.contingencyReserve, "money")}`, bridge.grossStartupCashNeed > 0 ? "primary" : "")}
-      ${summaryCard("Gerekli özkaynak", bridge.requiredOwnCash, `Hazır finansman: ${formatValue(bridge.availableFunding, "money")}`)}
+      ${summaryCard("Gerekli özkaynak", bridge.requiredOwnCash, `Hazır / kullanılmış: ${formatValue(bridge.availableFunding, "money")}`)}
+      ${summaryCard("Planlanan finansman", result.fundingSummary.plannedAmount, "Henüz özkaynaktan düşülmez", result.fundingSummary.plannedAmount > 0 ? "warning" : "")}
       ${summaryCard("Giderleşecek taban", totals.expenseBasis, "Kuruluş, sarf ve uyum giderleri")}
       ${summaryCard("Varlık + stok + bağlı nakit", totals.assetBasis + totals.inventoryBasis + totals.tiedCash, "Demirbaş, stok ve depozito")}
       ${summaryCard("Doğrulanmamış KDV", totals.unverifiedVat, "KDV niteliği henüz teyit edilmedi", totals.unverifiedVat > 0 ? "warning" : "")}
@@ -192,6 +237,9 @@ function profilePatch(target) {
 
 export function createSetupController({ elements, getContext, setSetup }) {
   let panelControl = null;
+  const fundingTable = elements.fundingTable ?? elements.panel.querySelector("#setupFundingTable");
+  const paymentSchedule = elements.paymentSchedule ?? elements.panel.querySelector("#setupPaymentSchedule");
+  const addFundingButton = elements.addFundingButton ?? elements.panel.querySelector("#setupAddFundingButton");
 
   function current() {
     const context = getContext();
@@ -203,6 +251,8 @@ export function createSetupController({ elements, getContext, setSetup }) {
     elements.profile.innerHTML = renderProfile(result.workspace.profile, result.workspace.reserveRate, context);
     elements.requirements.innerHTML = renderRequirements(result);
     elements.table.innerHTML = renderItemsTable(result.workspace);
+    fundingTable.innerHTML = renderFundingTable(result);
+    paymentSchedule.innerHTML = renderPaymentSchedule(result);
     elements.cashSummary.innerHTML = renderCashSummary(result);
     elements.syncButton.textContent = `Koşulları yenile · ${result.requirements.summary.total} kontrol`;
   }
@@ -236,9 +286,31 @@ export function createSetupController({ elements, getContext, setSetup }) {
     setSetup(removeSetupItem(context.setup, itemId, setupContext(context)));
   });
 
+  fundingTable.addEventListener("change", (event) => {
+    const fundingId = event.target.dataset.setupFundingId;
+    const field = event.target.dataset.setupFundingField;
+    if (!fundingId || !field) return;
+    const context = getContext();
+    let value = event.target.value;
+    if (["amount", "availableMonth"].includes(field)) value = Number(value);
+    setSetup(updateSetupFunding(context.setup, fundingId, { [field]: value }, setupContext(context)));
+  });
+
+  fundingTable.addEventListener("click", (event) => {
+    const fundingId = event.target.dataset.setupFundingRemove;
+    if (!fundingId) return;
+    const context = getContext();
+    setSetup(removeSetupFunding(context.setup, fundingId, setupContext(context)));
+  });
+
   elements.addButton.addEventListener("click", () => {
     const context = getContext();
     setSetup(addCustomSetupItem(context.setup, {}, setupContext(context)));
+  });
+
+  addFundingButton.addEventListener("click", () => {
+    const context = getContext();
+    setSetup(addSetupFunding(context.setup, {}, setupContext(context)));
   });
 
   elements.syncButton.addEventListener("click", () => {
