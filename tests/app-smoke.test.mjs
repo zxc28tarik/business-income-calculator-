@@ -33,6 +33,7 @@ test("index.html temiz UTF-8, eksiksiz kabuk ve muhasebe uyarısı içerir", asy
     "trackingPanel", "trackingSummary", "trackingTable", "trackingTrends", "trackingCloseButton",
     "trackingCsvButton", "trackingReportButton", "setupButton", "setupPanel", "setupCloseButton",
     "setupSyncButton", "setupAddItemButton", "setupProfile", "setupRequirements", "setupItemsTable",
+    "setupAddFundingButton", "setupFundingTable", "setupPaymentSchedule",
     "setupCashHeading", "setupCashSummary", "printButton", "decisionSummary", "warnings",
     "kpiGrid", "secondaryKpiGrid", "secondaryKpiToggle", "keySplit", "waterfall", "cashFlowTable", "breakdown",
   ];
