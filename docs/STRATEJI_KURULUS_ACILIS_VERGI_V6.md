@@ -9,7 +9,9 @@
 | Ana ürün sınırı | `Sektörel ön fizibilite ve işletme içi takip` |
 | Resmî muhasebe durumu | `Kapsam dışı` |
 
-> Bu belge uygulama kodunu değiştirmez. Business Income Calculator ürününün kuruluş ve açılış maliyetlerini hangi mantıkla ele alacağını, hangi fikirlerin aktif kaldığını ve hangi sınırların korunacağını tanımlar.
+> Bu belge Business Income Calculator ürününün kuruluş ve açılış maliyetlerini hangi mantıkla ele alacağını, hangi fikirlerin aktif kaldığını ve hangi sınırların korunacağını tanımlar.
+
+> **Uygulama durumu:** İlk çekirdek dilim `src/setup/setup-model.js` altında başlatıldı. Kuruluş profili, maliyet sınıfları, KDV ayrımı, ödeme takvimi ve gerçek başlangıç nakdi köprüsü saf fonksiyonlar olarak uygulanmıştır. Ayrıntılı sektör kural motoru ve kullanıcı arayüzü henüz bu fazın parçası değildir.
 
 ---
 
@@ -323,7 +325,7 @@ veya
 → Devreden KDV
 ```
 
-Her kalem için önerilen alanlar:
+Her kalem için:
 
 ```text
 vatRate
@@ -335,13 +337,18 @@ cashPaidMonth
 creditUsableMonth
 ```
 
-Bu modül resmî beyan üretmez; yalnız fizibilite içindeki yaklaşık kâr ve nakit etkisini gösterir.
+KDV modülü:
+
+- Resmî beyan üretmez.
+- Kalem bazında yaklaşık nakit ve vergi etkisini gösterir.
+- Belirsiz durumları mali müşavir doğrulamasına gönderir.
+- İndirilebilir KDV’yi açılışta gerekli nakitten otomatik olarak düşmez; önce nakit çıkışı olarak korur.
 
 ---
 
 # 10. Gelir veya kurumlar vergisi rezervi
 
-Tek sabit oran kullanılmamalıdır.
+Vergi motoru tek sabit oran kullanmamalıdır.
 
 Girdiler:
 
@@ -358,18 +365,18 @@ Girdiler:
 - Yaklaşık dönem vergi rezervi.
 - Ödeme takvimi.
 - Nakit açığına etkisi.
-- Kullanılan kaynağın tarihi.
+- Kullanılan oran ve kaynağın tarihi.
 - Doğrulama gerektiren alanlar.
 
-Kullanıcıya gösterilecek sınır:
+Kullanıcıya gösterilecek ifade:
 
 > Bu tutar fizibilite rezervidir; resmî vergi hesaplaması veya beyanname değildir.
 
 ---
 
-# 11. Stopaj, damga ve diğer olası yükler
+# 11. Stopaj, damga ve diğer yükler
 
-Tek bir “diğer vergi” kutusu yerine koşul tabanlı kontrol matrisi kullanılmalıdır:
+Tek bir “diğer vergi” kutusu yerine koşul tabanlı matris kullanılmalıdır:
 
 - Kira ilişkisine bağlı vergi veya stopaj kontrolü.
 - Ücret ve bordro kaynaklı yükler.
@@ -379,22 +386,18 @@ Tek bir “diğer vergi” kutusu yerine koşul tabanlı kontrol matrisi kullan�
 - Sektörel fon veya katkılar.
 - Teşvik ve indirim koşulları.
 
-Her madde:
+Her madde için:
 
-```text
-uygulaniyor
-uygulanmiyor
-kosula_bagli
-uzman_dogrulamasi_bekliyor
-```
-
-olarak işaretlenmelidir.
+- `uygulaniyor`
+- `uygulanmiyor`
+- `kosula_bagli`
+- `uzman_dogrulamasi_bekliyor`
 
 ---
 
-# 12. Çalışanın gerçek işveren maliyeti
+# 12. Çalışanın gerçek maliyeti
 
-Personel yalnız brüt ücret olarak hesaplanmamalıdır.
+Çalışan sayısı yalnız brüt maaş alanı olmamalıdır.
 
 ```text
 Brüt ücret
@@ -406,17 +409,21 @@ Brüt ücret
 + İşe alım ve eğitim
 + Üniforma / ekipman
 + İzin, devamsızlık ve yedek kapasite
-- Uygun ve doğrulanmış teşvik/indirim
+- Uygun ve doğrulanmış teşvik / indirim
 = Toplam işveren maliyeti
 ```
 
-Teşvik otomatik kazanılmış sayılmamalı; kaynak ve uzman doğrulaması istemelidir.
+Teşvik:
+
+- Otomatik hak edilmiş sayılmaz.
+- Koşulları ve geçerlilik tarihi gösterilir.
+- Kullanıcı veya uzman doğrulaması ister.
 
 ---
 
 # 13. Yer seçimi için yatırım öncesi kapı
 
-Kullanıcı kira sözleşmesi veya yatırım kararı öncesinde şu kontrolleri görmelidir:
+Kullanıcı kiralama veya satın alma kararından önce şu kontrolleri görmelidir:
 
 ```text
 Faaliyet bu adreste yapılabilir mi?
@@ -428,13 +435,13 @@ Tadilat maliyeti hesaplandı mı?
 Açılış gecikmesi riski var mı?
 ```
 
-Sonuç durumları:
+Sonuç seçenekleri:
 
-- `dogrulandi`
-- `kosullu_uygun`
-- `dogrulama_tamamlanmadi`
+- Yer finansal ve teknik olarak doğrulandı.
+- Koşullu uygun.
+- Doğrulama tamamlanmadı.
 
-Bu kapı yatırım tavsiyesi vermez; eksik kontrolü görünür yapar.
+Bu sonuçlar yatırım tavsiyesi değil, plan tamlığı göstergesidir.
 
 ---
 
@@ -468,19 +475,21 @@ Bu tutar başlangıç sermayesine eklenmelidir.
 
 ---
 
-# 15. Eksik maliyet ve plan tamlık kontrolü
+# 15. Eksik maliyet tespit sistemi
 
-Sistem şu tür tutarsızlıkları yakalamalıdır:
+Plan tamlığı yalnız doldurulan alan sayısı değildir.
 
-- Fiziksel işyeri var ama depozito yok.
-- Çalışan var ama toplam işveren maliyeti yok.
-- Kafe var ama mutfak veya servis ekipmanı yok.
-- E-ticaret var ama stok, paketleme veya iade rezervi yok.
-- Oto servis var ama lift, takım veya atık kontrolü yok.
-- KDV’li satış var ama alış KDV’si tanımlanmamış.
-- Tadilat var ama açılış gecikmesi yok.
-- Cihaz var ama kurulum, bakım veya elektrik ihtiyacı yok.
-- Şirket var ama muhasebe ve elektronik belge maliyeti yok.
+Sistem şu kontrolleri yapmalıdır:
+
+- Fiziksel işyeri var ama depozito yok mu?
+- Çalışan var ama işveren maliyeti veya işe alım gideri yok mu?
+- Kafe var ama mutfak veya servis ekipmanı yok mu?
+- E-ticaret var ama başlangıç stoğu, paketleme veya iade rezervi yok mu?
+- Oto servis var ama lift, cihaz, sarf veya atık yönetimi kontrolü yok mu?
+- KDV’li satış var ama alış KDV’si tanımlanmamış mı?
+- Tadilat var ama açılış gecikmesi yok mu?
+- Cihaz var ama kurulum, bakım veya elektrik ihtiyacı yok mu?
+- Şirket var ama muhasebe ve elektronik belge maliyeti yok mu?
 
 Örnek çıktı:
 
@@ -501,9 +510,9 @@ Doğrulama bekleyen:
 
 # 16. Resmî kaynak ve yürürlük sicili
 
-Değişken kurallar kalıcı sabitler olarak kod içine gömülmemelidir.
+Değişken oran ve kurallar kod içine kalıcı biçimde gömülmemelidir.
 
-Her kaynak kaydı:
+Her kural:
 
 ```text
 sourceAuthority
@@ -517,6 +526,8 @@ version
 notes
 ```
 
+taşımalıdır.
+
 Kaynak önceliği:
 
 1. Resmî kurum ve yürürlükteki mevzuat.
@@ -526,138 +537,240 @@ Kaynak önceliği:
 5. Kullanıcı araştırması.
 6. Sistem varsayılanı.
 
-Güncellik durumları:
+Güncellik durumu:
 
-- `guncel_resmi`
-- `yerel_dogrulama_gerekli`
-- `yakinda_sona_erecek`
-- `suresi_gecmis`
-- `kaynak_bulunamadi`
-
----
-
-# 17. Sekiz sektör için kuruluş ve açılış paketleri
-
-| Sektör | Başlıca kuruluş ve açılış kümeleri |
-|---|---|
-| Kafe / restoran | mutfak, masa/sandalye, havalandırma, soğutma, servis, POS/ÖKC, gıda kayıt/onay kontrolü, yangın, atık, ilk stok |
-| E-ticaret | şirket ve e-belge, mağaza/pazaryeri, başlangıç stoğu, depo/raf, paketleme, kargo, iade rezervi, fotoğraf, yazılım |
-| Güzellik / bakım | koltuk/yatak, cihaz, sterilizasyon, sarf, yeterlilik/ruhsat kontrolleri, randevu yazılımı, hijyen, bekleme alanı |
-| Ajans / freelancer | bilgisayar, lisans, ofis/coworking, internet, web sitesi, satış bütçesi, sözleşme ve mesleki hizmetler |
-| SaaS | geliştirme araçları, sunucu, alan adı, ödeme altyapısı, güvenlik, hukuki metinler, KVKK kontrolleri, ilk pazarlama |
-| Fiziksel perakende | raf, kasa, POS/ÖKC, tabela, güvenlik, mağaza dekorasyonu, başlangıç stoğu, depo, paketleme |
-| Oto hizmetleri | lift, kompresör, teşhis cihazı, el aletleri, elektrik altyapısı, atık/çevre kontrolleri, sarf/parça stoğu |
-| Oyun / dijital yayın | bilgisayar/test cihazı, yazılım, fikrî hak ve sözleşmeler, yerelleştirme, QA, platform hazırlığı, pazarlama |
-
-Bu paketler nihai zorunluluk listesi değildir. Kural motorunun kullanıcıya göstereceği başlangıç kataloglarıdır.
+- Güncel ve resmî.
+- Yerel doğrulama gerekiyor.
+- Yakında sona erecek.
+- Süresi geçmiş.
+- Kaynak bulunamadı.
 
 ---
 
-# 18. Kullanıcı ekranları
+# 17. Sekiz sektör için açılış paketleri
+
+Aşağıdaki listeler kesin zorunluluk listesi değil, kural motorunun gösterebileceği başlangıç paketleridir.
+
+## 17.1 Kafe / Restoran
+
+- Şirket ve mali müşavir kuruluş hizmeti.
+- Kira, depozito ve emlak hizmeti.
+- Tadilat, elektrik, su, gaz ve havalandırma.
+- Masa, sandalye, servis alanı ve dış mekân mobilyası.
+- Fırın, ocak, ızgara, davlumbaz ve hazırlık tezgâhı.
+- Buzdolabı, derin dondurucu ve soğuk zincir ekipmanı.
+- Kahve makinesi, değirmen ve içecek ekipmanı.
+- Bulaşık makinesi ve yıkama alanı.
+- Tabak, bardak, çatal, bıçak ve servis malzemesi.
+- POS, ödeme kaydedici cihaz ve yazılım.
+- Tabela, kamera, yangın ve güvenlik ekipmanı.
+- Temizlik, hijyen, personel kıyafeti ve ilk sarf.
+- İlk gıda ve içecek stoğu.
+- Ruhsat, gıda kayıt/onay, atık ve diğer yerel kontroller.
+- Açılış öncesi kira ve personel yanması.
+
+## 17.2 E-Ticaret / Pazaryeri
+
+- Şirket, mali müşavir ve elektronik belge altyapısı.
+- Pazaryeri mağaza ve entegrasyon hizmetleri.
+- Alan adı, web sitesi ve ödeme altyapısı.
+- Açılış stoğu.
+- Depo, raf ve ürün yerleşimi.
+- Barkod, etiket ve stok takip ekipmanı.
+- Paketleme masası, kutu, dolgu ve ambalaj.
+- Ürün fotoğrafı ve içerik üretimi.
+- Kargo sözleşmesi ve ilk kargo nakit rezervi.
+- İade, hasar ve kayıp rezervi.
+- İlk reklam ve kampanya bütçesi.
+- Yazılım abonelikleri.
+
+## 17.3 Güzellik / Kuaför / Bakım
+
+- Şirket ve işyeri kuruluş işlemleri.
+- Kira, depozito, tadilat ve dekorasyon.
+- Koltuk, yatak, ayna ve bekleme alanı.
+- Faaliyete özel cihazlar.
+- Sterilizasyon, hijyen ve güvenlik ekipmanı.
+- Havlu, sarf ve ilk ürün stoğu.
+- Randevu, ödeme ve müşteri takip yazılımı.
+- Personel ekipmanı ve kıyafetleri.
+- Mesleki yeterlilik, ruhsat ve yerel uygunluk kontrolleri.
+
+## 17.4 Ajans / Freelancer / Danışmanlık
+
+- Şirket kuruluşu ve mali müşavir.
+- Bilgisayar, monitör ve çevre birimleri.
+- Yazılım ve bulut lisansları.
+- İnternet ve iletişim altyapısı.
+- Ofis, ev ofis veya ortak çalışma alanı maliyeti.
+- Kamera, ışık ve ses ekipmanı.
+- Web sitesi ve portföy üretimi.
+- Sözleşme ve mesleki hizmet giderleri.
+- İlk müşteri edinme ve reklam bütçesi.
+
+## 17.5 SaaS / Abonelik
+
+- Şirket kuruluşu ve mali müşavir.
+- Bilgisayar ve geliştirme ekipmanı.
+- Sunucu, veritabanı ve bulut hizmetleri.
+- Alan adı, e-posta ve yazılım servisleri.
+- Ödeme sağlayıcı ve abonelik altyapısı.
+- Güvenlik, yedekleme ve izleme hizmetleri.
+- Hukuki metinler ve veri koruma kontrolleri.
+- Tasarım, geliştirme ve test maliyetleri.
+- İlk satış ve pazarlama bütçesi.
+
+## 17.6 Fiziksel Perakende
+
+- Şirket ve işyeri kuruluş işlemleri.
+- Kira, depozito ve mağaza tadilatı.
+- Raf, askılık, tezgâh ve ürün sergileme.
+- Kasa, POS ve ödeme kaydedici cihaz.
+- Kamera, alarm ve güvenlik.
+- Tabela ve mağaza görünürlüğü.
+- Deneme kabini veya sektöre özel müşteri alanı.
+- Açılış stoğu.
+- Depo, paketleme ve stok ekipmanı.
+- İlk kampanya ve reklam bütçesi.
+
+## 17.7 Oto Hizmetleri
+
+- Şirket ve işyeri kuruluş işlemleri.
+- Kira, depozito ve sanayi alanı hazırlığı.
+- Lift, kriko ve kaldırma ekipmanı.
+- Kompresör ve hava altyapısı.
+- Diagnostik cihazlar.
+- El aletleri ve özel takım setleri.
+- Elektrik, güç ve havalandırma altyapısı.
+- İş güvenliği ve yangın ekipmanı.
+- Atık, yağ ve çevre kontrolleri.
+- İlk parça, yağ ve sarf stoğu.
+- Müşteri kabul ve bekleme alanı.
+
+## 17.8 Oyun / Dijital Yayıncılık
+
+- Şirket kuruluşu ve mali müşavir.
+- Geliştirme bilgisayarları ve test cihazları.
+- Yazılım ve geliştirme lisansları.
+- Fikrî hak ve sözleşme hizmetleri.
+- Yerelleştirme.
+- Kalite testi ve uyumluluk.
+- Platform hazırlığı ve mağaza varlıkları.
+- Sunucu ve çevrimiçi hizmetler.
+- İlk pazarlama ve yayın bütçesi.
+- Geliştirici, yayıncı ve diğer paydaş sözleşme giderleri.
+
+---
+
+# 18. Kullanıcı akışı
 
 ## Ekran 1 — İşletme koşulları
 
-Kısa seçimler ve her önemli soruda `henüz bilmiyorum` seçeneği.
+- Sektör ve iş türü.
+- Hukuki yapı.
+- İl ve ilçe.
+- Fiziksel işyeri.
+- Çalışan.
+- Satış kanalı.
+- Özel faaliyet koşulları.
+
+Kullanıcının her soruda `henüz bilmiyorum` seçeneği bulunmalıdır.
 
 ## Ekran 2 — Zorunluluk ve ihtiyaç listesi
 
 Her satır:
 
-```text
-dahil_et
-uygulanmiyor
-dogrulama_bekliyor
-teklif_alinacak
-```
+- Dahil et.
+- Uygulanmıyor.
+- Doğrulama bekliyor.
+- Teklif alınacak.
 
 ## Ekran 3 — Ekipman ve açılış envanteri
 
 - Adet.
 - Birim fiyat.
 - KDV.
-- Ödeme biçimi.
-- Yeni veya ikinci el.
+- Peşin veya taksit.
+- Yeni, ikinci el veya kiralık.
 - Kapasite bağlantısı.
-- Kaynak ve teklif tarihi.
+- Kaynak ve teklif.
 
 ## Ekran 4 — Vergi ve çalışan
 
 - Vergi profili.
-- Yaklaşık rezerv.
+- Yaklaşık vergi rezervi.
 - KDV akışı.
-- Toplam personel maliyeti.
+- Toplam işveren maliyeti.
 - Doğrulama uyarıları.
 
 ## Ekran 5 — Açılış nakit köprüsü
 
-- Toplam gider.
-- Varlık.
+- Kuruluş gideri.
+- Varlık ve demirbaş.
 - Depozito.
 - Stok.
-- Vergi.
+- Vergi ve prim.
 - İşletme sermayesi.
-- Finansman.
-- Minimum güvenli nakit.
+- Kullanılabilir finansman.
+- Minimum güvenli başlangıç nakdi.
 
 ## Ekran 6 — Kontrol ve rapor
 
-- Eksik kalemler.
+- Eksik kritik kalemler.
 - Doğrulama bekleyenler.
 - Kaynak güncelliği.
 - Mali müşavir veya kurum görüşme listesi.
 
 ---
 
-# 19. Puanlanan yeni girişimler
+# 19. Aktif girişimler
 
-Dört ölçüt kullanılmıştır: uygunluk, işe yararlık, kapsayıcılık ve mantıklılık. Her biri 10 puandır. Toplamı 30 veya altında kalan fikir elenir.
-
-## 19.1 Aktif kalan 28 fikir
-
-| ID | Fikir | Toplam /40 |
-|---|---|---:|
-| `AST-001` | Sektörel demirbaş ve ekipman kataloğu | **40** |
-| `CSH-001` | Gerçek toplam başlangıç nakdi köprüsü | **40** |
-| `CST-001` | Kuruluş ve açılış maliyet sınıflandırması | **40** |
-| `SEC-001` | Sekiz sektör için kuruluş ve açılış paketleri | **40** |
-| `SET-001` | İşletme kuruluş profili ve koşul seçim sihirbazı | **40** |
-| `SET-002` | Koşuldan zorunluluk üreten kural motoru | **40** |
-| `SRC-001` | Yürürlük tarihli resmî kaynak ve kural sicili | **40** |
-| `SRC-002` | Uzman doğrulama kapıları | **40** |
-| `AST-002` | Demirbaş–kapasite–amortisman bağlantısı | **39** |
-| `CMP-001` | Ruhsat, kayıt, izin ve mesleki zorunluluk matrisi | **39** |
-| `CSH-002` | Peşin, taksit, vade, depozito ve iade zamanlaması | **39** |
-| `CST-002` | Eksik maliyet ve plan tamlık kontrolü | **39** |
-| `PAY-001` | Çalışanın toplam işveren maliyeti ve SGK katmanı | **39** |
-| `RPT-004` | Kuruluş ve açılış maliyet raporu | **39** |
-| `TAX-001` | Hukuki yapı ve faaliyete bağlı vergi profili | **39** |
-| `AST-003` | Açılış stoğu, sarf ve güvenlik stoğu planı | **38** |
-| `CST-003` | Açılış öncesi yanma ve gecikme maliyeti | **38** |
-| `RES-001` | Beklenmeyen gider ve işletme sermayesi rezervi | **38** |
-| `SET-003` | Kuruluş–açılış–faaliyet yaşam döngüsü | **38** |
-| `TAX-002` | Hesaplanan KDV, indirilebilir KDV ve nakit etkisi | **38** |
-| `AST-004` | Tadilat, kurulum ve devreye alma maliyetleri | **37** |
-| `CMP-002` | İl, ilçe ve yerel kurum bağımlılığı | **36** |
-| `DOC-001` | Belge ve doğrulama kontrol listesi | **35** |
-| `TAX-003` | Gelir veya kurumlar vergisi rezervi | **36** |
-| `CMP-003` | Yenileme ve tekrarlanan uyum maliyeti takvimi | **35** |
-| `SET-004` | Şirket ve işletme yapısı karşılaştırması | **34** |
-| `TAX-004` | Stopaj, damga ve diğer olası vergi yükleri matrisi | **33** |
-| `AST-005` | Satın al / kirala / yeni / ikinci el karşılaştırması | **33** |
-
-## 19.2 Elenen 5 fikir
-
-| ID | Fikir | Toplam /40 | Neden |
-|---|---|---:|---|
-| `BEN-001` | Kaynağı belirsiz ortalama kuruluş maliyeti benchmarkı | **26** | Yer, dönem ve işletme yapısı farklarını gizler. |
-| `SCR-001` | Bütün belediye ve kurum ücretlerini otomatik tarama | **22** | Kaynaklar standart değildir ve güncellik garanti edilemez. |
-| `AUT-001` | Resmî başvuruları otomatik gönderme | **16** | Kamu entegrasyonu ve hukuki sorumluluk gerektirir. |
-| `ACC-001` | Tam muhasebe defteri ve beyanname üretimi | **12** | Ürünü resmî muhasebe yazılımına dönüştürür. |
-| `AI-001` | AI vergi ve hukuk danışmanı | **12** | Hata ve sorumluluk riski yüksektir. |
+| ID | Girişim | Durum |
+|---|---|---|
+| `SET-001` | İşletme kuruluş profili ve koşul seçim sihirbazı | Aktif |
+| `SET-002` | Koşuldan zorunluluk üreten kural motoru | Aktif |
+| `SET-003` | Kuruluş–açılış–faaliyet yaşam döngüsü | Aktif |
+| `SET-004` | Şirket ve işletme yapısı karşılaştırması | Aktif |
+| `CST-001` | Kuruluş ve açılış maliyet sınıflandırması | Uygulama başladı |
+| `CST-002` | Eksik maliyet ve plan tamlık kontrolü | Aktif |
+| `CST-003` | Açılış öncesi yanma ve gecikme maliyeti | Aktif |
+| `AST-001` | Sektörel demirbaş ve ekipman kataloğu | Aktif |
+| `AST-002` | Demirbaş–kapasite–amortisman bağlantısı | Aktif |
+| `AST-003` | Açılış stoğu, sarf ve güvenlik stoğu planı | Aktif |
+| `AST-004` | Tadilat, kurulum ve devreye alma maliyetleri | Aktif |
+| `AST-005` | Satın al / kirala / yeni / ikinci el karşılaştırması | Aktif |
+| `TAX-001` | Hukuki yapı ve faaliyete bağlı vergi profili | Aktif |
+| `TAX-002` | Hesaplanan KDV, indirilebilir KDV ve nakit etkisi | Uygulama başladı |
+| `TAX-003` | Gelir veya kurumlar vergisi rezervi | Aktif |
+| `TAX-004` | Stopaj, damga ve diğer olası vergi yükleri matrisi | Aktif |
+| `PAY-001` | Çalışanın toplam işveren maliyeti ve SGK katmanı | Aktif |
+| `CMP-001` | Ruhsat, kayıt, izin ve mesleki zorunluluk matrisi | Aktif |
+| `CMP-002` | İl, ilçe ve yerel kurum bağımlılığı | Aktif |
+| `CMP-003` | Yenileme ve tekrarlanan uyum maliyeti takvimi | Aktif |
+| `DOC-001` | Belge ve doğrulama kontrol listesi | Aktif |
+| `SRC-001` | Yürürlük tarihli resmî kaynak ve kural sicili | Aktif |
+| `SRC-002` | Uzman doğrulama kapıları | Aktif |
+| `CSH-001` | Gerçek toplam başlangıç nakdi köprüsü | Uygulama başladı |
+| `CSH-002` | Peşin, taksit, vade, depozito ve iade zamanlaması | Uygulama başladı |
+| `RES-001` | Beklenmeyen gider ve işletme sermayesi rezervi | Uygulama başladı |
+| `RPT-004` | Kuruluş ve açılış maliyet raporu | Aktif |
+| `SEC-001` | Sekiz sektör için kuruluş ve açılış paketleri | Aktif |
 
 ---
 
-# 20. Uygulama sırası
+# 20. Elenen veya kapsam dışı fikirler
+
+| ID | Fikir | Gerekçe |
+|---|---|---|
+| `AUT-001` | Resmî başvuruları uygulamadan otomatik gönderme | Kamu entegrasyonu ve hukuki sorumluluk gerektirir. |
+| `ACC-001` | Tam muhasebe defteri ve beyanname üretimi | Ürünü resmî muhasebe yazılımına dönüştürür. |
+| `SCR-001` | Bütün belediye ve kurum ücretlerini otomatik tarama | Kaynaklar standart değildir; doğruluk ve güncellik garantilenemez. |
+| `AI-001` | AI vergi ve hukuk danışmanı | Hata ve sorumluluk riski yüksektir; ürün ilkeleriyle çelişir. |
+| `BEN-001` | Kaynağı belirsiz ortalama kuruluş maliyeti | Yer, dönem, şirket yapısı ve sektör farkını gizler. |
+
+---
+
+# 21. Uygulama sırası
 
 ## Faz A — Veri ve sınıflandırma
 
@@ -671,7 +784,7 @@ Dört ölçüt kullanılmıştır: uygunluk, işe yararlık, kapsayıcılık ve 
 1. `SET-002` kural motoru.
 2. `CMP-001` zorunluluk matrisi.
 3. `CST-002` eksik maliyet kontrolü.
-4. `SRC-002` uzman doğrulama kapıları.
+4. `SRC-002` doğrulama kapıları.
 
 ## Faz C — Finans bağlantısı
 
@@ -686,29 +799,56 @@ Dört ölçüt kullanılmıştır: uygunluk, işe yararlık, kapsayıcılık ve 
 1. `TAX-001` vergi profili.
 2. `TAX-002` KDV akışı.
 3. `TAX-003` vergi rezervi.
-4. `TAX-004` diğer vergi ve yükler matrisi.
+4. `TAX-004` diğer yükler matrisi.
 5. `PAY-001` toplam işveren maliyeti.
 
 ## Faz E — Sektör içeriği ve rapor
 
-1. `AST-001`, `AST-003`, `AST-004`.
-2. `CMP-002`, `CMP-003`, `DOC-001`.
-3. `RPT-004` kuruluş ve açılış raporu.
-4. Üç sektör gerçek kullanıcı pilotu.
+1. Sektörel demirbaş, stok ve tadilat listeleri.
+2. Yerel ve tekrarlanan uyum kontrolleri.
+3. Kuruluş ve açılış raporu.
+4. Üç sektör pilotu.
 5. Kalan beş sektörün genişletilmesi.
 
 ---
 
-# 21. Kabul kriterleri
+# 22. İlk çekirdek uygulama dilimi
 
-Bu katman aşağıdaki koşullar karşılanmadan tamamlanmış sayılmaz:
+İlk dilim şu dosyalardan oluşur:
+
+- `src/setup/setup-model.js`
+- `tests/setup-model.test.mjs`
+
+Uygulanan saf fonksiyonlar:
+
+- `createDefaultSetupProfile`
+- `normalizeSetupProfile`
+- `normalizeSetupCostItem`
+- `normalizeSetupCostItems`
+- `summarizeSetupCosts`
+- `normalizeSetupFunding`
+- `buildSetupPaymentSchedule`
+- `buildStartupCashBridge`
+
+Bu dilim:
+
+- henüz kullanıcı arayüzüne bağlı değildir,
+- mevcut sekiz sektör motorunu değiştirmez,
+- mevcut kayıtları ve raporları etkilemez,
+- bir sonraki kural motoru ve sektör paketleri için güvenli temel sağlar.
+
+---
+
+# 23. Kabul kriterleri
+
+Bu kuruluş katmanı tamamlanmış sayılmak için:
 
 - Aynı proje içinde gider, varlık, stok, depozito ve işletme sermayesi ayrılabiliyor.
 - Her maliyetin ödeme ayı 12 aylık nakde aktarılabiliyor.
 - En az üç sektörde koşuldan ihtiyaç listesi üretilebiliyor.
 - Aynı ekipman finans ve kapasite hesabına bağlanabiliyor.
 - KDV’nin hesaplanan, indirilebilir ve doğrulama bekleyen bölümleri ayrılıyor.
-- Vergi sonucu açıkça `rezerv` olarak etiketleniyor.
+- Vergi sonucu “rezerv” olarak etiketleniyor.
 - Çalışanın toplam işveren maliyeti brüt ücretten ayrılıyor.
 - Kaynak ve yürürlük tarihi olmayan dinamik kural güvenilir sayılmıyor.
 - Kullanıcı uygulanmayan kalemi gerekçesiyle kapatabiliyor.
@@ -717,14 +857,19 @@ Bu katman aşağıdaki koşullar karşılanmadan tamamlanmış sayılmaz:
 
 ---
 
-# 22. Nihai ürün tanımına etkisi
+# 24. Son ürün zinciri
 
-Önceki ürün sorusu:
+```text
+Ne iş kuruyorsun?
+→ Hangi hukuki ve operasyonel koşullarla?
+→ Hangi kuruluş, izin ve mesleki giderler doğuyor?
+→ Hangi sektörel ekipman, tadilat ve stok gerekiyor?
+→ Bunların gider, varlık, KDV, amortisman ve nakit etkisi ne?
+→ Açılış öncesinde ne kadar para yanıyor?
+→ Güvenli toplam başlangıç nakdi ne kadar?
+→ İş açıldıktan sonra aylık vergi, çalışan ve uyum yükü ne?
+→ Kaç satışta başabaşa ulaşılıyor?
+→ Plan ile gerçekleşen arasındaki fark ne?
+```
 
-> İşletme aylık ne kadar kazanır ve başabaşa ne zaman gelir?
-
-Yeni ürün sorusu:
-
-> Bu işletmeyi gerçekten açabilmek için hangi kuruluş, izin, ekipman, stok, çalışan ve vergi yükleriyle karşılaşacağım; bunlar ne zaman nakit çıkışı yaratacak; güvenli başlangıç sermayem ne kadar olmalı ve faaliyet başladıktan sonra işletme hangi ekonomik koşullarda yaşayabilir?
-
-Bu yön, ürünü ön muhasebeye dönüştürmeden fizibilite çekirdeğini tamamlar.
+Bu yapı ön muhasebe ürünü değildir. Sektörel fizibilitenin eksik kuruluş ve açılış katmanıdır.
