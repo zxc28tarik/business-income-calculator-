@@ -104,7 +104,7 @@ test("planlanan finansman özkaynağı azaltmaz, hazır finansman azaltır ve ta
 
   await page.reload();
   await page.locator("#setupButton").click();
-  await expect(page.locator("#setupFundingTable tbody tr").first()).toContainText("Banka kredisi");
+  await expect(page.locator('#setupFundingTable [data-setup-funding-field="label"]')).toHaveValue("Banka kredisi");
   await expect(page.locator('#setupFundingTable [data-setup-funding-field="status"]')).toHaveValue("available");
   await expect(page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" })).toContainText("4.000");
   await expect(page.locator("#setupCashSummary .setup-summary-card").filter({ hasText: "Gerekli özkaynak" })).toContainText("8.200");
