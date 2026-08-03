@@ -200,6 +200,8 @@ export function normalizeSetupCostItem(raw = {}, index = 0) {
 
   return {
     id: safeId(raw.id, `setup-item-${index + 1}`),
+    requirementId: safeId(raw.requirementId, ""),
+    templateKey: safeId(raw.templateKey, ""),
     label: text(raw.label, `Kuruluş kalemi ${index + 1}`),
     costType: enumValue(raw.costType, COST_TYPE_VALUES, SETUP_COST_TYPES.SETUP_EXPENSE),
     status: enumValue(raw.status, ITEM_STATUS_VALUES, SETUP_ITEM_STATUSES.INCLUDED),
