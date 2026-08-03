@@ -26,7 +26,10 @@ test("v0.24.2 sürüm, production ve Pages sözleşmesi eşleşir", async () => 
   assert.match(productionBuilder, /version: "0\.24\.2"/);
   assert.match(productionBuilder, /"styles-setup\.css"/);
 
-  assert.equal(pkg.devDependencies["@playwright/test"], "1.61.1");
+  assert.equal(pkg.devDependencies["@playwright/test"], "1.60.0");
+  assert.equal(lock.packages["node_modules/@playwright/test"].version, "1.60.0");
+  assert.equal(lock.packages["node_modules/playwright"].version, "1.60.0");
+  assert.equal(lock.packages["node_modules/playwright-core"].version, "1.60.0");
   assert.equal(pkg.devDependencies["@axe-core/playwright"], "4.12.1");
   assert.match(testWorkflow, /npm ci --no-audit --no-fund/);
   assert.match(testWorkflow, /BIC_E2E_ROOT: dist/);
