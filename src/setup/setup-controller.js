@@ -110,7 +110,7 @@ function renderProfile(profile, reserveRate, context) {
       <label class="setup-field"><span>Beklenmeyen gider rezervi (%)</span><input type="number" data-setup-reserve value="${escapeHtml((reserveRate * 100).toFixed(1))}" min="0" max="100" step="0.5"></label>
     </div>
     <div class="setup-toggle-grid">
-      ${profileToggle("hasPhysicalPremises", "Fiziksel işyeri var")}
+      ${profileToggle("hasPhysicalPremises", "Fiziksel işyeri var", profile.hasPhysicalPremises)}
       ${profileToggle("handlesFood", "Gıda / içecek faaliyeti var", profile.handlesFood)}
       ${profileToggle("hasEmployees", "Çalışan kullanılacak", profile.hasEmployees)}
       ${profileToggle("acceptsCardPayments", "Kartlı ödeme alınacak", profile.acceptsCardPayments)}
@@ -163,9 +163,8 @@ function summaryCard(label, value, note, tone = "") {
 function renderCashSummary(result) {
   const bridge = result.cashBridge;
   const totals = bridge.summary.totals;
-  const included = totals.includedCount;
-  const intro = included
-    ? `${included} dahil kalem üzerinden hesaplandı. Teklif veya doğrulama bekleyen ${result.unresolvedCount} kalem ayrıca izleniyor.`
+  const intro = totals.includedCount
+    ? `${totals.includedCount} dahil kalem üzerinden hesaplandı. Teklif veya doğrulama bekleyen ${result.unresolvedCount} kalem ayrıca izleniyor.`
     : `Henüz hesaba dahil edilen tutarlı kalem yok. ${result.unresolvedCount} kalem teklif veya doğrulama bekliyor.`;
   return `
     <div class="setup-cash-intro"><strong>${escapeHtml(intro)}</strong><span>İndirilebilir KDV, tahsil edilene veya mahsup edilene kadar başlangıç nakdinden düşülmez.</span></div>
@@ -178,17 +177,25 @@ function renderCashSummary(result) {
     </div>`;
 }
 
+function profilePatch(target) {
+  const key = target.dataset.setupProfile;
+  if (!key) return null;
+  let value = target.type === "checkbox" ? target.checked : target.value;
+  if (target.type === "number") value = Number(value);
+  const patch = { [key]: value };
+  if (key === "premisesType") {
+    patch.hasPhysicalPremises = ["rented", "owned", "shared", "other"].includes(value);
+  }
+  if (key === "employeeCount" && Number(value) > 0) patch.hasEmployees = true;
+  return patch;
+}
+
 export function createSetupController({ elements, getContext, setSetup }) {
   let panelControl = null;
 
   function current() {
     const context = getContext();
-    const result = buildSetupWorkspaceResult(context.setup, setupContext(context));
-    return { context, result };
-  }
-
-  function commit(next) {
-    setSetup(next);
+    return { context, result: buildSetupWorkspaceResult(context.setup, setupContext(context)) };
   }
 
   function render() {
@@ -200,21 +207,18 @@ export function createSetupController({ elements, getContext, setSetup }) {
     elements.syncButton.textContent = `Koşulları yenile · ${result.requirements.summary.total} kontrol`;
   }
 
-  function profileChanged(event) {
+  elements.profile.addEventListener("change", (event) => {
     const context = getContext();
-    const setup = synchronizeSetupWorkspace(context.setup, setupContext(context));
+    const normalized = synchronizeSetupWorkspace(context.setup, setupContext(context));
     if (event.target.dataset.setupReserve != null) {
-      commit(updateSetupReserveRate(setup, Number(event.target.value) / 100, setupContext(context)));
+      setSetup(updateSetupReserveRate(normalized, Number(event.target.value) / 100, setupContext(context)));
       return;
     }
-    const key = event.target.dataset.setupProfile;
-    if (!key) return;
-    let value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
-    if (event.target.type === "number") value = Number(value);
-    commit(updateSetupProfile(setup, { [key]: value }, setupContext(context)));
-  }
+    const patch = profilePatch(event.target);
+    if (patch) setSetup(updateSetupProfile(normalized, patch, setupContext(context)));
+  });
 
-  function itemChanged(event) {
+  elements.table.addEventListener("change", (event) => {
     const itemId = event.target.dataset.setupItemId;
     const field = event.target.dataset.setupItemField;
     if (!itemId || !field) return;
@@ -222,26 +226,24 @@ export function createSetupController({ elements, getContext, setSetup }) {
     let value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
     if (["quantity", "unitCost", "paymentMonth", "installmentCount"].includes(field)) value = Number(value);
     if (field === "vatRate") value = Number(value) / 100;
-    commit(updateSetupItem(context.setup, itemId, { [field]: value }, setupContext(context)));
-  }
+    setSetup(updateSetupItem(context.setup, itemId, { [field]: value }, setupContext(context)));
+  });
 
-  function tableClicked(event) {
+  elements.table.addEventListener("click", (event) => {
     const itemId = event.target.dataset.setupRemove;
     if (!itemId) return;
     const context = getContext();
-    commit(removeSetupItem(context.setup, itemId, setupContext(context)));
-  }
+    setSetup(removeSetupItem(context.setup, itemId, setupContext(context)));
+  });
 
-  elements.profile.addEventListener("change", profileChanged);
-  elements.table.addEventListener("change", itemChanged);
-  elements.table.addEventListener("click", tableClicked);
   elements.addButton.addEventListener("click", () => {
     const context = getContext();
-    commit(addCustomSetupItem(context.setup, {}, setupContext(context)));
+    setSetup(addCustomSetupItem(context.setup, {}, setupContext(context)));
   });
+
   elements.syncButton.addEventListener("click", () => {
     const context = getContext();
-    commit(synchronizeSetupWorkspace(context.setup, setupContext(context)));
+    setSetup(synchronizeSetupWorkspace(context.setup, setupContext(context)));
   });
 
   panelControl = createWorkspacePanel({
