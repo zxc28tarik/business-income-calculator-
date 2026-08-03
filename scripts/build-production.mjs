@@ -19,7 +19,7 @@ export async function buildProduction(outputDir = DIST) {
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
 
-  for (const file of ["index.html", "styles.css", "styles-advanced.css", "LICENSE"]) {
+  for (const file of ["index.html", "styles.css", "styles-advanced.css", "styles-setup.css", "LICENSE"]) {
     const source = path.join(ROOT, file);
     const target = path.join(outputDir, file);
     await mkdir(path.dirname(target), { recursive: true });
@@ -33,7 +33,7 @@ export async function buildProduction(outputDir = DIST) {
   await writeFile(path.join(outputDir, ".nojekyll"), "", "utf8");
   await writeFile(path.join(outputDir, "build-info.json"), `${JSON.stringify({
     application: "business-income-calculator",
-    version: "0.24.1",
+    version: "0.24.2",
     format: "static-es-modules",
     standaloneCalculators: 8,
   }, null, 2)}\n`, "utf8");
