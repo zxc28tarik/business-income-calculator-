@@ -33,6 +33,8 @@ import { exportFinancialReport } from "./report/report-controller.js";
 import { createTrackingController } from "./tracking/tracking-controller.js";
 import { createPortfolioController } from "./portfolio/portfolio-controller.js";
 import { buildProjectFinancialSummary } from "./portfolio/portfolio-summary.js";
+import { createSetupController } from "./setup/setup-controller.js";
+import { synchronizeSetupWorkspace } from "./setup/setup-workspace.js";
 
 const STORAGE_KEY = "business-income-calculator:platform:v0.2";
 const PORTFOLIO_STORAGE_KEY = "business-income-calculator:portfolio:v0.1";
@@ -82,6 +84,15 @@ const elements = {
   trackingCloseButton: document.querySelector("#trackingCloseButton"),
   trackingCsvButton: document.querySelector("#trackingCsvButton"),
   trackingReportButton: document.querySelector("#trackingReportButton"),
+  setupButton: document.querySelector("#setupButton"),
+  setupPanel: document.querySelector("#setupPanel"),
+  setupCloseButton: document.querySelector("#setupCloseButton"),
+  setupSyncButton: document.querySelector("#setupSyncButton"),
+  setupAddItemButton: document.querySelector("#setupAddItemButton"),
+  setupProfile: document.querySelector("#setupProfile"),
+  setupRequirements: document.querySelector("#setupRequirements"),
+  setupItemsTable: document.querySelector("#setupItemsTable"),
+  setupCashSummary: document.querySelector("#setupCashSummary"),
   printButton: document.querySelector("#printButton"),
   decisionSummary: document.querySelector("#decisionSummary"),
   warnings: document.querySelector("#warnings"),
@@ -97,6 +108,7 @@ const elements = {
 let state = loadState();
 let lastRendered = null;
 let portfolioController = null;
+let setupController = null;
 let autosaveTimer = null;
 let resetDialogTrigger = null;
 let secondaryKpisExpanded = false;
@@ -150,6 +162,30 @@ const trackingController = createTrackingController({
   getProjectId: () => portfolioController.getActiveProjectId(),
   getProjectName: () => portfolioController.getActiveProjectName?.() ?? "Aktif kayıt",
   storagePrefix: TRACKING_STORAGE_PREFIX,
+});
+
+setupController = createSetupController({
+  elements: {
+    toggleButton: elements.setupButton,
+    panel: elements.setupPanel,
+    closeButton: elements.setupCloseButton,
+    syncButton: elements.setupSyncButton,
+    addButton: elements.setupAddItemButton,
+    profile: elements.setupProfile,
+    requirements: elements.setupRequirements,
+    table: elements.setupItemsTable,
+    cashSummary: elements.setupCashSummary,
+  },
+  getContext: () => ({
+    sector: currentSector(),
+    inputs: currentInputs(),
+    setup: currentSectorState().setup,
+  }),
+  setSetup: (setup) => {
+    currentSectorState().setup = synchronizeSetupWorkspace(setup, currentSetupContext());
+    saveState();
+    render();
+  },
 });
 
 renderSectorOptions();
@@ -243,6 +279,13 @@ function currentInputs() {
   return currentSectorState().inputs;
 }
 
+function currentSetupContext() {
+  return {
+    sectorId: currentSector().id,
+    businessType: String(currentInputs()?.businessType ?? currentInputs()?.businessTypeId ?? ""),
+  };
+}
+
 function summarizeWorkspace(workspace) {
   const normalized = normalizeState(workspace);
   const sector = getSector(normalized.activeSectorId);
@@ -282,6 +325,7 @@ function updateCurrentInputs(patch) {
     ...cloneInputValue(currentInputs()),
     ...cloneInputValue(patch),
   });
+  currentSectorState().setup = synchronizeSetupWorkspace(currentSectorState().setup, currentSetupContext());
   saveState();
 }
 
@@ -364,13 +408,13 @@ function closeActionMenus({ returnFocus = false } = {}) {
   }
 }
 
-function toggleActionMenu(selected) {
-  const shouldOpen = selected.panel.hidden;
+function toggleActionMenu(selectedMenu) {
+  const shouldOpen = selectedMenu.panel.hidden;
   closeActionMenus();
   if (!shouldOpen) return;
-  selected.panel.hidden = false;
-  selected.trigger.setAttribute("aria-expanded", "true");
-  queueMicrotask(() => selected.panel.querySelector?.('[role="menuitem"]')?.focus?.());
+  selectedMenu.panel.hidden = false;
+  selectedMenu.trigger.setAttribute("aria-expanded", "true");
+  queueMicrotask(() => selectedMenu.panel.querySelector?.('[role="menuitem"]')?.focus?.());
 }
 
 function resetCurrentSector() {
@@ -475,8 +519,9 @@ function render() {
   renderWaterfall(elements.waterfall, result.waterfall);
   renderCashFlow(elements.cashFlowTable, sector, result.cashFlow.rows);
   renderBreakdown(elements.breakdown, presentation.breakdown);
-  lastRendered = { sector, inputs, result, presentation };
+  lastRendered = { sector, inputs, result, presentation, setup: currentSectorState().setup };
   trackingController.render();
+  setupController.render();
 }
 
 function renderSecondaryKpiDisclosure(count = elements.secondaryKpiGrid.children?.length ?? 0) {

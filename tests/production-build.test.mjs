@@ -18,10 +18,13 @@ test("production paketi yalnız yayınlanabilir statik dosyaları içerir", asyn
       "404.html",
       "styles.css",
       "styles-advanced.css",
+      "styles-setup.css",
       "LICENSE",
       ".nojekyll",
       "build-info.json",
       "src/app.js",
+      "src/setup/setup-controller.js",
+      "src/setup/setup-workspace.js",
       "standalone/cafe-restaurant-calculator.html",
       "standalone/game-digital-publishing-calculator.html",
     ]) {
@@ -31,11 +34,14 @@ test("production paketi yalnız yayınlanabilir statik dosyaları içerir", asyn
       assert.equal(await exists(path.join(output, excluded)), false, `${excluded} yayın paketine girmemelidir`);
     }
     const info = JSON.parse(await readFile(path.join(output, "build-info.json"), "utf8"));
-    assert.equal(info.version, "0.24.1");
+    assert.equal(info.version, "0.24.2");
     assert.equal(info.standaloneCalculators, 8);
     const html = await readFile(path.join(output, "index.html"), "utf8");
-    assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.1/);
+    assert.match(html, /BUSINESS INCOME CALCULATOR · v0\.24\.2/);
     assert.doesNotMatch(html, /BUSINESS INCOME CALCULATOR · v0\.23\.0/);
+    assert.match(html, /styles-setup\.css/);
+    assert.match(html, /id="setupPanel"/);
+    assert.match(html, /id="setupCashSummary"/);
     assert.match(html, /class="skip-link"/);
   } finally {
     await rm(output, { recursive: true, force: true });
