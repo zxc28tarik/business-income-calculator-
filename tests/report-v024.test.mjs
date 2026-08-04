@@ -95,8 +95,9 @@ test("v0.24 rapor modeli tek kullanıcı girdisi ve kuruluş hiyerarşisini koru
   assert.equal(report.setup.cashBridge.grossStartupCashNeed, 0);
   assert.ok(report.setup.items.length >= 10);
   assert.deepEqual(
-    report.cashFlow.columns.slice(-7).map((column) => column.key),
+    report.cashFlow.columns.slice(-8).map((column) => column.key),
     [
+      "legacyStartupAdjustment",
       "setupFundingInflow",
       "setupPaymentOutflow",
       "debtPrincipalPayment",
