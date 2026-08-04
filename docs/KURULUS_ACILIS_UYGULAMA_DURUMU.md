@@ -9,7 +9,7 @@
 | Dal | `agent/kurulus-acilis-vergi-stratejisi-v6` |
 | PR | `#7` |
 | Durum | Kuruluş, finansman, borç servisi, rapor, CSV ve birleşik nakit dilimi tamamlandı; taslak PR |
-| Son doğrulanan kod kalite kapısı | `Release quality gate #901 — başarılı` |
+| Son doğrulanan kapsam | `290 test · 110 modül · production · masaüstü/mobil E2E` |
 
 > PR taslak durumundadır ve `main` dalına birleştirilmemiştir. Bu belge yalnız uygulanmış ve otomatik testlerle doğrulanmış kapsamı kaydeder.
 
@@ -187,7 +187,6 @@ Rapor harici stil veya betik kaynağına ihtiyaç duymuyor ve Yazdır/PDF görü
 - Ortak raporda kuruluş ve borç görünümü: **geçti**.
 - 320 piksel dar görünüm: **geçti**.
 - Ciddi/kritik erişilebilirlik ihlali denetimi: **geçti**.
-- Kod kapsamını doğrulayan GitHub Release quality gate: **#901 başarılı**.
 
 ## Bilerek sonraya bırakılanlar
 
