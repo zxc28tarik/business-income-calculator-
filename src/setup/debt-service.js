@@ -63,7 +63,7 @@ function buildSingleDebtSchedule(raw, maxMonth) {
     rows[debt.availableMonth].feePayment += debt.amount * debt.upfrontFeeRate;
   }
 
-  let balance = debt.amount;
+  let lifetimeBalance = debt.amount;
   let totalInterest = 0;
   const monthlyRate = debt.annualInterestRate / 12;
   const firstPaymentMonth = debt.availableMonth + debt.graceMonths + 1;
@@ -72,12 +72,12 @@ function buildSingleDebtSchedule(raw, maxMonth) {
 
   for (let installment = 0; installment < debt.termMonths; installment += 1) {
     const month = firstPaymentMonth + installment;
-    const interest = balance * monthlyRate;
+    const interest = lifetimeBalance * monthlyRate;
     const principal = debt.repaymentMethod === "equal_principal"
-      ? Math.min(balance, fixedPrincipal)
-      : Math.min(balance, Math.max(0, fixedAnnuity - interest));
+      ? Math.min(lifetimeBalance, fixedPrincipal)
+      : Math.min(lifetimeBalance, Math.max(0, fixedAnnuity - interest));
     totalInterest += interest;
-    balance = Math.max(0, balance - principal);
+    lifetimeBalance = Math.max(0, lifetimeBalance - principal);
 
     if (month <= maxMonth) {
       rows[month].principalPayment += principal;
@@ -100,7 +100,7 @@ function buildSingleDebtSchedule(raw, maxMonth) {
   return {
     debt,
     rows,
-    afterHorizonPrincipal: roundMoney(balance),
+    afterHorizonPrincipal: roundMoney(runningBalance),
     totalInterest: roundMoney(totalInterest),
     totalFees: roundMoney(debt.amount * debt.upfrontFeeRate),
   };
