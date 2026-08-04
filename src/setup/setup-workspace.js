@@ -7,16 +7,18 @@ import {
   buildSetupPaymentSchedule,
   buildStartupCashBridge,
 } from "./setup-model.js";
+import { buildDebtServiceSchedule } from "./debt-service.js";
 import {
   instantiateRequirementItems,
   resolveSetupRequirements,
 } from "./requirement-engine.js";
 import { SETUP_REQUIREMENT_RULES } from "./requirement-rules.js";
 
-export const SETUP_WORKSPACE_VERSION = 1;
+export const SETUP_WORKSPACE_VERSION = 2;
 
 const FUNDING_TYPES = new Set(["equity", "loan", "grant", "support", "supplier_credit", "other"]);
 const FUNDING_STATUSES = new Set(["planned", "available", "used", "excluded"]);
+const REPAYMENT_METHODS = new Set(["annuity", "equal_principal"]);
 
 function text(value, fallback = "") {
   const normalized = String(value ?? "").replace(/\s+/g, " ").trim();
@@ -100,13 +102,25 @@ function itemTemplateIdentity(item) {
 
 export function normalizeWorkspaceFunding(raw = {}, index = 0) {
   const source = raw && typeof raw === "object" ? raw : {};
+  const type = enumValue(source.type, FUNDING_TYPES, "other");
   return {
     id: safeId(source.id, `setup-funding-${index + 1}`),
     label: text(source.label, `Finansman ${index + 1}`),
-    type: enumValue(source.type, FUNDING_TYPES, "other"),
+    type,
     status: enumValue(source.status, FUNDING_STATUSES, "planned"),
     amount: roundMoney(nonNegative(source.amount)),
     availableMonth: Math.min(120, nonNegativeInteger(source.availableMonth)),
+    annualInterestRate: type === "loan" || type === "supplier_credit" ? boundedRate(source.annualInterestRate, 0) : 0,
+    termMonths: type === "loan" || type === "supplier_credit"
+      ? Math.min(120, Math.max(1, nonNegativeInteger(source.termMonths, 12)))
+      : 0,
+    graceMonths: type === "loan" || type === "supplier_credit"
+      ? Math.min(120, nonNegativeInteger(source.graceMonths))
+      : 0,
+    upfrontFeeRate: type === "loan" || type === "supplier_credit" ? boundedRate(source.upfrontFeeRate, 0) : 0,
+    repaymentMethod: type === "loan" || type === "supplier_credit"
+      ? enumValue(source.repaymentMethod, REPAYMENT_METHODS, "annuity")
+      : "",
     note: text(source.note),
   };
 }
@@ -168,6 +182,7 @@ function summarizeFunding(workspace, availableFunding) {
     usedAmount: 0,
     excludedAmount: 0,
     readyAmount: roundMoney(availableFunding),
+    activeDebtAmount: 0,
   };
   for (const item of workspace.funding) {
     totals.totalAmount += item.amount;
@@ -175,6 +190,9 @@ function summarizeFunding(workspace, availableFunding) {
     if (item.status === "available") totals.availableAmount += item.amount;
     if (item.status === "used") totals.usedAmount += item.amount;
     if (item.status === "excluded") totals.excludedAmount += item.amount;
+    if (["available", "used"].includes(item.status) && ["loan", "supplier_credit"].includes(item.type)) {
+      totals.activeDebtAmount += item.amount;
+    }
   }
   for (const key of Object.keys(totals)) totals[key] = roundMoney(totals[key]);
   return totals;
@@ -194,7 +212,9 @@ export function buildSetupWorkspaceResult(raw = {}, context = {}, options = {}) 
     openingMonth: workspace.openingMonth,
   });
   cashBridge.funding = workspace.funding;
-  const paymentSchedule = buildSetupPaymentSchedule(workspace.items, options.scheduleMonths ?? 12);
+  const scheduleMonths = options.scheduleMonths ?? 12;
+  const paymentSchedule = buildSetupPaymentSchedule(workspace.items, scheduleMonths);
+  const debtService = buildDebtServiceSchedule(workspace.funding, scheduleMonths);
   const fundingSummary = summarizeFunding(workspace, cashBridge.availableFunding);
   const quoteCount = workspace.items.filter((item) => item.status === SETUP_ITEM_STATUSES.QUOTE).length;
   const verifyCount = workspace.items.filter((item) => item.status === SETUP_ITEM_STATUSES.VERIFY).length;
@@ -204,6 +224,7 @@ export function buildSetupWorkspaceResult(raw = {}, context = {}, options = {}) 
     requirements,
     cashBridge,
     paymentSchedule,
+    debtService,
     fundingSummary,
     quoteCount,
     verifyCount,
