@@ -73,9 +73,12 @@ function buildSingleDebtSchedule(raw, maxMonth) {
   for (let installment = 0; installment < debt.termMonths; installment += 1) {
     const month = firstPaymentMonth + installment;
     const interest = lifetimeBalance * monthlyRate;
-    const principal = debt.repaymentMethod === "equal_principal"
-      ? Math.min(lifetimeBalance, fixedPrincipal)
-      : Math.min(lifetimeBalance, Math.max(0, fixedAnnuity - interest));
+    const isFinalInstallment = installment === debt.termMonths - 1;
+    const principal = isFinalInstallment
+      ? lifetimeBalance
+      : debt.repaymentMethod === "equal_principal"
+        ? Math.min(lifetimeBalance, fixedPrincipal)
+        : Math.min(lifetimeBalance, Math.max(0, fixedAnnuity - interest));
     totalInterest += interest;
     lifetimeBalance = Math.max(0, lifetimeBalance - principal);
 
