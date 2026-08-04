@@ -1,10 +1,16 @@
 import { escapeHtml, formatValue } from "../ui/formatters.js";
+import { renderCashFlow, resolveCashFlowColumns } from "../ui/results-view.js";
 import { createWorkspacePanel } from "../ui/workspace-panel.js";
 import {
   SETUP_COST_TYPES,
   SETUP_ITEM_STATUSES,
   VAT_RECOVERABILITY,
 } from "./setup-model.js";
+import {
+  appendSetupCashColumns,
+  buildIntegratedCashFlow,
+  downloadSetupCsv,
+} from "./setup-integration.js";
 import {
   addCustomSetupItem,
   addSetupFunding,
@@ -60,6 +66,11 @@ const FUNDING_STATUS_LABELS = {
   available: "Kullanılabilir",
   used: "Kullanıldı",
   excluded: "Hariç",
+};
+
+const REPAYMENT_METHOD_LABELS = {
+  annuity: "Eşit taksit",
+  equal_principal: "Eşit anapara",
 };
 
 const REQUIREMENT_LEVEL_LABELS = {
@@ -175,11 +186,22 @@ function renderItemsTable(workspace) {
     </tr>`).join("")}</tbody>`;
 }
 
+function fundingDebtFields(item) {
+  const isDebt = item.type === "loan" || item.type === "supplier_credit";
+  const disabled = isDebt ? "" : " disabled";
+  return `
+    <td><input type="number" min="0" max="100" step="0.1" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="annualInterestRate" value="${escapeHtml((item.annualInterestRate * 100).toFixed(2))}"${disabled}></td>
+    <td><input type="number" min="1" max="120" step="1" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="termMonths" value="${escapeHtml(item.termMonths || 12)}"${disabled}></td>
+    <td><input type="number" min="0" max="120" step="1" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="graceMonths" value="${escapeHtml(item.graceMonths)}"${disabled}></td>
+    <td><input type="number" min="0" max="100" step="0.1" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="upfrontFeeRate" value="${escapeHtml((item.upfrontFeeRate * 100).toFixed(2))}"${disabled}></td>
+    <td><select data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="repaymentMethod"${disabled}>${optionList(REPAYMENT_METHOD_LABELS, item.repaymentMethod || "annuity")}</select></td>`;
+}
+
 function renderFundingTable(result) {
   const funding = result.workspace.funding;
-  if (!funding.length) return '<tbody><tr><td colspan="6" class="setup-empty">Henüz finansman kaynağı eklenmedi. Planlanan kaynaklar özkaynak ihtiyacından düşülmez.</td></tr></tbody>';
+  if (!funding.length) return '<tbody><tr><td colspan="11" class="setup-empty">Henüz finansman kaynağı eklenmedi. Planlanan kaynaklar özkaynak ihtiyacından düşülmez.</td></tr></tbody>';
   return `<thead><tr>
-    <th>Durum</th><th>Kaynak</th><th>Tür</th><th>Tutar</th><th>Hazır olduğu ay</th><th></th>
+    <th>Durum</th><th>Kaynak</th><th>Tür</th><th>Tutar</th><th>Hazır ay</th><th>Yıllık faiz %</th><th>Vade</th><th>Ödemesiz ay</th><th>Masraf %</th><th>Yöntem</th><th></th>
   </tr></thead><tbody>${funding.map((item) => `
     <tr data-setup-funding-row="${escapeHtml(item.id)}">
       <td><select data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="status">${optionList(FUNDING_STATUS_LABELS, item.status)}</select></td>
@@ -187,35 +209,37 @@ function renderFundingTable(result) {
       <td><select data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="type">${optionList(FUNDING_TYPE_LABELS, item.type)}</select></td>
       <td><input type="number" min="0" step="1000" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="amount" value="${escapeHtml(item.amount)}"></td>
       <td><input type="number" min="0" max="120" step="1" data-setup-funding-id="${escapeHtml(item.id)}" data-setup-funding-field="availableMonth" value="${escapeHtml(item.availableMonth)}"></td>
+      ${fundingDebtFields(item)}
       <td><button type="button" class="setup-remove-button" data-setup-funding-remove="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)} finansmanını kaldır">Kaldır</button></td>
     </tr>`).join("")}</tbody>`;
 }
 
-function renderPaymentSchedule(result) {
-  const rows = result.paymentSchedule.rows;
-  const total = rows.reduce((sum, row) => sum + row.cashOutflow, 0);
-  return `<thead><tr><th>Dönem</th><th>Kuruluş ödemesi</th></tr></thead>
-    <tbody>${rows.map((row) => `<tr><td>${row.month === 0 ? "Açılış / Ay 0" : `Ay ${row.month}`}</td><td>${formatValue(row.cashOutflow, "money")}</td></tr>`).join("")}</tbody>
-    <tfoot><tr><th>İlk 12 ay toplamı</th><th>${formatValue(total, "money")}</th></tr>
-    <tr><th>12 ay sonrasına kalan</th><th>${formatValue(result.paymentSchedule.afterHorizon, "money")}</th></tr></tfoot>`;
+function renderPaymentSchedule(result, integrated) {
+  const totalSetup = integrated.rows.reduce((sum, row) => sum + row.setupPaymentOutflow, 0);
+  const totalDebt = integrated.rows.reduce((sum, row) => sum + row.debtPrincipalPayment + row.debtInterestPayment + row.debtFeePayment, 0);
+  return `<thead><tr><th>Dönem</th><th>Finansman girişi</th><th>Kuruluş ödemesi</th><th>Anapara</th><th>Faiz</th><th>Masraf</th><th>Net etki</th><th>Kalan borç</th></tr></thead>
+    <tbody>${integrated.rows.map((row) => `<tr><td>${row.month === 0 ? "Açılış / Ay 0" : `Ay ${row.month}`}</td><td>${formatValue(row.setupFundingInflow, "money")}</td><td>${formatValue(row.setupPaymentOutflow, "money")}</td><td>${formatValue(row.debtPrincipalPayment, "money")}</td><td>${formatValue(row.debtInterestPayment, "money")}</td><td>${formatValue(row.debtFeePayment, "money")}</td><td>${formatValue(row.setupNetCashFlow, "money")}</td><td>${formatValue(row.endingDebtBalance, "money")}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><th>İlk dönem toplamı</th><th></th><th>${formatValue(totalSetup, "money")}</th><th colspan="3">Borç servisi: ${formatValue(totalDebt, "money")}</th><th></th><th>${formatValue(integrated.debt.endingBalance, "money")}</th></tr>
+    <tr><th>Ufuk sonrası</th><th colspan="2">Kuruluş ödemesi: ${formatValue(integrated.setupPaymentAfterHorizon, "money")}</th><th colspan="5">Kalan anapara: ${formatValue(integrated.debt.afterHorizonPrincipal, "money")}</th></tr></tfoot>`;
 }
 
 function summaryCard(label, value, note, tone = "") {
   return `<article class="setup-summary-card ${tone}"><span>${escapeHtml(label)}</span><strong>${formatValue(value, "money")}</strong><small>${escapeHtml(note)}</small></article>`;
 }
 
-function renderCashSummary(result) {
+function renderCashSummary(result, integrated) {
   const bridge = result.cashBridge;
   const totals = bridge.summary.totals;
   const intro = totals.includedCount
     ? `${totals.includedCount} dahil kalem üzerinden hesaplandı. Teklif veya doğrulama bekleyen ${result.unresolvedCount} kalem ayrıca izleniyor.`
     : `Henüz hesaba dahil edilen tutarlı kalem yok. ${result.unresolvedCount} kalem teklif veya doğrulama bekliyor.`;
   return `
-    <div class="setup-cash-intro"><strong>${escapeHtml(intro)}</strong><span>Yalnız açılışta kullanılabilir veya kullanılmış finansman özkaynak ihtiyacını azaltır. Planlanan kaynaklar düşülmez.</span></div>
+    <div class="setup-cash-intro"><strong>${escapeHtml(intro)}</strong><span>Yalnız açılışta kullanılabilir veya kullanılmış finansman özkaynak ihtiyacını azaltır. Borç anapara ve faiz ödemeleri kâra değil nakit akışına bağlanır.</span></div>
     <div class="setup-summary-grid">
       ${summaryCard("Güvenli başlangıç nakdi", bridge.grossStartupCashNeed, `Rezerv: ${formatValue(bridge.contingencyReserve, "money")}`, bridge.grossStartupCashNeed > 0 ? "primary" : "")}
       ${summaryCard("Gerekli özkaynak", bridge.requiredOwnCash, `Hazır / kullanılmış: ${formatValue(bridge.availableFunding, "money")}`)}
       ${summaryCard("Planlanan finansman", result.fundingSummary.plannedAmount, "Henüz özkaynaktan düşülmez", result.fundingSummary.plannedAmount > 0 ? "warning" : "")}
+      ${summaryCard("12 ay borç servisi", integrated.debt.totalPrincipalPaid + integrated.debt.totalInterestPaid + integrated.debt.totalFeesPaid, `Kalan borç: ${formatValue(integrated.debt.endingBalance, "money")}`, integrated.debt.activeDebtAmount > 0 ? "warning" : "")}
       ${summaryCard("Giderleşecek taban", totals.expenseBasis, "Kuruluş, sarf ve uyum giderleri")}
       ${summaryCard("Varlık + stok + bağlı nakit", totals.assetBasis + totals.inventoryBasis + totals.tiedCash, "Demirbaş, stok ve depozito")}
       ${summaryCard("Doğrulanmamış KDV", totals.unverifiedVat, "KDV niteliği henüz teyit edilmedi", totals.unverifiedVat > 0 ? "warning" : "")}
@@ -228,33 +252,49 @@ function profilePatch(target) {
   let value = target.type === "checkbox" ? target.checked : target.value;
   if (target.type === "number") value = Number(value);
   const patch = { [key]: value };
-  if (key === "premisesType") {
-    patch.hasPhysicalPremises = ["rented", "owned", "shared", "other"].includes(value);
-  }
+  if (key === "premisesType") patch.hasPhysicalPremises = ["rented", "owned", "shared", "other"].includes(value);
   if (key === "employeeCount" && Number(value) > 0) patch.hasEmployees = true;
   return patch;
 }
 
+function integratedSector(sector, baseRows) {
+  return {
+    ...sector,
+    cashFlowColumns: appendSetupCashColumns(resolveCashFlowColumns(sector, baseRows)),
+  };
+}
+
 export function createSetupController({ elements, getContext, setSetup }) {
   let panelControl = null;
+  let lastIntegrated = null;
+  let lastResult = null;
   const fundingTable = elements.fundingTable ?? elements.panel.querySelector("#setupFundingTable");
   const paymentSchedule = elements.paymentSchedule ?? elements.panel.querySelector("#setupPaymentSchedule");
   const addFundingButton = elements.addFundingButton ?? elements.panel.querySelector("#setupAddFundingButton");
+  const exportCsvButton = elements.exportCsvButton ?? elements.panel.querySelector("#setupExportCsvButton");
+  const mainCashTable = document.querySelector("#cashFlowTable");
 
   function current() {
     const context = getContext();
-    return { context, result: buildSetupWorkspaceResult(context.setup, setupContext(context)) };
+    const result = buildSetupWorkspaceResult(context.setup, setupContext(context));
+    const baseResult = context.result ?? context.sector?.calculateModel?.(context.inputs);
+    const baseRows = baseResult?.cashFlow?.rows ?? [];
+    const integrated = buildIntegratedCashFlow(baseRows, result, 12);
+    return { context, result, integrated, baseRows };
   }
 
   function render() {
-    const { context, result } = current();
+    const { context, result, integrated, baseRows } = current();
+    lastResult = result;
+    lastIntegrated = integrated;
     elements.profile.innerHTML = renderProfile(result.workspace.profile, result.workspace.reserveRate, context);
     elements.requirements.innerHTML = renderRequirements(result);
     elements.table.innerHTML = renderItemsTable(result.workspace);
     fundingTable.innerHTML = renderFundingTable(result);
-    paymentSchedule.innerHTML = renderPaymentSchedule(result);
-    elements.cashSummary.innerHTML = renderCashSummary(result);
+    paymentSchedule.innerHTML = renderPaymentSchedule(result, integrated);
+    elements.cashSummary.innerHTML = renderCashSummary(result, integrated);
     elements.syncButton.textContent = `Koşulları yenile · ${result.requirements.summary.total} kontrol`;
+    if (mainCashTable && context.sector) renderCashFlow(mainCashTable, integratedSector(context.sector, baseRows), integrated.rows);
   }
 
   elements.profile.addEventListener("change", (event) => {
@@ -292,8 +332,14 @@ export function createSetupController({ elements, getContext, setSetup }) {
     if (!fundingId || !field) return;
     const context = getContext();
     let value = event.target.value;
-    if (["amount", "availableMonth"].includes(field)) value = Number(value);
-    setSetup(updateSetupFunding(context.setup, fundingId, { [field]: value }, setupContext(context)));
+    if (["amount", "availableMonth", "termMonths", "graceMonths"].includes(field)) value = Number(value);
+    if (["annualInterestRate", "upfrontFeeRate"].includes(field)) value = Number(value) / 100;
+    const patch = { [field]: value };
+    if (field === "type" && ["loan", "supplier_credit"].includes(value)) {
+      patch.termMonths = 12;
+      patch.repaymentMethod = "annuity";
+    }
+    setSetup(updateSetupFunding(context.setup, fundingId, patch, setupContext(context)));
   });
 
   fundingTable.addEventListener("click", (event) => {
@@ -308,9 +354,15 @@ export function createSetupController({ elements, getContext, setSetup }) {
     setSetup(addCustomSetupItem(context.setup, {}, setupContext(context)));
   });
 
-  addFundingButton.addEventListener("click", () => {
+  addFundingButton?.addEventListener("click", () => {
     const context = getContext();
     setSetup(addSetupFunding(context.setup, {}, setupContext(context)));
+  });
+
+  exportCsvButton?.addEventListener("click", () => {
+    if (!lastResult || !lastIntegrated) render();
+    const sectorId = getContext()?.sector?.id ?? "isletme";
+    downloadSetupCsv(lastResult, lastIntegrated, `${sectorId}-kurulus-acilis.csv`);
   });
 
   elements.syncButton.addEventListener("click", () => {
