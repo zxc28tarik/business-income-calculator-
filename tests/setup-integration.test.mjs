@@ -30,6 +30,8 @@ test("kuruluş hareketi yoksa faaliyet nakit satırları ve sonuçları korunur"
   assert.equal(integrated.rows[0].month, 1);
   assert.equal(integrated.rows[0].cashEnd, 10_000);
   assert.equal(integrated.rows[11].cashEnd, 120_000);
+  assert.equal(integrated.replacedLegacySetup, false);
+  assert.equal(integrated.replacedLegacyFunding, false);
 });
 
 test("kuruluş taksiti ve hazır özkaynak birleşik nakde kümülatif bağlanır", () => {
@@ -69,6 +71,7 @@ test("planlanan finansman birleşik nakit girişi üretmez", () => {
   const integrated = buildIntegratedCashFlow(baseRows, result, 12);
   assert.equal(integrated.rows.length, 12);
   assert.equal(integrated.rows.reduce((sum, row) => sum + row.setupFundingInflow, 0), 0);
+  assert.equal(integrated.replacedLegacyFunding, false);
 });
 
 test("kredi girişi anapara faiz ve masrafı ayrı sütunlarda taşır", () => {
@@ -95,7 +98,45 @@ test("kredi girişi anapara faiz ve masrafı ayrı sütunlarda taşır", () => {
   assert.equal(integrated.debt.endingBalance, 0);
 });
 
-test("nakit kolonları faaliyet sonunu korur ve birleşik sonucu sona ekler", () => {
+test("ayrıntılı kuruluş planı eski toplu kurulum ve finansmanı bir kez nötrler", () => {
+  const legacyRows = [
+    { month: 1, setupCosts: 30_000, financing: 20_000, cashEnd: 90_000 },
+    { month: 2, setupCosts: 0, financing: 0, cashEnd: 110_000 },
+  ];
+  const result = setupResult({
+    items: [{
+      id: "detailed-setup",
+      label: "Ayrıntılı ekipman",
+      status: "included",
+      costType: "CAPEX",
+      unitCost: 30_000,
+      paymentMonth: 1,
+      installmentCount: 1,
+    }],
+    funding: [{
+      id: "detailed-equity",
+      label: "Ayrıntılı sermaye",
+      type: "equity",
+      status: "available",
+      amount: 20_000,
+      availableMonth: 1,
+    }],
+  });
+  const integrated = buildIntegratedCashFlow(legacyRows, result, 2);
+  const firstMonth = integrated.rows.find((row) => row.month === 1);
+
+  assert.equal(integrated.replacedLegacySetup, true);
+  assert.equal(integrated.replacedLegacyFunding, true);
+  assert.equal(integrated.totalLegacySetupCostsRemoved, 30_000);
+  assert.equal(integrated.totalLegacyFinancingRemoved, 20_000);
+  assert.equal(firstMonth.legacyStartupAdjustment, 10_000);
+  assert.equal(firstMonth.baseCashEnd, 100_000);
+  assert.equal(firstMonth.setupFundingInflow, 20_000);
+  assert.equal(firstMonth.setupPaymentOutflow, 30_000);
+  assert.equal(firstMonth.cashEnd, 90_000);
+});
+
+test("nakit kolonları eski kuruluş düzeltmesini, faaliyet sonunu ve birleşik sonucu gösterir", () => {
   const columns = appendSetupCashColumns([
     { key: "month", label: "Ay" },
     { key: "collections", label: "Tahsilat" },
@@ -104,6 +145,7 @@ test("nakit kolonları faaliyet sonunu korur ve birleşik sonucu sona ekler", ()
   assert.deepEqual(columns.map((column) => column.key), [
     "month",
     "collections",
+    "legacyStartupAdjustment",
     "setupFundingInflow",
     "setupPaymentOutflow",
     "debtPrincipalPayment",
@@ -114,7 +156,7 @@ test("nakit kolonları faaliyet sonunu korur ve birleşik sonucu sona ekler", ()
   ]);
 });
 
-test("kuruluş CSV çıktısı maliyet finansman ve borç takvimini birlikte içerir", () => {
+test("kuruluş CSV çıktısı maliyet finansman borç ve çift sayım düzeltmesini içerir", () => {
   const result = setupResult({
     items: [{ id: "deposit", label: "Kira depozitosu", status: "included", costType: "DEPOSIT", unitCost: 20_000 }],
     funding: [{ id: "loan", label: "Banka kredisi", type: "loan", status: "available", amount: 30_000, termMonths: 12 }],
@@ -124,6 +166,7 @@ test("kuruluş CSV çıktısı maliyet finansman ve borç takvimini birlikte iç
   assert.match(csv, /KURULUŞ VE AÇILIŞ ÖZETİ/);
   assert.match(csv, /Kira depozitosu/);
   assert.match(csv, /Banka kredisi/);
+  assert.match(csv, /Eski toplu kurulum etkisi nötrlendi/);
   assert.match(csv, /KURULUŞ VE BORÇ ÖDEME TAKVİMİ/);
   assert.doesNotMatch(csv, /\[object Object\]/);
 });
