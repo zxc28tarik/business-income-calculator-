@@ -136,19 +136,19 @@ export function buildDebtServiceSchedule(funding = [], maxMonth = 12) {
     }
   }
 
-  let endingBalance = debts
-    .filter((debt) => ACTIVE_STATUSES.has(debt.status))
-    .reduce((sum, debt) => sum + debt.amount, 0);
   for (const row of rows) {
-    endingBalance = Math.max(0, endingBalance - row.principalPayment);
     row.fundingInflow = roundMoney(row.fundingInflow);
     row.feePayment = roundMoney(row.feePayment);
     row.principalPayment = roundMoney(row.principalPayment);
     row.interestPayment = roundMoney(row.interestPayment);
     row.debtPayment = roundMoney(row.debtPayment);
-    row.endingBalance = roundMoney(endingBalance);
+    row.endingBalance = roundMoney(schedules.reduce(
+      (sum, schedule) => sum + Number(schedule.rows[row.month]?.endingBalance ?? 0),
+      0,
+    ));
   }
 
+  const endingBalance = roundMoney(rows.at(-1)?.endingBalance ?? 0);
   return {
     debts,
     rows,
@@ -156,7 +156,7 @@ export function buildDebtServiceSchedule(funding = [], maxMonth = 12) {
     totalPrincipalPaid: roundMoney(rows.reduce((sum, row) => sum + row.principalPayment, 0)),
     totalInterestPaid: roundMoney(rows.reduce((sum, row) => sum + row.interestPayment, 0)),
     totalFeesPaid: roundMoney(rows.reduce((sum, row) => sum + row.feePayment, 0)),
-    endingBalance: roundMoney(endingBalance),
+    endingBalance,
     afterHorizonPrincipal: roundMoney(schedules.reduce((sum, item) => sum + item.afterHorizonPrincipal, 0)),
     lifetimeInterest: roundMoney(schedules.reduce((sum, item) => sum + item.totalInterest, 0)),
   };
