@@ -11,7 +11,7 @@
 | Durum | Kuruluş, finansman, borç servisi, rapor, CSV ve birleşik nakit dilimi tamamlandı; taslak PR |
 | Son doğrulanan kod kalite kapısı | `Release quality gate #901 — başarılı` |
 
-> PR taslak durumundadır ve `main` dalına birleştirilmemiştir. Bu belge yalnız uygulanmış ve otomatik testlerle doğrulanmış kapsamı kaydeder. Belge güncellemesinden sonra oluşan final dal başı kalite koşusu ayrıca doğrulanacaktır.
+> PR taslak durumundadır ve `main` dalına birleştirilmemiştir. Bu belge yalnız uygulanmış ve otomatik testlerle doğrulanmış kapsamı kaydeder.
 
 ## Tamamlanan kuruluş çekirdeği
 
