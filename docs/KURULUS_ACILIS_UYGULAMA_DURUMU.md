@@ -9,7 +9,7 @@
 | Dal | `agent/kurulus-acilis-vergi-stratejisi-v6` |
 | PR | `#7` |
 | Durum | Kuruluş, finansman, borç servisi, rapor, CSV ve birleşik nakit dilimi tamamlandı; taslak PR |
-| Son doğrulanan kapsam | `290 test · 110 modül · production · masaüstü/mobil E2E` |
+| Doğrulama | `290 test · 110 modül · production · masaüstü/mobil E2E` |
 
 > PR taslak durumundadır ve `main` dalına birleştirilmemiştir. Bu belge yalnız uygulanmış ve otomatik testlerle doğrulanmış kapsamı kaydeder.
 
