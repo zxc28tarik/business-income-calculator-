@@ -23,6 +23,7 @@ test("kafe kuruluş çalışma alanı güvenli varsayımlar ve sıfır finans et
   const workspace = createDefaultSetupWorkspace(cafeContext, { asOf: "2026-08-03" });
   const result = buildSetupWorkspaceResult(workspace, cafeContext, { asOf: "2026-08-03" });
 
+  assert.equal(workspace.version, 2);
   assert.equal(workspace.profile.sectorId, "cafe_restaurant");
   assert.equal(workspace.profile.hasPhysicalPremises, true);
   assert.equal(workspace.profile.handlesFood, true);
@@ -31,6 +32,7 @@ test("kafe kuruluş çalışma alanı güvenli varsayımlar ve sıfır finans et
   assert.equal(result.cashBridge.grossStartupCashNeed, 0);
   assert.equal(result.cashBridge.requiredOwnCash, 0);
   assert.equal(result.fundingSummary.readyAmount, 0);
+  assert.equal(result.debtService.activeDebtAmount, 0);
 });
 
 test("dahil edilen kafe kalemi gerçek başlangıç nakdine bağlanır", () => {
@@ -104,7 +106,7 @@ test("eski veya bozuk çalışma alanı aktif sektör bağlamına güvenle taş�
     funding: [{ status: "unknown", amount: -5 }],
   }, { sectorId: "physical_retail", businessType: "shop" });
 
-  assert.equal(workspace.version, 1);
+  assert.equal(workspace.version, 2);
   assert.equal(workspace.profile.sectorId, "physical_retail");
   assert.equal(workspace.profile.businessType, "shop");
   assert.equal(workspace.profile.employeeCount, 2);
@@ -147,6 +149,7 @@ test("planlanan finansman özkaynağı azaltmaz, kullanılabilir ve kullanılmı
   assert.equal(result.cashBridge.availableFunding, 0);
   assert.equal(result.cashBridge.requiredOwnCash, 110_000);
   assert.equal(result.fundingSummary.plannedAmount, 20_000);
+  assert.equal(result.debtService.activeDebtAmount, 0);
 
   workspace = updateSetupFunding(workspace, "bank-loan", { status: "available" }, cafeContext, { asOf: "2026-08-03" });
   workspace = addSetupFunding(workspace, {
@@ -164,6 +167,7 @@ test("planlanan finansman özkaynağı azaltmaz, kullanılabilir ve kullanılmı
   assert.equal(result.fundingSummary.availableAmount, 20_000);
   assert.equal(result.fundingSummary.usedAmount, 10_000);
   assert.equal(result.fundingSummary.readyAmount, 30_000);
+  assert.equal(result.debtService.activeDebtAmount, 20_000);
 });
 
 test("finansman kaynağı ekleme güncelleme ve kaldırma kayıt içinde korunur", () => {
@@ -186,9 +190,38 @@ test("finansman kaynağı ekleme güncelleme ve kaldırma kayıt içinde korunur
   assert.equal(workspace.funding[0].status, "available");
   assert.equal(workspace.funding[0].amount, 80_000);
   assert.equal(workspace.funding[0].availableMonth, 2);
+  assert.equal(workspace.funding[0].termMonths, 0);
 
   workspace = removeSetupFunding(workspace, "grant-1", cafeContext, { asOf: "2026-08-03" });
   assert.deepEqual(workspace.funding, []);
+});
+
+test("kredi koşulları kayıtta korunur ve borç servisine bağlanır", () => {
+  let workspace = createDefaultSetupWorkspace(cafeContext, { asOf: "2026-08-03" });
+  workspace = addSetupFunding(workspace, {
+    id: "loan-terms",
+    label: "Yatırım kredisi",
+    type: "loan",
+    status: "available",
+    amount: 120_000,
+    annualInterestRate: 0.18,
+    termMonths: 24,
+    graceMonths: 3,
+    upfrontFeeRate: 0.015,
+    repaymentMethod: "equal_principal",
+  }, cafeContext, { asOf: "2026-08-03" });
+  const result = buildSetupWorkspaceResult(workspace, cafeContext, { asOf: "2026-08-03" });
+  const loan = result.workspace.funding[0];
+
+  assert.equal(loan.annualInterestRate, 0.18);
+  assert.equal(loan.termMonths, 24);
+  assert.equal(loan.graceMonths, 3);
+  assert.equal(loan.upfrontFeeRate, 0.015);
+  assert.equal(loan.repaymentMethod, "equal_principal");
+  assert.equal(result.debtService.activeDebtAmount, 120_000);
+  assert.equal(result.debtService.rows[0].feePayment, 1_800);
+  assert.equal(result.debtService.rows[1].debtPayment, 0);
+  assert.ok(result.debtService.rows[4].debtPayment > 0);
 });
 
 test("kuruluş taksitleri ay 0–12 planına bölünür ve ufuk sonrası ayrı kalır", () => {
