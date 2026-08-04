@@ -1,4 +1,9 @@
 import { evaluateVisibility } from "../core/sector-schema.js";
+import { buildSetupWorkspaceResult } from "../setup/setup-workspace.js";
+import {
+  appendSetupCashColumns,
+  buildIntegratedCashFlow,
+} from "../setup/setup-integration.js";
 import { buildDecisionHierarchy } from "../ui/decision-summary.js";
 import { formatValue } from "../ui/formatters.js";
 import {
@@ -124,7 +129,7 @@ function buildReportDecision({ sector, result, presentation }) {
   };
 }
 
-function buildExecutiveSummary(sector, decision, presentation) {
+function buildExecutiveSummary(sector, decision, presentation, setupReport) {
   const primary = decision.primaryKpis?.[0]
     ?? findKpi(presentation, ["net_profit", "net kâr", "net sonuç"])
     ?? presentation.kpis[0];
@@ -136,6 +141,12 @@ function buildExecutiveSummary(sector, decision, presentation) {
   ];
   if (primary) sentences.push(`${primary.label}: ${formatValue(primary.value, primary.format, primary)}.`);
   if (cash && cash !== primary) sentences.push(`${cash.label}: ${formatValue(cash.value, cash.format, cash)}.`);
+  if (setupReport?.cashBridge?.grossStartupCashNeed > 0) {
+    sentences.push(`Güvenli başlangıç nakdi ${formatValue(setupReport.cashBridge.grossStartupCashNeed, "money")}; hazır finansman sonrası gerekli özkaynak ${formatValue(setupReport.cashBridge.requiredOwnCash, "money")}.`);
+  }
+  if (setupReport?.debtService?.activeDebtAmount > 0) {
+    sentences.push(`Aktif borç ${formatValue(setupReport.debtService.activeDebtAmount, "money")}; ilk 12 ay faiz ve masraf yükü ${formatValue(setupReport.debtService.totalInterestPaid + setupReport.debtService.totalFeesPaid, "money")}.`);
+  }
   if (decision.hardCount > 0) sentences.push(`${decision.hardCount} kritik ve ${decision.softCount} dikkat gerektiren uyarı bulunuyor.`);
   else if (decision.softCount > 0) sentences.push(`Kritik uyarı yok; ${decision.softCount} konu izlenmeli.`);
   else sentences.push("Temel eşiklerde kritik veya dikkat gerektiren uyarı oluşmadı.");
@@ -183,15 +194,51 @@ function resolveBusinessType(sector, inputs) {
   return null;
 }
 
+function buildSetupReport(setup, sector, inputs, baseRows) {
+  const context = {
+    sectorId: sector.id,
+    businessType: String(inputs?.businessType ?? inputs?.businessTypeId ?? ""),
+  };
+  const setupResult = buildSetupWorkspaceResult(setup, context, { scheduleMonths: 12 });
+  const integrated = buildIntegratedCashFlow(baseRows, setupResult, 12);
+  return {
+    version: setupResult.workspace.version,
+    profile: setupResult.workspace.profile,
+    items: setupResult.workspace.items,
+    includedItems: setupResult.cashBridge.summary.includedItems,
+    funding: setupResult.workspace.funding,
+    fundingSummary: setupResult.fundingSummary,
+    requirements: setupResult.requirements,
+    unresolvedCount: setupResult.unresolvedCount,
+    cashBridge: setupResult.cashBridge,
+    paymentSchedule: setupResult.paymentSchedule,
+    debtService: integrated.debt,
+    integratedCashFlow: integrated,
+  };
+}
+
 export function buildFinancialReportModel({
   sector,
   inputs,
   result,
   presentation,
   scenarios,
+  setup,
   generatedAt = new Date(),
 }) {
-  const decision = buildReportDecision({ sector, result, presentation });
+  const baseRows = result.cashFlow?.rows ?? [];
+  const setupReport = buildSetupReport(setup, sector, inputs, baseRows);
+  const integrated = setupReport.integratedCashFlow;
+  const reportResult = {
+    ...result,
+    cashFlow: {
+      ...(result.cashFlow ?? {}),
+      rows: integrated.rows,
+      endingCash: integrated.endingCash,
+      minimumCash: integrated.minimumCash,
+    },
+  };
+  const decision = buildReportDecision({ sector, result: reportResult, presentation });
   const warnings = [...(result.warnings ?? [])].sort((a, b) =>
     (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9),
   );
@@ -202,16 +249,16 @@ export function buildFinancialReportModel({
     title: warning.title,
     message: warning.message,
   }));
-  const cashColumns = resolveCashFlowColumns(sector, result.cashFlow?.rows ?? []);
+  const baseCashColumns = resolveCashFlowColumns(sector, baseRows);
 
   return {
-    reportVersion: "1.2",
+    reportVersion: "1.3",
     generatedAt: generatedAt instanceof Date ? generatedAt.toISOString() : String(generatedAt),
     sector: { id: sector.id, name: sector.name, family: sector.family, version: sector.version },
     businessType: resolveBusinessType(sector, inputs),
     scenario: { id: "user-input", label: "Kullanıcı girdileri" },
     decision,
-    executiveSummary: buildExecutiveSummary(sector, decision, presentation),
+    executiveSummary: buildExecutiveSummary(sector, decision, presentation, setupReport),
     primaryKpis: decision.primaryKpis,
     secondaryKpis: decision.secondaryKpis,
     kpis: presentation.kpis,
@@ -220,11 +267,17 @@ export function buildFinancialReportModel({
     warningCards,
     scenarios: buildSingleInputComparison(sector, result, presentation, scenarios),
     assumptions: buildAssumptions(sector, inputs),
+    setup: setupReport,
     cashFlow: {
-      summary: cashMetrics(result),
-      columns: cashColumns,
-      rows: result.cashFlow?.rows ?? [],
+      summary: {
+        endingCash: integrated.endingCash,
+        minimumCash: integrated.minimumCash,
+        firstNegativeMonth: integrated.firstNegativeMonth,
+        additionalFundingNeed: integrated.additionalFundingNeed,
+      },
+      columns: appendSetupCashColumns(baseCashColumns),
+      rows: integrated.rows,
     },
-    disclaimer: "Bu rapor düzenlenebilir varsayımlara dayalı ön fizibilite çıktısıdır; yatırım tavsiyesi, mali müşavirlik, vergi danışmanlığı veya hukuki görüş değildir.",
+    disclaimer: "Bu rapor düzenlenebilir varsayımlara dayalı ön fizibilite çıktısıdır; yatırım tavsiyesi, mali müşavirlik, vergi danışmanlığı veya hukuki görüş değildir. Kredi oranları ve resmî yükümlülükler ilgili kurum ve uzmanlarla doğrulanmalıdır.",
   };
 }
