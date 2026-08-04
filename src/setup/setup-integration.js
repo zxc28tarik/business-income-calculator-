@@ -28,7 +28,18 @@ function fundingInflows(funding, maxMonth) {
   return rows;
 }
 
+function hasDetailedSetupCosts(setupResult) {
+  return (setupResult?.cashBridge?.summary?.includedItems ?? [])
+    .some((item) => number(item.cashAmount) > 0);
+}
+
+function hasDetailedFunding(funding) {
+  return (Array.isArray(funding) ? funding : [])
+    .some((item) => ACTIVE_FUNDING_STATUSES.has(item?.status) && number(item.amount) > 0);
+}
+
 export const SETUP_CASH_COLUMNS = Object.freeze([
+  { key: "legacyStartupAdjustment", label: "Eski kuruluş düzeltmesi", format: "money" },
   { key: "setupFundingInflow", label: "Kuruluş finansmanı", format: "money" },
   { key: "setupPaymentOutflow", label: "Kuruluş ödemesi", format: "money" },
   { key: "debtPrincipalPayment", label: "Borç anapara", format: "money" },
@@ -39,7 +50,9 @@ export const SETUP_CASH_COLUMNS = Object.freeze([
 ]);
 
 export function appendSetupCashColumns(baseColumns = []) {
-  const withoutEnding = (Array.isArray(baseColumns) ? baseColumns : []).filter((column) => column.key !== "cashEnd");
+  const replacedKeys = new Set(["cashEnd"]);
+  const withoutEnding = (Array.isArray(baseColumns) ? baseColumns : [])
+    .filter((column) => !replacedKeys.has(column.key));
   return [...withoutEnding, ...SETUP_CASH_COLUMNS];
 }
 
@@ -52,16 +65,26 @@ export function buildIntegratedCashFlow(baseRows = [], setupResult, maxMonth = 1
   const setupSchedule = setupResult?.paymentSchedule?.rows ?? [];
   const setupByMonth = new Map(setupSchedule.map((row) => [Number(row.month), row]));
   const funding = setupResult?.workspace?.funding ?? [];
+  const replaceLegacySetup = hasDetailedSetupCosts(setupResult);
+  const replaceLegacyFunding = hasDetailedFunding(funding);
   const nonDebtFunding = fundingInflows(funding, monthLimit);
   const debt = buildDebtServiceSchedule(funding, monthLimit);
   const debtByMonth = new Map(debt.rows.map((row) => [row.month, row]));
   const rows = [];
   let cumulativeSetupCash = 0;
+  let totalLegacySetupCostsRemoved = 0;
+  let totalLegacyFinancingRemoved = 0;
 
   for (let month = 0; month <= monthLimit; month += 1) {
     const base = baseByMonth.get(month) ?? {};
     const setup = setupByMonth.get(month) ?? {};
     const debtRow = debtByMonth.get(month) ?? {};
+    const legacySetupCostsRemoved = replaceLegacySetup ? number(base.setupCosts) : 0;
+    const legacyFinancingRemoved = replaceLegacyFunding ? number(base.financing) : 0;
+    const legacyStartupAdjustment = legacySetupCostsRemoved - legacyFinancingRemoved;
+    totalLegacySetupCostsRemoved += legacySetupCostsRemoved;
+    totalLegacyFinancingRemoved += legacyFinancingRemoved;
+
     const setupFundingInflow = number(nonDebtFunding[month]?.cashInflow) + number(debtRow.fundingInflow);
     const setupPaymentOutflow = number(setup.cashOutflow);
     const debtPrincipalPayment = number(debtRow.principalPayment);
@@ -73,11 +96,16 @@ export function buildIntegratedCashFlow(baseRows = [], setupResult, maxMonth = 1
       - debtInterestPayment
       - debtFeePayment;
     cumulativeSetupCash += setupNetCashFlow;
-    const baseCashEnd = number(base.cashEnd);
+    const originalBaseCashEnd = number(base.cashEnd);
+    const baseCashEnd = originalBaseCashEnd + legacyStartupAdjustment;
 
     rows.push({
       ...base,
       month,
+      originalBaseCashEnd: roundMoney(originalBaseCashEnd),
+      legacySetupCostsRemoved: roundMoney(legacySetupCostsRemoved),
+      legacyFinancingRemoved: roundMoney(legacyFinancingRemoved),
+      legacyStartupAdjustment: roundMoney(legacyStartupAdjustment),
       setupFundingInflow: roundMoney(setupFundingInflow),
       setupPaymentOutflow: roundMoney(setupPaymentOutflow),
       debtPrincipalPayment: roundMoney(debtPrincipalPayment),
@@ -100,6 +128,10 @@ export function buildIntegratedCashFlow(baseRows = [], setupResult, maxMonth = 1
   return {
     rows: visibleRows,
     debt,
+    replacedLegacySetup: replaceLegacySetup,
+    replacedLegacyFunding: replaceLegacyFunding,
+    totalLegacySetupCostsRemoved: roundMoney(totalLegacySetupCostsRemoved),
+    totalLegacyFinancingRemoved: roundMoney(totalLegacyFinancingRemoved),
     setupPaymentAfterHorizon: roundMoney(number(setupResult?.paymentSchedule?.afterHorizon)),
     endingCash: roundMoney(cashValues.at(-1) ?? 0),
     minimumCash: roundMoney(cashValues.length ? Math.min(...cashValues) : 0),
@@ -124,6 +156,8 @@ export function buildSetupCsvRows(setupResult, integratedCashFlow) {
     ["Açılış stoğu", totals.inventoryBasis ?? 0],
     ["Bağlı nakit", totals.tiedCash ?? 0],
     ["Doğrulanmamış KDV", totals.unverifiedVat ?? 0],
+    ["Eski toplu kurulum etkisi nötrlendi", integratedCashFlow?.totalLegacySetupCostsRemoved ?? 0],
+    ["Eski toplu finansman etkisi nötrlendi", integratedCashFlow?.totalLegacyFinancingRemoved ?? 0],
     [],
     ["KURULUŞ KALEMLERİ"],
     ["Durum", "Kalem", "Sınıf", "Adet", "Birim tutar", "Net", "KDV", "Nakit", "Ödeme ayı", "Taksit", "Not"],
@@ -158,9 +192,10 @@ export function buildSetupCsvRows(setupResult, integratedCashFlow) {
     ]),
     [],
     ["KURULUŞ VE BORÇ ÖDEME TAKVİMİ"],
-    ["Ay", "Kuruluş finansmanı", "Kuruluş ödemesi", "Anapara", "Faiz", "Masraf", "Net kuruluş etkisi", "Kalan borç"],
+    ["Ay", "Eski kuruluş düzeltmesi", "Kuruluş finansmanı", "Kuruluş ödemesi", "Anapara", "Faiz", "Masraf", "Net kuruluş etkisi", "Kalan borç"],
     ...(integratedCashFlow?.rows ?? []).map((row) => [
       row.month,
+      row.legacyStartupAdjustment,
       row.setupFundingInflow,
       row.setupPaymentOutflow,
       row.debtPrincipalPayment,
