@@ -110,3 +110,58 @@ test("planlanan finansman özkaynağı azaltmaz, hazır finansman azaltır ve ta
   await expect(page.locator("#setupCashSummary .setup-summary-card").filter({ hasText: "Gerekli özkaynak" })).toContainText("8.200");
   expect(pageErrors).toEqual([]);
 });
+
+test("kredi koşulları borç servisine, birleşik nakde ve kuruluş CSV çıktısına bağlanır", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.locator("#setupButton").click();
+  await page.locator("#setupAddFundingButton").click();
+
+  const fundingRow = page.locator("#setupFundingTable tbody tr").first();
+  await fundingRow.locator('[data-setup-funding-field="label"]').fill("Yatırım kredisi");
+  await fundingRow.locator('[data-setup-funding-field="label"]').dispatchEvent("change");
+  await fundingRow.locator('[data-setup-funding-field="type"]').selectOption("loan");
+  await fundingRow.locator('[data-setup-funding-field="status"]').selectOption("available");
+  await fundingRow.locator('[data-setup-funding-field="amount"]').fill("120000");
+  await fundingRow.locator('[data-setup-funding-field="amount"]').dispatchEvent("change");
+  await fundingRow.locator('[data-setup-funding-field="annualInterestRate"]').fill("12");
+  await fundingRow.locator('[data-setup-funding-field="annualInterestRate"]').dispatchEvent("change");
+  await fundingRow.locator('[data-setup-funding-field="termMonths"]').fill("12");
+  await fundingRow.locator('[data-setup-funding-field="termMonths"]').dispatchEvent("change");
+  await fundingRow.locator('[data-setup-funding-field="graceMonths"]').fill("1");
+  await fundingRow.locator('[data-setup-funding-field="graceMonths"]').dispatchEvent("change");
+  await fundingRow.locator('[data-setup-funding-field="upfrontFeeRate"]').fill("1");
+  await fundingRow.locator('[data-setup-funding-field="upfrontFeeRate"]').dispatchEvent("change");
+
+  const openingRow = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Açılış / Ay 0" });
+  const month1 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 1" });
+  const month2 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" });
+  await expect(openingRow).toContainText("120.000");
+  await expect(openingRow).toContainText("1.200");
+  await expect(month1).not.toContainText("10.000");
+  await expect(month2).toContainText("1.200");
+
+  const cashHeaders = page.locator("#cashFlowTable thead th");
+  await expect(cashHeaders).toContainText([
+    /Kuruluş finansmanı/,
+    /Kuruluş ödemesi/,
+    /Borç anapara/,
+    /Borç faizi/,
+    /Faaliyet sonu/,
+    /Birleşik dönem sonu/,
+  ]);
+  await expect(page.locator("#cashFlowTable tbody tr").first()).toContainText("120.000");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#setupExportCsvButton").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/cafe_restaurant-kurulus-acilis\.csv$/);
+
+  await page.reload();
+  await page.locator("#setupButton").click();
+  await expect(page.locator('[data-setup-funding-field="annualInterestRate"]')).toHaveValue("12.00");
+  await expect(page.locator('[data-setup-funding-field="termMonths"]')).toHaveValue("12");
+  await expect(page.locator('[data-setup-funding-field="graceMonths"]')).toHaveValue("1");
+  await expect(page.locator('[data-setup-funding-field="upfrontFeeRate"]')).toHaveValue("1.00");
+  expect(pageErrors).toEqual([]);
+});
