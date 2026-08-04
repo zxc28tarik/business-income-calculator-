@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Sektör bazlı ciro, net kâr, başabaş, 12 aylık nakit akışı ve gerçekleşen takip hesaplayıcısı." />
+<meta name="description" content="Sektör bazlı ciro, net kâr, başabaş, kuruluş maliyeti, borç servisi ve birleşik 12 aylık nakit akışı hesaplayıcısı." />
 <meta name="theme-color" content="#174a35" />
 <title>Business Income Calculator</title>
 <link rel="stylesheet" href="./styles.css" />
@@ -17,7 +17,7 @@
     <div class="topbar-brand">
       <p class="eyebrow">BUSINESS INCOME CALCULATOR · v0.24.2</p>
       <h1 id="pageTitle">Sektör Bazlı Finansal Fizibilite</h1>
-      <p id="pageSubtitle" class="subtitle">Cirodan net kâra, başabaştan 12 aylık nakit akışına kadar düzenlenebilir ön fizibilite.</p>
+      <p id="pageSubtitle" class="subtitle">Cirodan net kâra, kuruluştan borç servisine ve birleşik nakit akışına kadar düzenlenebilir ön fizibilite.</p>
     </div>
 
     <div class="workspace-context" aria-label="Çalışma alanı">
@@ -126,6 +126,7 @@
         <div class="setup-panel-actions">
           <button id="setupSyncButton" class="secondary-button" type="button">Koşulları yenile</button>
           <button id="setupAddItemButton" class="secondary-button" type="button">Özel kalem ekle</button>
+          <button id="setupExportCsvButton" class="secondary-button" type="button">Kuruluş CSV</button>
           <button id="setupCloseButton" class="secondary-button" type="button">Kapat</button>
         </div>
       </div>
@@ -142,16 +143,16 @@
       </div>
       <div class="setup-funding-card">
         <div class="section-heading">
-          <div><p class="eyebrow">FİNANSMAN</p><h2>Kaynaklar ve hazır olma durumu</h2></div>
+          <div><p class="eyebrow">FİNANSMAN</p><h2>Kaynaklar ve borç koşulları</h2></div>
           <button id="setupAddFundingButton" class="secondary-button" type="button">Finansman kaynağı ekle</button>
         </div>
-        <p class="section-description">Planlanan kaynaklar bilgi amaçlıdır ve gerekli özkaynaktan düşülmez. Yalnız açılışta kullanılabilir veya kullanılmış kaynaklar hesaba alınır.</p>
+        <p class="section-description">Planlanan kaynaklar bilgi amaçlıdır ve gerekli özkaynaktan düşülmez. Kredi ve tedarikçi kredilerinde faiz, vade, ödemesiz dönem ve masraf ayrıca modellenir.</p>
         <div class="setup-funding-scroll" role="region" aria-label="Kuruluş finansman kaynakları tablosu" tabindex="0"><table id="setupFundingTable" class="setup-funding-table"></table></div>
       </div>
       <div class="setup-payment-card">
-        <div class="section-heading"><div><p class="eyebrow">ÖDEME TAKVİMİ</p><h2>Kuruluş taksitleri · Ay 0–12</h2></div></div>
-        <p class="section-description">Hesaba dahil edilen kalemler ödeme ayı ve taksit sayısına göre dağıtılır. Bu görünüm kuruluş ödemelerini gösterir; ana faaliyet nakit akışıyla henüz birleştirilmemiştir.</p>
-        <div class="setup-payment-scroll" role="region" aria-label="Kuruluş aylık ödeme takvimi" tabindex="0"><table id="setupPaymentSchedule" class="setup-payment-table"></table></div>
+        <div class="section-heading"><div><p class="eyebrow">ÖDEME TAKVİMİ</p><h2>Kuruluş ve borç servisi · Ay 0–12</h2></div></div>
+        <p class="section-description">Kuruluş taksitleri, finansman girişleri, anapara, faiz ve finansman masrafları ayrı gösterilir. Aynı etkiler ana nakit tablosunda faaliyet sonucundan ayrı sütunlarla birleşir.</p>
+        <div class="setup-payment-scroll" role="region" aria-label="Kuruluş ve borç aylık ödeme takvimi" tabindex="0"><table id="setupPaymentSchedule" class="setup-payment-table"></table></div>
       </div>
     </section>
 
@@ -199,8 +200,8 @@
     </section>
 
     <section class="panel-card">
-      <div class="section-heading"><div><p class="eyebrow">NAKİT</p><h2>12 aylık nakit akışı</h2></div></div>
-      <div class="table-scroll" role="region" aria-label="12 aylık nakit akışı tablosu" tabindex="0"><table id="cashFlowTable"></table></div>
+      <div class="section-heading"><div><p class="eyebrow">NAKİT</p><h2>Açılış + 12 aylık birleşik nakit akışı</h2></div></div>
+      <div class="table-scroll" role="region" aria-label="Açılış ve 12 aylık birleşik nakit akışı tablosu" tabindex="0"><table id="cashFlowTable"></table></div>
     </section>
 
     <section class="panel-card">
@@ -208,7 +209,7 @@
       <div id="breakdown" class="breakdown"></div>
     </section>
 
-    <p id="usageDisclaimer" class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe, teşvik ve muhasebe uygulamaları uzmanlarla teyit edilmelidir.</p>
+    <p id="usageDisclaimer" class="disclaimer"><strong>Önemli:</strong> Bu araç ön fizibilite ve işletme içi tahmin içindir; mali müşavirlik, vergi danışmanlığı veya hukuki danışmanlık değildir. Vergi, amortisman, hibe, teşvik, kredi oranları ve muhasebe uygulamaları uzmanlarla teyit edilmelidir.</p>
   </section>
 </main>
 
