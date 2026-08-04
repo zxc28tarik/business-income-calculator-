@@ -79,9 +79,9 @@ test("planlanan finansman özkaynağı azaltmaz, hazır finansman azaltır ve ta
   await itemRow.locator('[data-setup-item-field="installmentCount"]').dispatchEvent("change");
   await itemRow.locator('[data-setup-item-field="status"]').selectOption("included");
 
-  const month2 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" });
-  const month3 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 3" });
-  const month4 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 4" });
+  const month2 = page.getByRole("row", { name: /^Ay 2 / });
+  const month3 = page.getByRole("row", { name: /^Ay 3 / });
+  const month4 = page.getByRole("row", { name: /^Ay 4 / });
   await expect(month2).toContainText("4.000");
   await expect(month3).toContainText("4.000");
   await expect(month4).toContainText("4.000");
@@ -106,7 +106,7 @@ test("planlanan finansman özkaynağı azaltmaz, hazır finansman azaltır ve ta
   await page.locator("#setupButton").click();
   await expect(page.locator('#setupFundingTable [data-setup-funding-field="label"]')).toHaveValue("Banka kredisi");
   await expect(page.locator('#setupFundingTable [data-setup-funding-field="status"]')).toHaveValue("available");
-  await expect(page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" })).toContainText("4.000");
+  await expect(page.getByRole("row", { name: /^Ay 2 / })).toContainText("4.000");
   await expect(page.locator("#setupCashSummary .setup-summary-card").filter({ hasText: "Gerekli özkaynak" })).toContainText("8.200");
   expect(pageErrors).toEqual([]);
 });
@@ -133,23 +133,24 @@ test("kredi koşulları borç servisine, birleşik nakde ve kuruluş CSV çıkt�
   await fundingRow.locator('[data-setup-funding-field="upfrontFeeRate"]').fill("1");
   await fundingRow.locator('[data-setup-funding-field="upfrontFeeRate"]').dispatchEvent("change");
 
-  const openingRow = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Açılış / Ay 0" });
-  const month1 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 1" });
-  const month2 = page.locator("#setupPaymentSchedule tbody tr").filter({ hasText: "Ay 2" });
+  const openingRow = page.getByRole("row", { name: /^Açılış \/ Ay 0 / });
+  const month1 = page.getByRole("row", { name: /^Ay 1 / });
+  const month2 = page.getByRole("row", { name: /^Ay 2 / });
   await expect(openingRow).toContainText("120.000");
   await expect(openingRow).toContainText("1.200");
-  await expect(month1).not.toContainText("10.000");
+  await expect(month1).toContainText("₺0");
   await expect(month2).toContainText("1.200");
 
-  const cashHeaders = page.locator("#cashFlowTable thead th");
-  await expect(cashHeaders).toContainText([
-    /Kuruluş finansmanı/,
-    /Kuruluş ödemesi/,
-    /Borç anapara/,
-    /Borç faizi/,
-    /Faaliyet sonu/,
-    /Birleşik dönem sonu/,
-  ]);
+  for (const label of [
+    "Kuruluş finansmanı",
+    "Kuruluş ödemesi",
+    "Borç anapara",
+    "Borç faizi",
+    "Faaliyet sonu",
+    "Birleşik dönem sonu",
+  ]) {
+    await expect(page.locator("#cashFlowTable thead th").filter({ hasText: label })).toHaveCount(1);
+  }
   await expect(page.locator("#cashFlowTable tbody tr").first()).toContainText("120.000");
 
   const downloadPromise = page.waitForEvent("download");
